@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { createServer } from "node:net";
+import { readFile } from "node:fs/promises";
 import { after, before, test } from "node:test";
 import { once } from "node:events";
 import { join } from "node:path";
@@ -9,6 +10,22 @@ import { fileURLToPath } from "node:url";
 const host = "127.0.0.1";
 const projectRoot = fileURLToPath(new URL("../", import.meta.url));
 const nextCli = join(projectRoot, "node_modules", "next", "dist", "bin", "next");
+const focusStyles = await readFile(
+  new URL("../src/app/globals.css", import.meta.url),
+  "utf8",
+);
+const orderRequestForm = await readFile(
+  new URL("../src/features/orders/order-request-form.tsx", import.meta.url),
+  "utf8",
+);
+const orderDecisionForm = await readFile(
+  new URL("../src/features/orders/order-decision-form.tsx", import.meta.url),
+  "utf8",
+);
+const roleForm = await readFile(
+  new URL("../src/features/auth/role-form.tsx", import.meta.url),
+  "utf8",
+);
 let server;
 let serverError = "";
 let url;
@@ -96,4 +113,36 @@ test("production serves the offline worker and app manifest", async () => {
   assert.match(worker, /AgricultorOfflinePolicy/);
   assert.equal(manifest.name, "Agricultor");
   assert.equal(manifest.start_url, "/");
+});
+
+test("interactive controls expose a visible keyboard focus indicator", () => {
+  assert.match(
+    focusStyles,
+    /:focus-visible\s*\{\s*outline:\s*3px solid #166534;\s*outline-offset:\s*3px;/,
+  );
+});
+
+test("order quantity validation is linked to its invalid field", () => {
+  assert.match(orderRequestForm, /aria-invalid=\{Boolean\(state\.fieldErrors\?\.quantity\)\}/);
+  assert.match(orderRequestForm, /"order-quantity-error"/);
+  assert.match(orderRequestForm, /id="order-quantity-error"/);
+});
+
+test("action feedback distinguishes success statuses from errors", () => {
+  for (const source of [orderRequestForm, orderDecisionForm, roleForm]) {
+    assert.match(source, /role=\{state\.ok \? "status" : "alert"\}/);
+  }
+});
+
+test("production registration page keeps labels associated with their fields", async () => {
+  const response = await fetch(`${url}/crear-cuenta`);
+  assert.equal(response.status, 200);
+  const html = await response.text();
+
+  assert.match(html, /<label[^>]*for="name"[^>]*>Nombre<\/label>/);
+  assert.match(html, /<input[^>]*id="name"[^>]*name="name"/);
+  assert.match(html, /<label[^>]*for="email"[^>]*>Correo electrónico<\/label>/);
+  assert.match(html, /<input[^>]*id="email"[^>]*name="email"/);
+  assert.match(html, /<label[^>]*for="password"[^>]*>Contraseña<\/label>/);
+  assert.match(html, /<input[^>]*id="password"[^>]*name="password"/);
 });

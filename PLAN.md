@@ -12,6 +12,12 @@ Este documento conserva el roadmap y registra el estado real del repositorio. La
 - `.gitignore` excluye `.env*`. Las credenciales se revisaron sin mostrar ni registrar valores; no se ha conectado a Neon ni a servicios de correo o imágenes.
 - Se inició la primera parte de identidad/permisos: autenticación por correo y contraseña, sesiones persistidas, roles básicos y migración versionada. Los cortes de productos y catálogo agregan captura privada y publicación explícita bajo una hipótesis de visibilidad pendiente de revisión; el flujo básico de pedidos está implementado. No se implementan perfiles comerciales, asociaciones ni sincronización offline. El primer corte offline posterior solo ofrece un shell estático genérico, sin cachear catálogo ni datos privados.
 
+## Estado del hardening accesible
+
+- **Hecho en la rama de hardening:** se añadió un indicador global de foco visible para teclado; los errores de cantidad del pedido ahora indican el campo inválido y asocian el texto del error; los mensajes de resultado de roles y pedidos distinguen errores anunciados como alertas de éxitos anunciados como estados.
+- **Auditoría de flujos existentes:** registro, inicio, producto y filtros de catálogo ya tienen etiquetas asociadas; los encabezados de catálogo, productos y pedidos siguen una jerarquía coherente; los colores de texto y controles observados conservan contraste suficiente en sus fondos claros; el aviso offline ya se anuncia como estado. No se encontraron animaciones/transiciones en los flujos revisados que requieran una regla adicional de movimiento reducido, ni se cambió la interfaz o su contenido en español.
+- **Verificado tras los cambios:** `npm run lint`, `npm run typecheck`, `npm run test:unit` (14/14), `npm test` (9/9, incluidas las comprobaciones smoke de producción) y `npm run build` pasan. Prisma Client se generó con una URL local sin servicio y la carga dotenv dirigida a un archivo inexistente; no se hicieron llamadas a Neon ni a otros servicios.
+
 ## Progreso de fundaciones e identidad
 
 - **Hecho:** scaffold mínimo de Next.js 16.4.6, React 19.3, TypeScript, Tailwind CSS 4 y ESLint; scripts `lint` y `typecheck`; página inicial provisional en español sin flujos de producto; documentación de desarrollo básica; CI de lint, tipos y build.
