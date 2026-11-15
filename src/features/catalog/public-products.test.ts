@@ -1,8 +1,13 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  getCatalogPageHref,
+  getCatalogPagination,
+  getPublicProductWhere,
   getPublicProductOrderHref,
   getPublicProducts,
+  parseCatalogFilters,
+  PUBLIC_CATALOG_PAGE_SIZE,
 } from "./public-products";
 
 describe("public catalog projection", () => {
@@ -98,5 +103,93 @@ describe("public catalog projection", () => {
     assert.equal("email" in publicProduct, false);
     assert.equal("phone" in publicProduct, false);
     assert.equal("preciseAddress" in publicProduct, false);
+  });
+});
+
+describe("public catalog query and pagination", () => {
+  it("parses optional filters and ignores unknown categories and invalid pages", () => {
+    assert.deepEqual(
+      parseCatalogFilters({
+        categoria: "TUBERS",
+        municipio: "  La Vega  ",
+        pagina: "3",
+      }),
+      { category: "TUBERS", municipality: "La Vega", page: 3 },
+    );
+    assert.deepEqual(
+      parseCatalogFilters({
+        categoria: "inventada",
+        municipio: "x".repeat(101),
+        pagina: "-2",
+      }),
+      { category: undefined, municipality: undefined, page: 1 },
+    );
+    assert.deepEqual(
+      parseCatalogFilters({
+        categoria: ["TUBERS", "GRAINS"],
+        municipio: ["La Vega"],
+        pagina: ["2"],
+      }),
+      { category: undefined, municipality: undefined, page: 1 },
+    );
+  });
+
+  it("always scopes database filters to published products with stock", () => {
+    assert.deepEqual(
+      getPublicProductWhere({
+        category: "FRUITS",
+        municipality: "La Vega",
+      }),
+      {
+        isPublished: true,
+        availableQuantity: { gt: 0 },
+        category: "FRUITS",
+        municipality: { equals: "La Vega", mode: "insensitive" },
+      },
+    );
+    assert.deepEqual(getPublicProductWhere({}), {
+      isPublished: true,
+      availableQuantity: { gt: 0 },
+    });
+  });
+
+  it("paginates consistently and clamps pages beyond the available results", () => {
+    assert.deepEqual(
+      getCatalogPagination(PUBLIC_CATALOG_PAGE_SIZE * 2 + 1, 2),
+      {
+        page: 2,
+        pageCount: 3,
+        skip: PUBLIC_CATALOG_PAGE_SIZE,
+        take: PUBLIC_CATALOG_PAGE_SIZE,
+      },
+    );
+    assert.deepEqual(getCatalogPagination(1, 99), {
+      page: 1,
+      pageCount: 1,
+      skip: 0,
+      take: PUBLIC_CATALOG_PAGE_SIZE,
+    });
+    assert.deepEqual(getCatalogPagination(0, 1), {
+      page: 1,
+      pageCount: 1,
+      skip: 0,
+      take: PUBLIC_CATALOG_PAGE_SIZE,
+    });
+  });
+
+  it("encodes Spanish filter values and preserves them in pagination links", () => {
+    const href = getCatalogPageHref(
+      { category: "TUBERS", municipality: "San José del Guaviare" },
+      2,
+    );
+    const query = new URL(href, "https://agricultor.example").searchParams;
+
+    assert.equal(query.get("categoria"), "TUBERS");
+    assert.equal(query.get("municipio"), "San José del Guaviare");
+    assert.equal(query.get("pagina"), "2");
+    assert.equal(
+      getCatalogPageHref({ category: undefined, municipality: undefined }, 1),
+      "/catalogo",
+    );
   });
 });

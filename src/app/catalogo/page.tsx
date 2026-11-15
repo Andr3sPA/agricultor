@@ -1,7 +1,11 @@
 import Link from "next/link";
 import {
+  getCatalogPageHref,
+  getCatalogPagination,
+  getPublicProductWhere,
   getPublicProductOrderHref,
   getPublicProducts,
+  parseCatalogFilters,
 } from "@/features/catalog/public-products";
 import {
   PRODUCT_CATEGORIES,
@@ -25,12 +29,19 @@ export const metadata = {
 
 export const dynamic = "force-dynamic";
 
-export default async function CatalogPage() {
+type CatalogPageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export default async function CatalogPage({ searchParams }: CatalogPageProps) {
+  const filters = parseCatalogFilters(await searchParams);
+  const where = getPublicProductWhere(filters);
+  const total = await prisma.product.count({ where });
+  const pagination = getCatalogPagination(total, filters.page);
   const records = await prisma.product.findMany({
-    where: {
-      isPublished: true,
-      availableQuantity: { gt: 0 },
-    },
+    where,
+    skip: pagination.skip,
+    take: pagination.take,
     select: {
       id: true,
       name: true,
@@ -65,6 +76,50 @@ export default async function CatalogPage() {
           de contacto y ubicación precisa de quienes producen no se muestra.
         </p>
       </section>
+      <form
+        action="/catalogo"
+        className="mt-8 grid gap-4 rounded-2xl border border-slate-200 bg-white p-6 sm:grid-cols-[1fr_1fr_auto] sm:items-end"
+        method="get"
+      >
+        <div>
+          <label className="mb-2 block text-sm font-medium" htmlFor="categoria">
+            Categoría
+          </label>
+          <select
+            className="min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3"
+            defaultValue={filters.category ?? ""}
+            id="categoria"
+            name="categoria"
+          >
+            <option value="">Todas las categorías</option>
+            {PRODUCT_CATEGORIES.map(({ value, label }) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="mb-2 block text-sm font-medium" htmlFor="municipio">
+            Municipio
+          </label>
+          <input
+            autoComplete="address-level2"
+            className="min-h-11 w-full rounded-lg border border-slate-300 px-3"
+            defaultValue={filters.municipality ?? ""}
+            id="municipio"
+            maxLength={100}
+            name="municipio"
+            type="text"
+          />
+        </div>
+        <button
+          className="min-h-11 rounded-lg bg-emerald-800 px-5 py-2 font-semibold text-white hover:bg-emerald-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-900"
+          type="submit"
+        >
+          Filtrar
+        </button>
+      </form>
       {products.length === 0 ? (
         <p className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 text-slate-700">
           No hay productos publicados y disponibles en este momento.
@@ -120,6 +175,36 @@ export default async function CatalogPage() {
           })}
         </ul>
       )}
+      {total > 0 && pagination.pageCount > 1 ? (
+        <nav
+          aria-label="Paginación del catálogo"
+          className="mt-8 flex items-center justify-between gap-4"
+        >
+          {pagination.page > 1 ? (
+            <Link
+              className="min-h-11 rounded-lg border border-emerald-900 px-4 py-2 font-semibold text-emerald-900"
+              href={getCatalogPageHref(filters, pagination.page - 1)}
+            >
+              Anterior
+            </Link>
+          ) : (
+            <span />
+          )}
+          <span aria-live="polite" className="text-sm text-slate-700">
+            Página {pagination.page} de {pagination.pageCount}
+          </span>
+          {pagination.page < pagination.pageCount ? (
+            <Link
+              className="min-h-11 rounded-lg border border-emerald-900 px-4 py-2 font-semibold text-emerald-900"
+              href={getCatalogPageHref(filters, pagination.page + 1)}
+            >
+              Siguiente
+            </Link>
+          ) : (
+            <span />
+          )}
+        </nav>
+      ) : null}
     </main>
   );
 }
