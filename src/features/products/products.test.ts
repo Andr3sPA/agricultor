@@ -54,7 +54,7 @@ describe("product management policies and validation", () => {
     }
   });
 
-  it("allows only producers to manage products and only their owner to edit", () => {
+  it("allows only the producer owner to edit and change publication", () => {
     assert.equal(canManageProducts(["PRODUCER"]), true);
     assert.equal(canManageProducts(["BUYER"]), false);
     assert.equal(
@@ -64,6 +64,10 @@ describe("product management policies and validation", () => {
     assert.equal(
       canEditProduct({ userId: "producer-1", roles: ["PRODUCER"] }, "producer-1"),
       true,
+    );
+    assert.equal(
+      canEditProduct({ userId: "producer-1", roles: ["BUYER"] }, "producer-1"),
+      false,
     );
   });
 
