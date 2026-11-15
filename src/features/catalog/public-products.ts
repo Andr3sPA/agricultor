@@ -1,4 +1,5 @@
 export type CatalogProductRecord = {
+  id: string;
   name: string;
   category: string;
   availableQuantity: string;
@@ -10,6 +11,10 @@ export type CatalogProductRecord = {
 
 export type PublicProduct = Omit<CatalogProductRecord, "isPublished">;
 
+export function getPublicProductOrderHref(productId: string): string {
+  return `/catalogo/${encodeURIComponent(productId)}/pedido`;
+}
+
 export function getPublicProducts(
   products: readonly CatalogProductRecord[],
 ): PublicProduct[] {
@@ -20,6 +25,7 @@ export function getPublicProducts(
     )
     .map(
       ({
+        id,
         name,
         category,
         availableQuantity,
@@ -27,6 +33,7 @@ export function getPublicProducts(
         priceCOP,
         municipality,
       }) => ({
+        id,
         name,
         category,
         availableQuantity,

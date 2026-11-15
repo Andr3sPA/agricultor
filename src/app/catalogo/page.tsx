@@ -1,5 +1,8 @@
 import Link from "next/link";
-import { getPublicProducts } from "@/features/catalog/public-products";
+import {
+  getPublicProductOrderHref,
+  getPublicProducts,
+} from "@/features/catalog/public-products";
 import {
   PRODUCT_CATEGORIES,
   PRODUCT_UNITS,
@@ -29,6 +32,7 @@ export default async function CatalogPage() {
       availableQuantity: { gt: 0 },
     },
     select: {
+      id: true,
       name: true,
       category: true,
       availableQuantity: true,
@@ -67,7 +71,7 @@ export default async function CatalogPage() {
         </p>
       ) : (
         <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {products.map((product, index) => {
+          {products.map((product) => {
             const category =
               PRODUCT_CATEGORIES.find(({ value }) => value === product.category)
                 ?.label ?? product.category;
@@ -78,7 +82,7 @@ export default async function CatalogPage() {
             return (
               <li
                 className="rounded-2xl border border-emerald-950/10 bg-white p-6 shadow-sm"
-                key={`${product.name}-${product.municipality}-${index}`}
+                key={product.id}
               >
                 <h2 className="text-xl font-semibold">{product.name}</h2>
                 <dl className="mt-4 space-y-3 text-sm text-slate-700">
@@ -104,6 +108,13 @@ export default async function CatalogPage() {
                     <dd>{product.municipality}</dd>
                   </div>
                 </dl>
+                <Link
+                  aria-label={`Solicitar este producto: ${product.name}`}
+                  className="mt-6 inline-flex min-h-11 items-center justify-center rounded-lg bg-emerald-800 px-4 py-2 font-semibold text-white underline-offset-4 hover:bg-emerald-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-900"
+                  href={getPublicProductOrderHref(product.id)}
+                >
+                  Solicitar este producto
+                </Link>
               </li>
             );
           })}
