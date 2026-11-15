@@ -38,29 +38,40 @@ El esquema y sus migraciones están versionados, pero no se aplican
 automáticamente. Antes de desplegar una migración, verifica que `DATABASE_URL`
 apunte al entorno previsto y que exista un respaldo adecuado.
 
-## Productos e inventario
+## Catálogo, pedidos e inventario
 
-El corte inicial permite que un productor autenticado guarde y edite sus propios
-registros privados: nombre, categoría, cantidad, unidad, precio por unidad en
-pesos enteros COP y municipio/localidad. La cantidad determina el estado:
-cero significa agotado y un valor mayor significa disponible. Las categorías,
-unidades y el significado del precio por unidad son hipótesis provisionales
-documentadas en `PLAN.md`. Los productos no son públicos; no hay pedidos,
-decremento por ventas, fotos ni integración con Cloudinary en este corte.
+Los productores administran sus productos y pueden publicarlos explícitamente.
+El catálogo público muestra solo productos publicados con cantidad disponible y
+no expone datos personales o de contacto. Categorías, unidades y precio por
+unidad en pesos enteros COP siguen siendo hipótesis provisionales descritas en
+`PLAN.md`.
+
+Un comprador autenticado puede solicitar una cantidad. La solicitud reserva
+inventario en una actualización condicional atómica; el productor propietario
+puede aceptarla o rechazarla. Aceptar consume la reserva y rechazar la devuelve
+a la disponibilidad. El pedido conserva una instantánea del nombre, unidad y
+precio, además del historial básico de estados. No se procesan pagos, facturas,
+transporte, notificaciones ni sincronización offline.
 
 ## Comprobaciones
 
 ```bash
 npm run db:generate
+npm run db:validate
 npm run lint
 npm run typecheck
 npm run test:unit
+npm run test:integration
 npm run build
 npm test
 ```
 
-`npm run db:generate` genera el cliente Prisma sin conectarse a la base.
-Las pruebas unitarias de roles, validación y autorización de productos no
-requieren credenciales. `npm test` ejecuta la prueba HTTP de producción y necesita
+`npm run db:generate` genera el cliente Prisma y `npm run db:validate` valida el
+esquema sin conectarse a la base. Las pruebas unitarias no requieren
+credenciales. La prueba de integración solo se ejecuta con
+`TEST_DATABASE_URL` apuntando a una base PostgreSQL local y desechable cuyo nombre
+empiece por `agricultor_test` y con el esquema de migraciones ya aplicado; nunca
+usa `DATABASE_URL` ni ejecuta migraciones. No apuntes `TEST_DATABASE_URL` a una
+base de producción. `npm test` ejecuta la prueba HTTP de producción y necesita
 que se corra `npm run build` antes. El build requiere `AUTH_SECRET` y
 `DATABASE_URL`, pero no ejecuta consultas ni migraciones.

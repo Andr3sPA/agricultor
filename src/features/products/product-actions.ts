@@ -99,12 +99,20 @@ export async function updateProduct(
     where: {
       id: productId,
       ownerId: identity.userId,
+      reservedQuantity: {
+        lte: new Prisma.Decimal("999999999.999").minus(
+          result.data.availableQuantity,
+        ),
+      },
     },
     data: productData(result.data),
   });
 
   if (updated.count !== 1) {
-    return { message: "No encontramos ese producto en tu cuenta." };
+    return {
+      message:
+        "No encontramos ese producto o la cantidad disponible más las reservas supera el inventario permitido.",
+    };
   }
 
   revalidatePath("/mi-cuenta");

@@ -42,6 +42,15 @@ export default async function AccountPage() {
             Gestionar mis productos
           </Link>
         )}
+        {(identity.roles.includes("BUYER") ||
+          identity.roles.includes("PRODUCER")) && (
+          <Link
+            className="mt-6 inline-flex rounded-xl border border-emerald-900 px-5 py-3 font-semibold text-emerald-950 hover:bg-emerald-50"
+            href="/mi-cuenta/pedidos"
+          >
+            Ver mis pedidos
+          </Link>
+        )}
         <SignOutButton />
       </section>
     </main>
