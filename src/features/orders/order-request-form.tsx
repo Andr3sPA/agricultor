@@ -1,0 +1,65 @@
+"use client";
+
+import { useActionState } from "react";
+import {
+  requestOrderAction,
+  type OrderFormState,
+} from "./order-actions";
+
+const initialState: OrderFormState = {};
+
+export function OrderRequestForm({
+  productId,
+  availableQuantity,
+}: {
+  productId: string;
+  availableQuantity: string;
+}) {
+  const [state, action, pending] = useActionState(
+    requestOrderAction,
+    initialState,
+  );
+
+  return (
+    <form action={action} className="mt-6 space-y-4">
+      <input name="productId" type="hidden" value={productId} />
+      <div>
+        <label className="block font-medium" htmlFor="order-quantity">
+          Cantidad que solicitas
+        </label>
+        <input
+          autoComplete="off"
+          className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3"
+          id="order-quantity"
+          inputMode="decimal"
+          name="quantity"
+          placeholder="Ejemplo: 2,5"
+          type="text"
+        />
+        {state.fieldErrors?.quantity && (
+          <p className="mt-1 text-sm text-red-800" role="alert">
+            {state.fieldErrors.quantity}
+          </p>
+        )}
+        <p className="mt-1 text-sm text-slate-600">
+          Disponible ahora: {availableQuantity}
+        </p>
+      </div>
+      {state.message && (
+        <p
+          className={state.ok ? "text-emerald-900" : "text-red-800"}
+          role="status"
+        >
+          {state.message}
+        </p>
+      )}
+      <button
+        className="w-full rounded-xl bg-emerald-800 px-5 py-3 font-semibold text-white hover:bg-emerald-900 disabled:opacity-60"
+        disabled={pending}
+        type="submit"
+      >
+        {pending ? "Enviando…" : "Solicitar producto"}
+      </button>
+    </form>
+  );
+}

@@ -30,6 +30,9 @@ Este documento conserva el roadmap y registra el estado real del repositorio. La
 - **Preview de Vercel pendiente:** el check de Vercel falló, pero no se pudieron consultar sus logs porque el CLI no tiene credenciales configuradas en este entorno. No se modificó configuración ni se leyeron valores de secretos; no es posible confirmar si falta alguna variable. El build local de producción sí pasa con placeholders locales.
 - **Pendiente de prueba de integración:** la migración se generó desde el esquema sin ejecutarla contra Neon. No hay `psql` local ni daemon de Docker disponible para una base PostgreSQL desechable.
 - **Integraciones excluidas:** no se habilitan verificación ni recuperación de correo (Brevo queda fuera) ni fotos (Cloudinary queda fuera hasta aclarar la errata y diseñar carga segura).
+- **Validación local del flujo de pedidos:** Prisma generate/validate, lint, typecheck, 13 pruebas unitarias, build de producción con placeholders locales y smoke HTTP (1/1) pasan. La prueba PostgreSQL se omite si no se configura `TEST_DATABASE_URL` para una base desechable local.
+- **Integración real/concurrencia pendiente:** en esta sesión no hay `psql`, el daemon de Docker no está activo, `TEST_DATABASE_URL` no está configurada y no existe `.env` local. La prueba de integración reportó `SKIP`; no se ejecutó ni se declara cubierta por mocks. Ninguna migración se aplicó a una base.
+- **Límite de integración con el catálogo:** el PR #5 sigue separado y no está en esta rama; esta rama implementa la pantalla de solicitud por ID publicado, pero el enlace de cada tarjeta pública debe añadirse al catálogo al integrar ese PR.
 
 ## Decisiones provisionales de productos, inventario y catálogo
 
@@ -136,7 +139,8 @@ Entidades candidatas, sujetas a las decisiones pendientes:
 - **Organization** (asociación) y **OrganizationMember**: asociación y relación de usuarios con ella; definir si existen permisos jerárquicos.
 - **Product**: nombre, descripción, categoría, unidad, origen/ubicación aproximada, imágenes y estado de publicación.
 - **InventoryItem** o inventario asociado al producto/oferta: cantidad disponible, unidad, versión y marcas de actualización.
-- **Order** y **OrderItem**: comprador, vendedor, líneas con cantidad y copia inmutable del precio/unidad acordados, estado y marcas de tiempo.
+- **Order**: comprador, productor, producto opcional, instantánea de nombre/cantidad/unidad/precio, estado y marcas de tiempo. El corte actual admite una unidad de producto por pedido.
+- **OrderHistory**: eventos de solicitud, aceptación y rechazo con actor/estado/fecha; no registra datos de contacto.
 - **InventoryMovement**: registro auditable de ajustes, reservas, confirmaciones y liberaciones.
 - **ShareLink** (o slug público): referencia opaca/estable a contenido publicable, con vigencia o revocación si el producto lo requiere.
 - **Notification** y **NotificationAttempt**: destinatario, tipo, referencia, estado e intentos acotados de entrega.
@@ -149,7 +153,7 @@ Aplicar claves foráneas, restricciones de cantidades y estados, índices para f
 - Better Auth administra creación, lectura, vencimiento y revocación de sesiones en servidor; el adaptador Prisma las persiste en PostgreSQL. La política y el alcance son provisionales y requieren revisión.
 - Comprobar autorización en cada caso de uso/Server Action/Route Handler; ocultar botones en la interfaz es solo una ayuda de UX, no control de acceso.
 - Definir reglas explícitas por rol y organización, y probar tanto acceso permitido como denegado. No confiar en un `role` enviado por el cliente.
-- Propuesta inicial de pedido: el comprador envía una solicitud; el vendedor la acepta o rechaza. La aceptación confirma el inventario de forma atómica; si ya no hay stock suficiente, rechazar la confirmación y devolver un resultado explicable. El pedido conserva una instantánea del precio y la unidad mostrados al solicitar. Esta política requiere aprobación del producto.
+- Hipótesis inicial de pedido: al solicitar, el comprador mueve cantidad libre a reservada mediante una actualización condicional atómica. El productor la acepta (consume reserva) o rechaza (libera reserva); los cambios de estado e inventario se confirman juntos. El pedido conserva una instantánea del producto. La regla de reservar al solicitar requiere aprobación del producto.
 - Usar clave de idempotencia o protección equivalente para reintentos de creación/confirmación; limitar transacciones y revisar conflictos de escritura. Definir cancelaciones y liberación de inventario junto con el flujo final.
 
 ## Experiencia mobile-first y modo offline

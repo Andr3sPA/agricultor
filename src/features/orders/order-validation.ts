@@ -1,0 +1,51 @@
+export type OrderRequestField = "productId" | "quantity";
+export type OrderRequestFieldErrors = Partial<
+  Record<OrderRequestField, string>
+>;
+
+export type OrderRequestInput = {
+  productId: string;
+  quantity: string;
+};
+
+export type OrderRequestValidation =
+  | { ok: true; data: OrderRequestInput }
+  | { ok: false; errors: OrderRequestFieldErrors };
+
+function asString(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+export function validateOrderRequest(
+  input: Record<string, unknown>,
+): OrderRequestValidation {
+  const errors: OrderRequestFieldErrors = {};
+  const productId = asString(input.productId);
+  const rawQuantity = asString(input.quantity);
+  const quantity = rawQuantity.replace(",", ".");
+
+  if (!/^[A-Za-z0-9_-]{1,64}$/.test(productId)) {
+    errors.productId = "Selecciona un producto válido.";
+  }
+
+  if (
+    !/^(?:0|[1-9]\d{0,8})(?:\.\d{1,3})?$/.test(quantity) ||
+    !Number.isFinite(Number(quantity)) ||
+    Number(quantity) <= 0
+  ) {
+    errors.quantity =
+      "Escribe una cantidad mayor que cero, con máximo 3 decimales.";
+  }
+
+  if (Object.keys(errors).length > 0) {
+    return { ok: false, errors };
+  }
+
+  return { ok: true, data: { productId, quantity } };
+}
+
+export function parseOrderDecision(
+  value: unknown,
+): "ACCEPTED" | "REJECTED" | null {
+  return value === "ACCEPTED" || value === "REJECTED" ? value : null;
+}
