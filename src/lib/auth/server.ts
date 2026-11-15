@@ -1,5 +1,5 @@
 import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
+import { getAuth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { RoleName } from "@/generated/prisma/enums";
 import {
@@ -12,8 +12,9 @@ export async function getCurrentIdentity(): Promise<{
   userId: string;
   roles: UserRole[];
 } | null> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
+  const requestHeaders = await headers();
+  const session = await getAuth().api.getSession({
+    headers: requestHeaders,
   });
 
   if (!session) {
