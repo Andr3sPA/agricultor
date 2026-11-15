@@ -26,6 +26,7 @@ model User {
   sessions      Session[]
   accounts      Account[]
   userRoles     UserRole[]
+  products      Product[]
 }
 
 model Session {
@@ -80,6 +81,22 @@ model UserRole {
 
   @@id([userId, role])
   @@index([role])
+}
+
+model Product {
+  id                String   @id @default(cuid())
+  ownerId           String
+  owner             User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  name              String   @db.VarChar(100)
+  category          String   @db.VarChar(40)
+  availableQuantity Decimal  @db.Decimal(12, 3)
+  unit              String   @db.VarChar(30)
+  priceCOP          Int
+  municipality      String   @db.VarChar(100)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([ownerId, updatedAt])
 }
 
 model RateLimit {
