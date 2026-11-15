@@ -1,0 +1,116 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { ProductForm } from "@/features/products/product-form";
+import { canManageProducts } from "@/features/products/product-access";
+import {
+  getAvailabilityLabel,
+  PRODUCT_CATEGORIES,
+  PRODUCT_UNITS,
+} from "@/features/products/product-validation";
+import { getCurrentIdentity } from "@/lib/auth/server";
+import { prisma } from "@/lib/db";
+
+const copFormatter = new Intl.NumberFormat("es-CO", {
+  style: "currency",
+  currency: "COP",
+  maximumFractionDigits: 0,
+});
+const quantityFormatter = new Intl.NumberFormat("es-CO", {
+  maximumFractionDigits: 3,
+});
+
+export default async function ProductsPage() {
+  const identity = await getCurrentIdentity();
+
+  if (!identity) {
+    redirect("/iniciar-sesion");
+  }
+
+  if (!canManageProducts(identity.roles)) {
+    redirect("/mi-cuenta");
+  }
+
+  const products = await prisma.product.findMany({
+    where: { ownerId: identity.userId },
+    orderBy: { updatedAt: "desc" },
+  });
+
+  return (
+    <main className="mx-auto min-h-screen w-full max-w-3xl px-6 py-12">
+      <Link
+        className="font-semibold text-emerald-900 underline"
+        href="/mi-cuenta"
+      >
+        Volver a mi cuenta
+      </Link>
+      <section className="mt-6 rounded-3xl border border-emerald-950/10 bg-white p-8 shadow-sm sm:p-12">
+        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-800">
+          Agricultor
+        </p>
+        <h1 className="mt-4 text-3xl font-semibold">Mis productos</h1>
+        <p className="mt-3 text-slate-700">
+          Guarda la información de tu oferta. Todavía no se publica para otras
+          personas ni se conecta con pedidos.
+        </p>
+        <ProductForm />
+      </section>
+      <section className="mt-8 rounded-3xl border border-emerald-950/10 bg-white p-8 shadow-sm sm:p-12">
+        <h2 className="text-2xl font-semibold">Productos guardados</h2>
+        {products.length === 0 ? (
+          <p className="mt-4 text-slate-700">Aún no tienes productos registrados.</p>
+        ) : (
+          <ul className="mt-5 space-y-4">
+            {products.map((product) => {
+              const category =
+                PRODUCT_CATEGORIES.find(({ value }) => value === product.category)
+                  ?.label ?? product.category;
+              const unit =
+                PRODUCT_UNITS.find(({ value }) => value === product.unit)?.label ??
+                product.unit;
+
+              return (
+                <li
+                  className="rounded-2xl border border-slate-200 p-5"
+                  key={product.id}
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <h3 className="text-lg font-semibold">{product.name}</h3>
+                      <p className="mt-1 text-sm text-slate-700">{category}</p>
+                    </div>
+                    <span className="rounded-full bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-900">
+                      {getAvailabilityLabel(product.availableQuantity.toString())}
+                    </span>
+                  </div>
+                  <dl className="mt-4 grid gap-2 text-sm text-slate-700 sm:grid-cols-2">
+                    <div>
+                      <dt className="font-medium">Disponible</dt>
+                      <dd>
+                        {quantityFormatter.format(product.availableQuantity.toNumber())}{" "}
+                        {unit}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="font-medium">Precio por unidad</dt>
+                      <dd>{copFormatter.format(product.priceCOP)}</dd>
+                    </div>
+                    <div>
+                      <dt className="font-medium">Municipio o localidad</dt>
+                      <dd>{product.municipality}</dd>
+                    </div>
+                  </dl>
+                  <Link
+                    className="mt-4 inline-flex rounded-xl border border-emerald-900 px-4 py-2 font-semibold text-emerald-950 hover:bg-emerald-50"
+                    href={`/mi-cuenta/productos/${encodeURIComponent(product.id)}/editar`}
+                  >
+                    Editar producto
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
+    </main>
+  );
+}

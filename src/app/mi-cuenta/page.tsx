@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { RoleForm } from "@/features/auth/role-form";
 import { SignOutButton } from "@/features/auth/sign-out-button";
 import { getCurrentIdentity } from "@/lib/auth/server";
+import { canManageProducts } from "@/features/products/product-access";
+import Link from "next/link";
 
 const roleLabels = {
   PRODUCER: "Productor o productora",
@@ -32,6 +34,14 @@ export default async function AccountPage() {
           ))}
         </ul>
         <RoleForm />
+        {canManageProducts(identity.roles) && (
+          <Link
+            className="mt-6 inline-flex rounded-xl bg-emerald-800 px-5 py-3 font-semibold text-white hover:bg-emerald-900"
+            href="/mi-cuenta/productos"
+          >
+            Gestionar mis productos
+          </Link>
+        )}
         <SignOutButton />
       </section>
     </main>
