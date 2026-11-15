@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import type { RoleName } from "@/generated/prisma/enums";
 import {
   assertHasRole,
   AuthenticationRequiredError,
@@ -26,7 +27,7 @@ export async function getCurrentIdentity(): Promise<{
 
   return {
     userId: session.user.id,
-    roles: userRoles.map(({ role }) => role),
+    roles: userRoles.map(({ role }: { role: RoleName }) => role),
   };
 }
 
