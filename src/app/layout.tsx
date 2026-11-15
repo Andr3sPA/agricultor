@@ -1,16 +1,25 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
+import { OfflineStatus } from "@/components/offline-status";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Agricultor",
   description: "Plataforma agrícola en preparación.",
+  manifest: "/manifest.webmanifest",
+};
+
+export const viewport: Viewport = {
+  themeColor: "#166534",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="es" className="h-full antialiased">
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <OfflineStatus />
+        {children}
+      </body>
     </html>
   );
 }

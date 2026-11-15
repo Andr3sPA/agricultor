@@ -82,3 +82,18 @@ test("production home page renders the Spanish scaffold", async () => {
   assert.match(html, /Una plataforma para conectar el campo y el mercado/);
   assert.match(html, /Este espacio está en preparación\./);
 });
+
+test("production serves the offline worker and app manifest", async () => {
+  const [workerResponse, manifestResponse] = await Promise.all([
+    fetch(`${url}/sw.js`),
+    fetch(`${url}/manifest.webmanifest`),
+  ]);
+  assert.equal(workerResponse.status, 200);
+  assert.equal(manifestResponse.status, 200);
+
+  const worker = await workerResponse.text();
+  const manifest = await manifestResponse.json();
+  assert.match(worker, /AgricultorOfflinePolicy/);
+  assert.equal(manifest.name, "Agricultor");
+  assert.equal(manifest.start_url, "/");
+});

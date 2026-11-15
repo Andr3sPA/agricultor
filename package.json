@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "node --test tests/smoke.test.mjs",
+    "test": "node --test tests/smoke.test.mjs tests/offline-policy.test.mjs",
     "test:unit": "tsx --test src/lib/auth/roles.test.ts src/features/products/products.test.ts src/features/catalog/public-products.test.ts",
     "db:generate": "prisma generate"
   },
