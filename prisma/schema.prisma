@@ -93,6 +93,7 @@ model Product {
   unit              String   @db.VarChar(30)
   priceCOP          Int
   municipality      String   @db.VarChar(100)
+  isPublished       Boolean  @default(false)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 

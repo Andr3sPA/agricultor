@@ -112,3 +112,58 @@ export async function updateProduct(
   revalidatePath(`/mi-cuenta/productos/${productId}/editar`);
   return { ok: true, message: "Actualizamos el producto." };
 }
+
+export async function setProductPublication(
+  _previousState: ProductFormState,
+  formData: FormData,
+): Promise<ProductFormState> {
+  const identity = await getCurrentIdentity();
+  if (!identity) {
+    return { message: "Inicia sesión para publicar tus productos." };
+  }
+  if (!canManageProducts(identity.roles)) {
+    return { message: "Agrega el perfil de productor para publicar productos." };
+  }
+
+  const productId = formData.get("productId");
+  const publishedValue = formData.get("isPublished");
+  if (
+    typeof productId !== "string" ||
+    productId.length === 0 ||
+    (publishedValue !== "true" && publishedValue !== "false")
+  ) {
+    return { message: "No pudimos actualizar la publicación del producto." };
+  }
+
+  const product = await prisma.product.findUnique({
+    where: { id: productId },
+    select: { ownerId: true },
+  });
+  if (!product || !canEditProduct(identity, product.ownerId)) {
+    return { message: "No encontramos ese producto en tu cuenta." };
+  }
+
+  const isPublished = publishedValue === "true";
+  const updated = await prisma.product.updateMany({
+    where: {
+      id: productId,
+      ownerId: identity.userId,
+      ...(isPublished ? { availableQuantity: { gt: 0 } } : {}),
+    },
+    data: { isPublished },
+  });
+
+  if (updated.count !== 1) {
+    return {
+      message:
+        "No pudimos actualizar el producto. Verifica que sea tuyo y que tenga cantidad disponible para publicarlo.",
+    };
+  }
+
+  revalidatePath("/mi-cuenta/productos");
+  revalidatePath("/catalogo");
+  return {
+    ok: true,
+    message: isPublished ? "Publicamos el producto." : "Retiramos el producto.",
+  };
+}

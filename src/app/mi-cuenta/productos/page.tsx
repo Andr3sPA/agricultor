@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ProductForm } from "@/features/products/product-form";
 import { canManageProducts } from "@/features/products/product-access";
+import { PublicationToggle } from "@/features/products/publication-toggle";
 import {
   getAvailabilityLabel,
   PRODUCT_CATEGORIES,
@@ -82,6 +83,9 @@ export default async function ProductsPage() {
                       {getAvailabilityLabel(product.availableQuantity.toString())}
                     </span>
                   </div>
+                  <p className="mt-2 text-sm text-slate-700">
+                    {product.isPublished ? "Publicado" : "Privado"}
+                  </p>
                   <dl className="mt-4 grid gap-2 text-sm text-slate-700 sm:grid-cols-2">
                     <div>
                       <dt className="font-medium">Disponible</dt>
@@ -105,6 +109,10 @@ export default async function ProductsPage() {
                   >
                     Editar producto
                   </Link>
+                  <PublicationToggle
+                    isPublished={product.isPublished}
+                    productId={product.id}
+                  />
                 </li>
               );
             })}

@@ -15,6 +15,12 @@ export default function Home() {
         </p>
         <nav className="mt-8 flex flex-wrap gap-4">
           <Link
+            className="rounded-xl border border-emerald-900 px-5 py-3 font-semibold text-emerald-950"
+            href="/catalogo"
+          >
+            Ver catálogo
+          </Link>
+          <Link
             className="rounded-xl bg-emerald-800 px-5 py-3 font-semibold text-white"
             href="/crear-cuenta"
           >
