@@ -4,13 +4,13 @@
 
 Construir una plataforma de comercialización agrícola para comunidades rurales de Colombia, dirigida a personas con distintos niveles de experiencia tecnológica y con conectividad limitada. El producto debe facilitar que productores publiquen cosechas, que compradores encuentren oferta y soliciten pedidos, y que comerciantes, asociaciones y administradores participen con permisos claros.
 
-Este documento conserva el roadmap y registra el estado real del repositorio. La primera entrega de identidad implementa una base de cuenta y permisos; el corte de productos agrega captura privada y el corte actual explora un catálogo público de solo lectura como hipótesis de producto pendiente de revisión, sin pedidos. Pagos en línea, logística, precios de referencia, facturación y verificación de identidad no se consideran requisitos confirmados; deben definirse antes de incorporarlos.
+Este documento conserva el roadmap y registra el estado real del repositorio. La primera entrega de identidad implementa una base de cuenta y permisos; los cortes de productos y catálogo agregan captura privada y publicación explícita, y el flujo básico de pedidos permite solicitar y decidir pedidos. El catálogo enlaza cada producto publicado y disponible a su solicitud por ID. Pagos en línea, logística, precios de referencia, facturación y verificación de identidad no se consideran requisitos confirmados; deben definirse antes de incorporarlos.
 
 ## Estado observado del repositorio
 
 - El repositorio ya tiene un scaffold de Next.js App Router, TypeScript, Tailwind CSS y ESLint, una portada neutral en español, scripts de lint/tipos y CI para lint, tipos y build.
 - `.gitignore` excluye `.env*`. Las credenciales se revisaron sin mostrar ni registrar valores; no se ha conectado a Neon ni a servicios de correo o imágenes.
-- Se inició la primera parte de identidad/permisos: autenticación por correo y contraseña, sesiones persistidas, roles básicos y migración versionada. Los cortes de productos agregan captura privada y un catálogo público de solo lectura bajo una hipótesis de visibilidad pendiente de revisión; no implementan perfiles comerciales, asociaciones, pedidos ni sincronización offline.
+- Se inició la primera parte de identidad/permisos: autenticación por correo y contraseña, sesiones persistidas, roles básicos y migración versionada. Los cortes de productos y catálogo agregan captura privada y publicación explícita bajo una hipótesis de visibilidad pendiente de revisión; el flujo básico de pedidos está implementado. No se implementan perfiles comerciales, asociaciones ni sincronización offline.
 
 ## Progreso de fundaciones e identidad
 
@@ -32,7 +32,7 @@ Este documento conserva el roadmap y registra el estado real del repositorio. La
 - **Integraciones excluidas:** no se habilitan verificación ni recuperación de correo (Brevo queda fuera) ni fotos (Cloudinary queda fuera hasta aclarar la errata y diseñar carga segura).
 - **Validación local del flujo de pedidos:** Prisma generate/validate, lint, typecheck, 13 pruebas unitarias, build de producción con placeholders locales y smoke HTTP (1/1) pasan. La prueba PostgreSQL se omite si no se configura `TEST_DATABASE_URL` para una base desechable local.
 - **Integración real/concurrencia pendiente:** en esta sesión no hay `psql`, el daemon de Docker no está activo, `TEST_DATABASE_URL` no está configurada y no existe `.env` local. La prueba de integración reportó `SKIP`; no se ejecutó ni se declara cubierta por mocks. Ninguna migración se aplicó a una base.
-- **Límite de integración con el catálogo:** el PR #5 sigue separado y no está en esta rama; esta rama implementa la pantalla de solicitud por ID publicado, pero el enlace de cada tarjeta pública debe añadirse al catálogo al integrar ese PR.
+- **Integración catálogo-pedido:** los PR #5 (catálogo) y #6 (pedidos) ya están fusionados en `main`. Este corte añade a cada producto publicado y disponible un enlace accesible a `/catalogo/[productId]/pedido`; la proyección pública expone solo el ID requerido y los campos públicos aprobados. Los productos privados/retirados o agotados siguen excluidos tanto del catálogo como de la acción de solicitud. No se modifican pagos, contacto, notificaciones ni funcionamiento offline.
 
 ## Decisiones provisionales de productos, inventario y catálogo
 
@@ -223,7 +223,7 @@ Los nombres bajo “áreas/archivos” son destinos propuestos porque no hay est
 
 ## Criterio de salida de planificación
 
-La autenticación, los roles, la captura privada inicial de producto/inventario y un catálogo público de solo lectura bajo hipótesis están listos para revisión técnica; la visibilidad pública y las demás decisiones provisionales siguen abiertas. Antes de ampliar la fase 2 hacen falta verificación/recuperación de cuenta, perfiles y el proceso confiable para asociación/administrador. La taxonomía, unidades y política de publicación requieren validación. No se han implementado pedidos ni sincronización offline.
+La autenticación, los roles, la captura privada inicial de producto/inventario, un catálogo público bajo hipótesis y el flujo básico de pedidos están implementados. La integración enlaza cada oferta pública y disponible a su solicitud; la visibilidad pública y las demás decisiones provisionales siguen abiertas. Antes de ampliar la fase 2 hacen falta verificación/recuperación de cuenta, perfiles y el proceso confiable para asociación/administrador. La taxonomía, unidades y política de publicación requieren validación. No se implementa sincronización offline.
 
 ### Fuentes técnicas consultadas
 

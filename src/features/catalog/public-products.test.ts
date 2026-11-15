@@ -1,11 +1,15 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { getPublicProducts } from "./public-products";
+import {
+  getPublicProductOrderHref,
+  getPublicProducts,
+} from "./public-products";
 
 describe("public catalog projection", () => {
   it("excludes private, withdrawn, and zero-quantity products", () => {
     const products = [
       {
+        id: "published-yuca",
         name: "Yuca",
         category: "TUBERS",
         availableQuantity: "4.5",
@@ -15,6 +19,7 @@ describe("public catalog projection", () => {
         isPublished: true,
       },
       {
+        id: "private-corn",
         name: "Maíz privado",
         category: "GRAINS",
         availableQuantity: "8",
@@ -24,6 +29,7 @@ describe("public catalog projection", () => {
         isPublished: false,
       },
       {
+        id: "withdrawn-beans",
         name: "Fríjol retirado",
         category: "GRAINS",
         availableQuantity: "6",
@@ -33,6 +39,7 @@ describe("public catalog projection", () => {
         isPublished: false,
       },
       {
+        id: "sold-out-product",
         name: "Producto agotado",
         category: "OTHER",
         availableQuantity: "0",
@@ -45,6 +52,7 @@ describe("public catalog projection", () => {
 
     assert.deepEqual(getPublicProducts(products), [
       {
+        id: "published-yuca",
         name: "Yuca",
         category: "TUBERS",
         availableQuantity: "4.5",
@@ -53,10 +61,15 @@ describe("public catalog projection", () => {
         municipality: "La Vega",
       },
     ]);
+    assert.equal(
+      getPublicProductOrderHref(getPublicProducts(products)[0].id),
+      "/catalogo/published-yuca/pedido",
+    );
   });
 
   it("returns only approved public fields, even if private fields are present", () => {
     const product = {
+      id: "public-yuca-id",
       name: "Yuca",
       category: "TUBERS",
       availableQuantity: "4.5",
@@ -73,6 +86,7 @@ describe("public catalog projection", () => {
     const [publicProduct] = getPublicProducts([product]);
 
     assert.deepEqual(Object.keys(publicProduct), [
+      "id",
       "name",
       "category",
       "availableQuantity",
