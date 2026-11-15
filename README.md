@@ -53,6 +53,22 @@ a la disponibilidad. El pedido conserva una instantánea del nombre, unidad y
 precio, además del historial básico de estados. No se procesan pagos, facturas,
 transporte, notificaciones ni sincronización offline.
 
+## Uso sin conexión (primer corte)
+
+La aplicación registra un service worker propio, sin plugin adicional, y ofrece
+una pantalla estática mínima cuando se intenta abrir `/` o `/catalogo` sin red.
+Solo esa pantalla genérica se guarda en Cache Storage como respuesta creada por
+el propio service worker; no contiene productos, cantidades ni datos de sesión.
+La navegación pública siempre intenta consultar al servidor primero.
+
+No se guardan páginas ni respuestas del catálogo, archivos de autenticación,
+`/mi-cuenta`, pedidos, APIs ni mutaciones. El indicador sin conexión advierte
+que el catálogo/las cantidades pueden no estar actualizados. Se requiere
+conexión para solicitar: no se crean borradores, no se envían solicitudes y no
+se confirma ninguna operación offline. El primer registro del service worker
+requiere conexión; la pantalla mínima queda disponible después de que termine
+su instalación. No se implementan sincronización ni resolución de conflictos.
+
 ## Comprobaciones
 
 ```bash
