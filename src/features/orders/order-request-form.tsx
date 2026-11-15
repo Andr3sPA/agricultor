@@ -28,16 +28,21 @@ export function OrderRequestForm({
           Cantidad que solicitas
         </label>
         <input
+          aria-describedby={
+            state.fieldErrors?.quantity ? "order-quantity-error" : undefined
+          }
+          aria-invalid={Boolean(state.fieldErrors?.quantity)}
           autoComplete="off"
           className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3"
           id="order-quantity"
           inputMode="decimal"
           name="quantity"
           placeholder="Ejemplo: 2,5"
+          required
           type="text"
         />
         {state.fieldErrors?.quantity && (
-          <p className="mt-1 text-sm text-red-800" role="alert">
+          <p className="mt-1 text-sm text-red-800" id="order-quantity-error" role="alert">
             {state.fieldErrors.quantity}
           </p>
         )}
@@ -48,7 +53,7 @@ export function OrderRequestForm({
       {state.message && (
         <p
           className={state.ok ? "text-emerald-900" : "text-red-800"}
-          role="status"
+          role={state.ok ? "status" : "alert"}
         >
           {state.message}
         </p>

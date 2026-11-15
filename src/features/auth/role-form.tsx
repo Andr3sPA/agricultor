@@ -33,7 +33,7 @@ export function RoleForm() {
       {state.message && (
         <p
           className={state.ok ? "text-sm text-emerald-900" : "text-sm text-red-800"}
-          role="status"
+          role={state.ok ? "status" : "alert"}
         >
           {state.message}
         </p>

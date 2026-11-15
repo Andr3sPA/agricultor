@@ -36,7 +36,10 @@ export function OrderDecisionForm({ orderId }: { orderId: string }) {
         Rechazar pedido
       </button>
       {state.message && (
-        <p className="basis-full text-sm text-slate-700" role="status">
+        <p
+          className={`basis-full text-sm ${state.ok ? "text-emerald-900" : "text-red-800"}`}
+          role={state.ok ? "status" : "alert"}
+        >
           {state.message}
         </p>
       )}
