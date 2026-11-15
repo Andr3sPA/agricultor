@@ -18,6 +18,13 @@ Este documento conserva el roadmap y registra el estado real del repositorio. La
 - **Auditoría de flujos existentes:** registro, inicio, producto y filtros de catálogo ya tienen etiquetas asociadas; los encabezados de catálogo, productos y pedidos siguen una jerarquía coherente; los colores de texto y controles observados conservan contraste suficiente en sus fondos claros; el aviso offline ya se anuncia como estado. No se encontraron animaciones/transiciones en los flujos revisados que requieran una regla adicional de movimiento reducido, ni se cambió la interfaz o su contenido en español.
 - **Verificado tras los cambios:** `npm run lint`, `npm run typecheck`, `npm run test:unit` (14/14), `npm test` (9/9, incluidas las comprobaciones smoke de producción) y `npm run build` pasan. Prisma Client se generó con una URL local sin servicio y la carga dotenv dirigida a un archivo inexistente; no se hicieron llamadas a Neon ni a otros servicios.
 
+## Panel de gestión del productor
+
+- **Implementado:** `/mi-cuenta` muestra a productores autenticados un resumen móvil de productos publicados y agotados, y pedidos recibidos pendientes, aceptados y rechazados. Cada bloque enlaza a las gestiones ya existentes y ofrece un próximo paso cuando no hay registros; las demás cuentas conservan sus perfiles y enlaces actuales.
+- **Acceso y consultas:** el servidor exige sesión y rol de productor antes de mostrar los conteos; las consultas agregadas filtran por `ownerId` para productos y `producerId` para pedidos, y solo devuelven cantidades por estado, sin datos de compradores ni filas individuales. El conteo de agotados usa cantidad disponible igual a cero e incluye productos privados o retirados, porque el esquema no limita esa condición a productos publicados.
+- **Límites:** el esquema permite derivar estos conteos de estado, pero no permite afirmar ventas, ingresos, tendencias por periodo ni actividad futura; el panel no los muestra. La disponibilidad cero representa agotado independientemente de publicación, como en la gestión actual de productos.
+- **PostgreSQL:** `src/features/orders/orders.integration.test.ts` se ejecutó sin `TEST_DATABASE_URL` y reportó `SKIP` (“Set TEST_DATABASE_URL to run against local PostgreSQL.”). No se configuró ni conectó una base PostgreSQL desechable en esta sesión; persistencia y concurrencia siguen sin verificarse aquí.
+
 ## Progreso de fundaciones e identidad
 
 - **Hecho:** scaffold mínimo de Next.js 16.4.6, React 19.3, TypeScript, Tailwind CSS 4 y ESLint; scripts `lint` y `typecheck`; página inicial provisional en español sin flujos de producto; documentación de desarrollo básica; CI de lint, tipos y build.
