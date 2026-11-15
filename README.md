@@ -45,9 +45,9 @@ npm run lint
 npm run typecheck
 npm test
 npm run build
+npm test
 ```
 
-`npm run db:generate` genera el cliente Prisma sin conectarse a la base.
-Las pruebas de roles no requieren credenciales. El build requiere las variables
-de entorno de autenticación y base de datos, pero no ejecuta consultas ni
-migraciones.
+`npm test` levanta la compilación de producción y comprueba la respuesta HTTP de la portada; ejecuta `npm run build` antes.
+
+El scaffold no necesita credenciales ni servicios externos para estas comprobaciones. No se han configurado todavía base de datos, autenticación ni integraciones.

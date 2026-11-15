@@ -8,8 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/lib/auth/roles.test.ts",
-    "db:generate": "prisma generate"
+    "test": "node --test tests/smoke.test.mjs"
   },
   "dependencies": {
     "@better-auth/prisma-adapter": "1.7.25",

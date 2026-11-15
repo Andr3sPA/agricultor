@@ -23,6 +23,4 @@ jobs:
       - run: npm test
       - run: echo "AUTH_SECRET=$(openssl rand -base64 32)" >> "$GITHUB_ENV"
       - run: npm run build
-        env:
-          # Build-time placeholder only; no database query or migration runs in CI.
-          DATABASE_URL: postgresql://ci:ci@localhost:5432/agricultor
+      - run: npm test
