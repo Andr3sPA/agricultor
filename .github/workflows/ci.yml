@@ -17,7 +17,10 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      - run: npm run db:generate
       - run: npm run lint
       - run: npm run typecheck
+      - run: npm test
+      - run: echo "AUTH_SECRET=$(openssl rand -base64 32)" >> "$GITHUB_ENV"
       - run: npm run build
       - run: npm test

@@ -2,18 +2,17 @@
 
 ## Objetivo y alcance
 
-Planificar una plataforma de comercialización agrícola para comunidades rurales de Colombia, dirigida a personas con distintos niveles de experiencia tecnológica y con conectividad limitada. El producto debe facilitar que productores publiquen cosechas, que compradores encuentren oferta y soliciten pedidos, y que comerciantes, asociaciones y administradores participen con permisos claros.
+Construir una plataforma de comercialización agrícola para comunidades rurales de Colombia, dirigida a personas con distintos niveles de experiencia tecnológica y con conectividad limitada. El producto debe facilitar que productores publiquen cosechas, que compradores encuentren oferta y soliciten pedidos, y que comerciantes, asociaciones y administradores participen con permisos claros.
 
-Esta entrega es únicamente de planificación. No implementa la aplicación ni modifica su configuración. Pagos en línea, logística, precios de referencia, facturación y verificación de identidad no se consideran requisitos confirmados; deben definirse antes de incorporarlos.
+Este documento conserva el roadmap y registra el estado real del repositorio. La primera entrega de identidad implementa solo una base de cuenta y permisos; no implementa el producto agrícola completo. Pagos en línea, logística, precios de referencia, facturación y verificación de identidad no se consideran requisitos confirmados; deben definirse antes de incorporarlos.
 
 ## Estado observado del repositorio
 
-- Al inicio del trabajo, el árbol contenía `.gitignore` y este `PLAN.md`; no había aplicación ni manifiesto de paquetes.
-- Se inició la fase de fundaciones: el worktree ahora tiene un scaffold mínimo de Next.js App Router, TypeScript, Tailwind CSS y ESLint, una portada neutral en español, scripts de lint/tipos y un flujo CI para lint, tipos y build. Estos archivos son cambios de esta fase, no configuración preexistente.
-- `.gitignore` excluye `.env*`. No hay un `.env` en la raíz observada; no se inspeccionaron nombres ni valores de variables, ni se hicieron conexiones a Neon, Cloudinary o Brevo.
-- No se ha configurado base de datos, esquema Prisma, autenticación, roles, funcionalidades de dominio ni sincronización offline. Las tecnologías y estructura más allá del scaffold siguen siendo propuestas hasta resolver las decisiones pendientes.
+- El repositorio ya tiene un scaffold de Next.js App Router, TypeScript, Tailwind CSS y ESLint, una portada neutral en español, scripts de lint/tipos y CI para lint, tipos y build.
+- `.gitignore` excluye `.env*`. Las credenciales se revisaron sin mostrar ni registrar valores; no se ha conectado a Neon ni a servicios de correo o imágenes.
+- Se inició la primera parte de identidad/permisos: autenticación por correo y contraseña, sesiones persistidas, roles básicos y migración versionada. Esta entrega no implementa perfiles comerciales, asociaciones, catálogo, pedidos ni sincronización offline.
 
-## Progreso de fundaciones
+## Progreso de fundaciones e identidad
 
 - **Hecho:** scaffold mínimo de Next.js 16.4.6, React 19.3, TypeScript, Tailwind CSS 4 y ESLint; scripts `lint` y `typecheck`; página inicial provisional en español sin flujos de producto; documentación de desarrollo básica; CI de lint, tipos y build.
 - **Hecho:** dependencias instaladas limpiamente con `npm ci` y una caché npm aislada; se regeneró el lockfile tras detectar que el primer intento había dejado entradas transitivas incompletas.
@@ -48,7 +47,7 @@ Esta entrega es únicamente de planificación. No implementa la aplicación ni m
 
 Resolver con las personas responsables del producto, antes de cerrar los flujos y el esquema:
 
-1. ¿Un usuario puede tener varios roles? ¿Quién puede crear asociaciones y administrar sus miembros?
+1. ¿Se confirma que un usuario pueda tener varios roles? ¿Quién puede crear asociaciones, aprobar su verificación y administrar sus miembros?
 2. ¿Los comerciantes publican oferta propia, compran, o ambas cosas? ¿Qué operaciones puede hacer cada rol?
 3. ¿Qué unidades, cantidades mínimas, disponibilidad por temporada y ubicaciones se necesitan?
 4. ¿Cuándo se compromete el inventario: al solicitar, al aceptar un pedido o en otro momento? ¿Qué estados y reglas de cancelación aplican?
@@ -67,7 +66,7 @@ Resolver con las personas responsables del producto, antes de cerrar los flujos 
 - **Persistencia:** PostgreSQL administrado en Neon; Prisma como ORM y migraciones versionadas. Usar conexión apropiada para ejecución serverless y conexión directa para tareas de migración, según la configuración recomendada vigente de Neon/Prisma.
 - **Imágenes:** Cloudinary para carga y transformación de imágenes. La autorización de carga debe emitirse desde el servidor; limitar formatos, tamaño y cantidad, y persistir identificadores/URLs y metadatos necesarios, nunca secretos del proveedor en el navegador.
 - **Correo/notificaciones:** Brevo como opción de entrega de correo transaccional, desacoplada mediante un servicio interno. Registrar estado e intentos de entrega sin guardar más datos personales de los necesarios.
-- **Despliegue:** alojamiento compatible con Next.js y Neon (proveedor por confirmar), con entornos separados, migraciones controladas y secretos en el gestor de configuración del entorno.
+- **Despliegue:** Vercel está previsto, con Next.js y Neon, entornos separados, migraciones controladas y secretos en el gestor de configuración del entorno.
 
 ### Límites y flujo de datos
 
@@ -130,7 +129,7 @@ Aplicar claves foráneas, restricciones de cantidades y estados, índices para f
 
 ## Identidad, autorización y flujo de pedidos
 
-- Elegir e implementar el mecanismo de autenticación en la fase de definición técnica; no hay proveedor ni mecanismo existente observado. Mantener creación, lectura y revocación de sesión en servidor.
+- Better Auth administra creación, lectura, vencimiento y revocación de sesiones en servidor; el adaptador Prisma las persiste en PostgreSQL. La política y el alcance son provisionales y requieren revisión.
 - Comprobar autorización en cada caso de uso/Server Action/Route Handler; ocultar botones en la interfaz es solo una ayuda de UX, no control de acceso.
 - Definir reglas explícitas por rol y organización, y probar tanto acceso permitido como denegado. No confiar en un `role` enviado por el cliente.
 - Propuesta inicial de pedido: el comprador envía una solicitud; el vendedor la acepta o rechaza. La aceptación confirma el inventario de forma atómica; si ya no hay stock suficiente, rechazar la confirmación y devolver un resultado explicable. El pedido conserva una instantánea del precio y la unidad mostrados al solicitar. Esta política requiere aprobación del producto.
@@ -180,8 +179,8 @@ Los nombres bajo “áreas/archivos” son destinos propuestos porque no hay est
 | Fase | Trabajo y dependencias | Áreas/archivos propuestos | Criterios de aceptación verificables |
 |---|---|---|---|
 | 0. Descubrimiento y decisiones | Validar roles, flujo y estados de pedido, unidades, publicación, pagos/contacto, offline, canales, datos y criterios de lanzamiento. Depende de responsables de producto y usuarios de prueba. | `PLAN.md`; especificación aprobada en la ubicación que acuerde el equipo. | Cada decisión de producto pendiente tiene responsable y resolución; alcance y exclusiones quedan aprobados antes de cerrar esquema y UX. |
-| 1. Fundaciones técnicas | Crear Next.js/TypeScript/Tailwind, calidad/CI, configuración segura, Prisma/Neon, migraciones iniciales y entornos. Requiere fase 0 para decisiones que afectan datos y despliegue; Prisma/Neon se posponen hasta validar acceso/configuración. | `package.json`, `src/app/`, `src/lib/db/`, `prisma/`, configuración de CI y variables documentadas sin valores. | Aplicación ejecuta en desarrollo; CI valida tipos/lint/build; migraciones se aplican y revierten en una base no productiva cuando se aprueben configuración y esquema; no hay secretos en el repositorio. |
-| 2. Cuenta, perfiles y permisos | Implementar autenticación elegida, perfiles, roles y membresías de asociaciones; diseñar UX de errores/sesión. Requiere fase 1 y reglas de fase 0. | `src/features/auth/`, `src/lib/auth/`, `src/features/organizations/`, modelos Prisma y pruebas de autorización. | Matriz de permisos aprobada; pruebas demuestran acceso permitido y denegado por rol, propietario y asociación; rutas privadas sin sesión no filtran datos. |
+| 1. Fundaciones técnicas | Crear Next.js/TypeScript/Tailwind, calidad/CI, configuración segura, Prisma/Neon, migraciones iniciales y entornos. | `package.json`, `src/app/`, `src/lib/db/`, `prisma/`, configuración de CI y variables documentadas sin valores. | Aplicación ejecuta en desarrollo; CI valida tipos/lint/build; migraciones se aplican y revierten en una base no productiva cuando se aprueben configuración y esquema; no hay secretos en el repositorio. |
+| 2. Cuenta, perfiles y permisos | **Primer corte implementado:** cuenta con correo/contraseña, sesión, ruta privada, roles globales y auto-adopción limitada. **Pendiente:** perfiles comerciales, membresías/organizaciones, aprobación de roles privilegiados y matriz de permisos final. | `src/features/auth/`, `src/lib/auth/`, modelos Prisma y pruebas de autorización. | Pruebas demuestran denegación de roles privilegiados al input público; página privada redirige sin sesión; roles se consultan en servidor. La aprobación de producto sigue pendiente. |
 | 3. Productos e inventario | Crear/editar/publicar ofertas, fotos, disponibilidad, unidades y catálogo consultable con filtros y paginación. Requiere identidad/permisos. | `src/features/catalog/`, `src/features/inventory/`, `src/server/services/`, integraciones Cloudinary y pruebas. | Productor autorizado administra su oferta; otros usuarios no pueden modificarla; páginas del catálogo solo muestran datos publicados; límites/validación de imágenes se hacen cumplir. |
 | 4. Descubrimiento y compartición | Diseñar búsqueda móvil, vista de producto y enlaces públicos con metadatos y datos permitidos. Requiere política aprobada de privacidad y fase 3. | `src/app/(public)/`, `src/features/catalog/`, Route Handlers/metadatos y pruebas E2E. | Un enlace compartido funciona sin sesión, muestra solo campos aprobados, deja de ofrecer contenido retirado y presenta una vista utilizable en teléfono. |
 | 5. Pedidos y notificaciones | Implementar estados acordados, solicitudes/decisiones, consistencia de inventario, historial e integración Brevo si se confirma. Requiere fase 3 y decisiones de fase 0. | `src/features/orders/`, `src/features/notifications/`, `src/server/services/`, webhooks/Route Handlers y pruebas de integración/concurrencia. | Transiciones no autorizadas se rechazan; confirmaciones concurrentes no exceden stock; reintentos no duplican pedidos; falla de notificación no pierde el pedido. |
@@ -203,4 +202,13 @@ Los nombres bajo “áreas/archivos” son destinos propuestos porque no hay est
 
 ## Criterio de salida de planificación
 
-Esta fase se considera lista para revisión cuando el equipo confirme el alcance, las decisiones pendientes de fase 0, el flujo de pedidos/inventario, los datos públicos, el mecanismo de autenticación y el alcance offline. Hasta esa aprobación, `PLAN.md` guía la conversación y no autoriza la implementación de funcionalidades.
+La autenticación y el esquema de roles de este primer corte están listos para revisión técnica; las decisiones provisionales siguen abiertas a revisión. Antes de completar la fase 2 hace falta acordar verificación/recuperación de cuenta, perfiles y el proceso confiable para asociación/administrador. No se han implementado catálogo, pedidos ni sincronización offline. La siguiente fase de implementación es el perfil comercial mínimo y el proceso aprobado para otorgar roles privilegiados; después se podrá iniciar catálogo/inventario, sujeto a las decisiones de producto pendientes.
+
+### Fuentes técnicas consultadas
+
+- [Autenticación en Next.js](https://nextjs.org/docs/app/guides/authentication): recomienda una biblioteca para autenticación, sesiones y autorización.
+- [Integración de Better Auth con Next.js](https://www.better-auth.com/docs/integrations/next): documenta Route Handlers, Server Components y la integración Next.js 16 (`proxy`).
+- [Better Auth con Prisma](https://www.better-auth.com/docs/adapters/prisma): documenta Prisma 6 y Prisma 7; el adaptador actual no soporta Prisma 8.
+- [Correo y contraseña en Better Auth](https://www.better-auth.com/docs/authentication/email-password): define el flujo, validaciones y requisitos de verificación/correo.
+- [Límites de solicitudes en Better Auth](https://www.better-auth.com/docs/concepts/rate-limit): documenta el rate limiting integrado y el almacenamiento para serverless.
+- [Prisma con Neon](https://www.prisma.io/docs/orm/v6/overview/databases/neon): documenta el adaptador serverless y la recomendación de conexión agrupada para ejecución serverless.
