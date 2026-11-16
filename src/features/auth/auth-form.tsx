@@ -135,6 +135,16 @@ export function AuthForm({ mode }: AuthFormProps) {
             ? "Crear cuenta"
             : "Iniciar sesión"}
       </button>
+      {!isSignUp && (
+        <p className="text-center text-sm">
+          <Link
+            className="font-semibold text-emerald-900 underline"
+            href="/recuperar-contrasena"
+          >
+            ¿Olvidaste tu contraseña?
+          </Link>
+        </p>
+      )}
       <p className="text-center text-sm text-slate-700">
         {isSignUp ? "¿Ya tienes cuenta?" : "¿Primera vez por aquí?"}{" "}
         <Link

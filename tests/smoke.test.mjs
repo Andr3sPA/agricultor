@@ -152,3 +152,22 @@ test("production registration page keeps labels associated with their fields", a
   assert.match(html, /<label[^>]*for="password"[^>]*>Contraseña<\/label>/);
   assert.match(html, /<input[^>]*id="password"[^>]*name="password"/);
 });
+
+test("production password recovery pages render without sending email", async () => {
+  const [requestResponse, resetResponse] = await Promise.all([
+    fetch(`${url}/recuperar-contrasena`),
+    fetch(`${url}/restablecer-contrasena?token=local-test-token`),
+  ]);
+  assert.equal(requestResponse.status, 200);
+  assert.equal(resetResponse.status, 200);
+
+  const [requestHtml, resetHtml] = await Promise.all([
+    requestResponse.text(),
+    resetResponse.text(),
+  ]);
+  assert.match(requestHtml, /Recupera tu contraseña/);
+  assert.match(requestHtml, /Enviar instrucciones/);
+  assert.match(requestHtml, /Correo electrónico/);
+  assert.match(resetHtml, /Cambia tu contraseña/);
+  assert.match(resetHtml, /Confirma la nueva contraseña/);
+});

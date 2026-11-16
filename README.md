@@ -23,6 +23,9 @@ La aplicación local se sirve en `http://localhost:3000`.
   sesiones. No lo compartas ni lo guardes en el repositorio.
 - `DATABASE_URL`: conexión PostgreSQL de Neon. La aplicación usa el adaptador
   serverless de Neon; configura la URL de conexión agrupada que entrega Neon.
+- `API_KEY_BREVO` y `BREVO_SENDER_EMAIL`: clave y dirección remitente
+  verificada en Brevo. Se usan al solicitar recuperación de contraseña; no se
+  requieren para registro, inicio de sesión ni para compilar.
 - En Vercel, Better Auth usa los dominios de implementación que entrega el
   sistema (`VERCEL_URL`, `VERCEL_BRANCH_URL` y
   `VERCEL_PROJECT_PRODUCTION_URL`) para limitar los hosts permitidos.
@@ -30,9 +33,19 @@ La aplicación local se sirve en `http://localhost:3000`.
 La creación de cuenta usa correo y contraseña. Después de crearla, la persona
 inicia sesión explícitamente. Una cuenta nueva comienza como comprador; cada
 persona puede agregar los perfiles de productor o comerciante. Asociación y
-administrador no se pueden autoasignar. La verificación de correo y la
-recuperación de contraseña todavía no están habilitadas; por eso esta primera
-entrega no envía correos ni requiere configurar Brevo.
+administrador no se pueden autoasignar. Se conserva la política actual: no se
+exige verificar el correo para iniciar sesión. La recuperación de contraseña
+envía un enlace de un solo uso, válido por una hora, mediante Brevo; la pantalla
+de solicitud no revela si el correo tiene una cuenta.
+
+`META_WEBHOOK_VERIFY_TOKEN` se usa para la verificación inicial del webhook de
+Meta. `META_APP_ID`, `META_APP_SECRET` y `META_GRAPH_API_VERSION` todavía no
+son consumidas por el código. Cloudinary tampoco está integrado: las variables
+`CLOUDINARY_API_SECRET`, `CLOUDINARY_CLOUD_NAME` y `CLOUDINARY_URL` no se usan,
+y `COUDINARY_API_KEY` parece tener una errata; no se debe configurar ni usar
+hasta implementar esa integración con el nombre correcto `CLOUDINARY_API_KEY`.
+`.env.example` enumera las variables aplicables sin valores. No se puede
+comprobar desde el repositorio cuáles variables están guardadas en Vercel.
 
 El esquema y sus migraciones están versionados, pero no se aplican
 automáticamente. Antes de desplegar una migración, verifica que `DATABASE_URL`

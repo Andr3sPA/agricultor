@@ -2,8 +2,10 @@ import { prismaAdapter } from "@better-auth/prisma-adapter";
 import { betterAuth } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
 import { APIError, createAuthMiddleware } from "better-auth/api";
+import { after } from "next/server";
 import { getPrismaClient } from "@/lib/db";
 import { normalizeDisplayName } from "@/lib/auth/validation";
+import { sendPasswordResetEmail } from "@/lib/email/brevo";
 
 function createAuth() {
   const secret = process.env.AUTH_SECRET;
@@ -33,11 +35,25 @@ function createAuth() {
     database: prismaAdapter(prisma, {
       provider: "postgresql",
     }),
+    advanced: {
+      backgroundTasks: {
+        handler: (promise) => after(promise),
+      },
+    },
     emailAndPassword: {
       enabled: true,
       minPasswordLength: 8,
       maxPasswordLength: 128,
       autoSignIn: false,
+      sendResetPassword: async ({ user, url }) => {
+        await sendPasswordResetEmail({
+          email: user.email,
+          name: user.name,
+          url,
+        });
+      },
+      resetPasswordTokenExpiresIn: 60 * 60,
+      revokeSessionsOnPasswordReset: true,
     },
     session: {
       expiresIn: 60 * 60 * 24 * 7,
@@ -53,6 +69,10 @@ function createAuth() {
         "/sign-up/email": {
           window: 60 * 60,
           max: 5,
+        },
+        "/request-password-reset": {
+          window: 60,
+          max: 3,
         },
       },
     },
