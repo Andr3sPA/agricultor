@@ -284,6 +284,7 @@ async function main(): Promise<void> {
         include: { history: true },
       });
       assert.equal(replayedOrder.id, firstOrder.id);
+      assert.equal(replayedOrder.producerId, producer.id);
       assert.equal(replayedOrder.history.length, 1);
       const replayedInventory = await database.product.findUniqueOrThrow({
         where: { id: product.id },
@@ -308,10 +309,20 @@ async function main(): Promise<void> {
       await producerPage
         .getByRole("button", { name: "Aceptar pedido" })
         .click();
-      await producerPage
-        .getByRole("status")
-        .getByText("Aceptamos el pedido")
-        .waitFor();
+      const decisionFeedback = producerPage
+        .locator("form")
+        .filter({
+          has: producerPage.getByRole("button", { name: "Aceptar pedido" }),
+        })
+        .locator('[role="status"], [role="alert"]');
+      await decisionFeedback.waitFor();
+      const decisionMessage = await decisionFeedback.innerText();
+      assert.equal(
+        await decisionFeedback.getAttribute("role"),
+        "status",
+        decisionMessage,
+      );
+      assert.match(decisionMessage, /Aceptamos el pedido/);
       await producerPage
         .getByRole("list", { name: "Seguimiento del pedido" })
         .getByText("Aceptado")
