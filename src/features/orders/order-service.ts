@@ -60,7 +60,7 @@ export async function requestOrder(
           ${`${actor.userId.length}:${actor.userId}${idempotencyKey}`},
           0
         )
-      )
+      ) IS NULL AS "locked"
     `;
 
     const existingOrder = await transaction.order.findFirst({
