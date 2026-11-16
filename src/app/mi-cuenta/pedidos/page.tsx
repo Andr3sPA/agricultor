@@ -79,6 +79,11 @@ export default async function OrdersPage() {
     order: (typeof buyerOrders)[number] | (typeof producerOrders)[number],
     producerView: boolean,
   ) {
+    const decisionEvent =
+      order.status === "PENDING"
+        ? null
+        : order.history.find((event) => event.toStatus === order.status);
+
     return (
       <li
         className="rounded-2xl border border-slate-200 p-5"
@@ -107,17 +112,75 @@ export default async function OrdersPage() {
             <dd>{dateFormatter.format(order.createdAt)}</dd>
           </div>
         </dl>
-        <div className="mt-4">
-          <h4 className="font-medium">Historial</h4>
-          <ol className="mt-2 space-y-1 text-sm text-slate-700">
-            {order.history.map((event) => (
-              <li key={event.id}>
-                {statusLabels[event.toStatus]} ·{" "}
-                {dateFormatter.format(event.createdAt)}
-              </li>
-            ))}
+        <section className="mt-4 rounded-xl bg-slate-50 p-4">
+          <h4 className="font-medium">Seguimiento</h4>
+          <ol
+            aria-label="Seguimiento del pedido"
+            className="mt-2 space-y-3 text-sm text-slate-700"
+          >
+            <li>
+              <p className="font-medium">
+                <span
+                  aria-hidden="true"
+                  className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-xs text-emerald-950"
+                >
+                  1
+                </span>
+                Solicitud enviada
+              </p>
+              <time dateTime={order.createdAt.toISOString()}>
+                {dateFormatter.format(order.createdAt)}
+              </time>
+            </li>
+            <li aria-current="step">
+              <p className="font-medium">
+                <span
+                  aria-hidden="true"
+                  className={`mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full text-xs ${order.status === "PENDING" ? "bg-amber-100 text-amber-950" : order.status === "REJECTED" ? "bg-rose-100 text-rose-950" : "bg-emerald-100 text-emerald-950"}`}
+                >
+                  2
+                </span>
+                Respuesta del productor
+              </p>
+              {order.status === "PENDING" ? (
+                <p>Esperando respuesta</p>
+              ) : (
+                <p>
+                  {statusLabels[order.status]}
+                  {decisionEvent && (
+                    <>
+                      {" · "}
+                      <time dateTime={decisionEvent.createdAt.toISOString()}>
+                        {dateFormatter.format(decisionEvent.createdAt)}
+                      </time>
+                    </>
+                  )}
+                </p>
+              )}
+            </li>
           </ol>
-        </div>
+          {order.status === "REJECTED" && !producerView ? (
+            <p className="mt-3 text-sm text-slate-700">
+              El productor rechazó esta solicitud.{" "}
+              <Link
+                className="font-semibold text-emerald-900 underline"
+                href="/catalogo"
+              >
+                Explora otros productos.
+              </Link>
+            </p>
+          ) : (
+            <p className="mt-3 text-sm text-slate-700">
+              {order.status === "PENDING"
+                ? producerView
+                  ? "Revisa la solicitud y elige aceptar o rechazar."
+                  : "El productor debe revisar la solicitud."
+                : order.status === "ACCEPTED"
+                  ? "Agricultor registra la aceptación, pero no gestiona la entrega ni el pago."
+                  : "La solicitud fue rechazada y la cantidad reservada volvió a estar disponible."}
+            </p>
+          )}
+        </section>
         {producerView && order.status === "PENDING" && (
           <OrderDecisionForm orderId={order.id} />
         )}

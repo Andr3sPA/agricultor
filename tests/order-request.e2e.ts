@@ -7,6 +7,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import {
   chromium,
   request as playwrightRequest,
+  type APIRequestContext,
   type Browser,
   type Request,
 } from "@playwright/test";
@@ -120,25 +121,47 @@ async function main(): Promise<void> {
   const database = new PrismaClient({ adapter: new PrismaPg(pool) });
   let browser: Browser | undefined;
   let server: ChildProcess | undefined;
+  let producerApi: APIRequestContext | undefined;
   const fixtureUserIds: string[] = [];
 
   try {
     await database.$connect();
     const suffix = randomUUID();
-    const producerId = `order-e2e-producer-${suffix}`;
-    const producerEmail = `${producerId}@example.test`;
-    await database.user.create({
-      data: {
-        id: producerId,
-        name: "Productor de prueba E2E",
-        email: producerEmail,
+    const port = await getFreePort();
+    server = await startServer(port, databaseUrl);
+    const baseURL = `http://localhost:${port}`;
+    producerApi = await playwrightRequest.newContext({
+      baseURL,
+      extraHTTPHeaders: {
+        Origin: baseURL,
+        Referer: `${baseURL}/crear-cuenta`,
       },
     });
-    fixtureUserIds.push(producerId);
+    const producerEmail = `order-e2e-producer-${suffix}@example.test`;
+    const producerSignup = await producerApi.post("/api/auth/sign-up/email", {
+      data: {
+        name: "Productor de prueba E2E",
+        email: producerEmail,
+        password: `E2e-${randomUUID()}-pass`,
+      },
+    });
+    assert.equal(
+      producerSignup.ok(),
+      true,
+      `Producer signup failed: ${await producerSignup.text()}`,
+    );
+    const producer = await database.user.findUniqueOrThrow({
+      where: { email: producerEmail },
+      select: { id: true },
+    });
+    fixtureUserIds.push(producer.id);
+    await database.userRole.create({
+      data: { userId: producer.id, role: "PRODUCER" },
+    });
 
     const product = await database.product.create({
       data: {
-        ownerId: producerId,
+        ownerId: producer.id,
         name: `Producto E2E ${suffix}`,
         category: "OTHER",
         availableQuantity: new Prisma.Decimal("5"),
@@ -149,10 +172,6 @@ async function main(): Promise<void> {
       },
       select: { id: true, name: true },
     });
-
-    const port = await getFreePort();
-    server = await startServer(port, databaseUrl);
-    const baseURL = `http://localhost:${port}`;
     const email = `order-e2e-buyer-${suffix}@example.test`;
     const password = `E2e-${randomUUID()}-pass`;
     const api = await playwrightRequest.newContext({
@@ -263,12 +282,46 @@ async function main(): Promise<void> {
       assert.ok(replayedInventory.availableQuantity.equals("3"));
       assert.ok(replayedInventory.reservedQuantity.equals("2"));
 
+      await page.goto(`${baseURL}/mi-cuenta/pedidos`);
+      await page
+        .getByText("El productor debe revisar la solicitud.")
+        .waitFor();
+      await page.getByText("Esperando respuesta").waitFor();
+
+      const producerContext = await browser.newContext({
+        storageState: await producerApi.storageState(),
+      });
+      const producerPage = await producerContext.newPage();
+      await producerPage.goto(`${baseURL}/mi-cuenta/pedidos`);
+      await producerPage
+        .getByRole("heading", { name: "Solicitudes recibidas" })
+        .waitFor();
+      await producerPage
+        .getByRole("button", { name: "Aceptar pedido" })
+        .click();
+      await producerPage
+        .getByRole("status")
+        .getByText("Aceptamos el pedido")
+        .waitFor();
+      await producerPage
+        .getByRole("list", { name: "Seguimiento del pedido" })
+        .getByText("Aceptado")
+        .waitFor();
+
+      await page.goto(`${baseURL}/mi-cuenta/pedidos`);
+      await page.getByText("Agricultor registra la aceptación").waitFor();
+      await page
+        .getByRole("list", { name: "Seguimiento del pedido" })
+        .getByText("Aceptado")
+        .waitFor();
+      await producerContext.close();
       await context.close();
     } finally {
       await api.dispose();
     }
   } finally {
     await browser?.close();
+    await producerApi?.dispose();
     if (server) await stopServer(server);
     if (fixtureUserIds.length > 0) {
       await database.user.deleteMany({
