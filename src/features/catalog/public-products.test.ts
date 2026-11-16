@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  getCatalogOrderBy,
   getCatalogPageHref,
   getCatalogPagination,
   getPublicProductWhere,
@@ -154,26 +155,56 @@ describe("public catalog query and pagination", () => {
       parseCatalogFilters({
         categoria: "TUBERS",
         municipio: "  La Vega  ",
+        orden: "precio-asc",
         pagina: "3",
       }),
-      { category: "TUBERS", municipality: "La Vega", page: 3 },
+      {
+        category: "TUBERS",
+        municipality: "La Vega",
+        sort: "precio-asc",
+        page: 3,
+      },
     );
     assert.deepEqual(
       parseCatalogFilters({
         categoria: "inventada",
         municipio: "x".repeat(101),
+        orden: "precio-invalido",
         pagina: "-2",
       }),
-      { category: undefined, municipality: undefined, page: 1 },
+      {
+        category: undefined,
+        municipality: undefined,
+        sort: undefined,
+        page: 1,
+      },
     );
     assert.deepEqual(
       parseCatalogFilters({
         categoria: ["TUBERS", "GRAINS"],
         municipio: ["La Vega"],
+        orden: ["precio-desc", "precio-asc"],
         pagina: ["2"],
       }),
-      { category: undefined, municipality: undefined, page: 1 },
+      {
+        category: undefined,
+        municipality: undefined,
+        sort: undefined,
+        page: 1,
+      },
     );
+  });
+
+  it("uses the current recency order by default and stable price orders when selected", () => {
+    assert.deepEqual(getCatalogOrderBy(undefined), { updatedAt: "desc" });
+    assert.deepEqual(getCatalogOrderBy("precio-asc"), [
+      { priceCOP: "asc" },
+      { id: "asc" },
+    ]);
+    assert.deepEqual(getCatalogOrderBy("precio-desc"), [
+      { priceCOP: "desc" },
+      { id: "asc" },
+    ]);
   });
 
   it("always scopes database filters to published products with stock", () => {
@@ -221,13 +252,18 @@ describe("public catalog query and pagination", () => {
 
   it("encodes Spanish filter values and preserves them in pagination links", () => {
     const href = getCatalogPageHref(
-      { category: "TUBERS", municipality: "San José del Guaviare" },
+      {
+        category: "TUBERS",
+        municipality: "San José del Guaviare",
+        sort: "precio-desc",
+      },
       2,
     );
     const query = new URL(href, "https://agricultor.example").searchParams;
 
     assert.equal(query.get("categoria"), "TUBERS");
     assert.equal(query.get("municipio"), "San José del Guaviare");
+    assert.equal(query.get("orden"), "precio-desc");
     assert.equal(query.get("pagina"), "2");
     assert.equal(
       getCatalogPageHref({ category: undefined, municipality: undefined }, 1),

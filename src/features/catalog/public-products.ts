@@ -18,9 +18,12 @@ export type PublicProduct = Omit<CatalogProductRecord, "isPublished">;
 
 export const PUBLIC_CATALOG_PAGE_SIZE = 12;
 
+export type CatalogSort = "precio-asc" | "precio-desc";
+
 export type CatalogFilters = {
   category?: (typeof PRODUCT_CATEGORIES)[number]["value"];
   municipality?: string;
+  sort?: CatalogSort;
   page: number;
 };
 
@@ -52,8 +55,13 @@ export function parseCatalogFilters(
     Number.isSafeInteger(requestedPage) && requestedPage > 0
       ? requestedPage
       : 1;
+  const rawSort = getSingleSearchParam(searchParams, "orden");
+  const sort =
+    rawSort === "precio-asc" || rawSort === "precio-desc"
+      ? rawSort
+      : undefined;
 
-  return { category, municipality, page };
+  return { category, municipality, sort, page };
 }
 
 export function getPublicProductWhere(
@@ -74,6 +82,17 @@ export function getPublicProductWhere(
   };
 }
 
+export function getCatalogOrderBy(sort: CatalogSort | undefined) {
+  if (sort === "precio-asc") {
+    return [{ priceCOP: "asc" as const }, { id: "asc" as const }];
+  }
+  if (sort === "precio-desc") {
+    return [{ priceCOP: "desc" as const }, { id: "asc" as const }];
+  }
+
+  return { updatedAt: "desc" as const };
+}
+
 export function getCatalogPagination(total: number, requestedPage: number) {
   const pageCount = Math.max(
     1,
@@ -90,7 +109,7 @@ export function getCatalogPagination(total: number, requestedPage: number) {
 }
 
 export function getCatalogPageHref(
-  filters: Pick<CatalogFilters, "category" | "municipality">,
+  filters: Pick<CatalogFilters, "category" | "municipality" | "sort">,
   page: number,
 ): string {
   const searchParams = new URLSearchParams();
@@ -98,6 +117,7 @@ export function getCatalogPageHref(
   if (filters.municipality) {
     searchParams.set("municipio", filters.municipality);
   }
+  if (filters.sort) searchParams.set("orden", filters.sort);
   if (page > 1) searchParams.set("pagina", String(page));
 
   const query = searchParams.toString();

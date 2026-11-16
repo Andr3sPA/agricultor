@@ -1,6 +1,7 @@
 import Link from "next/link";
 import {
   getCatalogPageHref,
+  getCatalogOrderBy,
   getCatalogPagination,
   getPublicProductHref,
   getPublicProductWhere,
@@ -53,7 +54,7 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
       municipality: true,
       isPublished: true,
     },
-    orderBy: { updatedAt: "desc" },
+    orderBy: getCatalogOrderBy(filters.sort),
   });
   const products = getPublicProducts(
     records.map((product) => ({
@@ -79,7 +80,7 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
       </section>
       <form
         action="/catalogo"
-        className="mt-8 grid gap-4 rounded-2xl border border-slate-200 bg-white p-6 sm:grid-cols-[1fr_1fr_auto] sm:items-end"
+        className="mt-8 grid gap-4 rounded-2xl border border-slate-200 bg-white p-6 sm:grid-cols-2 sm:items-end lg:grid-cols-[1fr_1fr_1fr_auto]"
         method="get"
       >
         <div>
@@ -98,6 +99,21 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
                 {label}
               </option>
             ))}
+          </select>
+        </div>
+        <div>
+          <label className="mb-2 block text-sm font-medium" htmlFor="orden">
+            Ordenar por
+          </label>
+          <select
+            className="min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3"
+            defaultValue={filters.sort ?? ""}
+            id="orden"
+            name="orden"
+          >
+            <option value="">Más recientes</option>
+            <option value="precio-asc">Menor precio</option>
+            <option value="precio-desc">Mayor precio</option>
           </select>
         </div>
         <div>
