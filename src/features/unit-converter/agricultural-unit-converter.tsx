@@ -160,6 +160,18 @@ export function AgriculturalUnitConverter() {
       </div>
 
       <button
+        className="min-h-11 rounded-xl border border-emerald-800 px-4 font-semibold text-emerald-900 hover:bg-emerald-50 focus-visible:outline-2 focus-visible:outline-emerald-800"
+        onClick={() => {
+          setFromUnit(toUnit);
+          setToUnit(fromUnit);
+          resetResult();
+        }}
+        type="button"
+      >
+        Intercambiar unidades
+      </button>
+
+      <button
         className="inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-emerald-800 px-5 py-3 font-semibold text-white hover:bg-emerald-900 sm:w-auto"
         type="submit"
       >
