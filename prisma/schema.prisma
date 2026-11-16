@@ -36,6 +36,7 @@ model User {
   buyerOrders   Order[]        @relation("OrderBuyer")
   producerOrders Order[]       @relation("OrderProducer")
   orderHistory  OrderHistory[]
+  farmActivities FarmActivity[]
 }
 
 model Session {
@@ -146,6 +147,27 @@ model OrderHistory {
   actor      User        @relation(fields: [actorId], references: [id], onDelete: Cascade)
 
   @@index([orderId, createdAt])
+}
+
+enum FarmActivityType {
+  SOWING
+  IRRIGATION
+  FERTILIZATION
+  HARVEST
+  OTHER
+}
+
+model FarmActivity {
+  id            String            @id @default(cuid())
+  userId        String
+  activityType  FarmActivityType
+  scheduledFor  DateTime          @db.Date
+  cropProduct   String?           @db.VarChar(100)
+  notes         String?           @db.VarChar(1000)
+  createdAt     DateTime          @default(now())
+  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, scheduledFor])
 }
 
 model RateLimit {
