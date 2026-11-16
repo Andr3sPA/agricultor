@@ -36,6 +36,23 @@ describe("product management policies and validation", () => {
     }
   });
 
+  it("accepts the maximum supported quantity and rejects more integer digits", () => {
+    const maximumQuantity = validateProductInput({
+      ...validInput,
+      availableQuantity: "999999999.999",
+    });
+    assert.equal(maximumQuantity.ok, true);
+
+    const unsupportedQuantity = validateProductInput({
+      ...validInput,
+      availableQuantity: "1000000000",
+    });
+    assert.equal(unsupportedQuantity.ok, false);
+    if (!unsupportedQuantity.ok) {
+      assert.ok(unsupportedQuantity.errors.availableQuantity);
+    }
+  });
+
   it("rejects invalid categories, units, prices, and localities", () => {
     const result = validateProductInput({
       ...validInput,
