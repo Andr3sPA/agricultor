@@ -1,4 +1,4 @@
-export type OrderRequestField = "productId" | "quantity";
+export type OrderRequestField = "productId" | "quantity" | "idempotencyKey";
 export type OrderRequestFieldErrors = Partial<
   Record<OrderRequestField, string>
 >;
@@ -6,6 +6,7 @@ export type OrderRequestFieldErrors = Partial<
 export type OrderRequestInput = {
   productId: string;
   quantity: string;
+  idempotencyKey: string;
 };
 
 export type OrderRequestValidation =
@@ -21,11 +22,16 @@ export function validateOrderRequest(
 ): OrderRequestValidation {
   const errors: OrderRequestFieldErrors = {};
   const productId = asString(input.productId);
+  const idempotencyKey = asString(input.idempotencyKey);
   const rawQuantity = asString(input.quantity);
   const quantity = rawQuantity.replace(",", ".");
 
   if (!/^[A-Za-z0-9_-]{1,64}$/.test(productId)) {
     errors.productId = "Selecciona un producto válido.";
+  }
+
+  if (!/^[A-Za-z0-9_-]{43}$/.test(idempotencyKey)) {
+    errors.idempotencyKey = "Actualiza el formulario para enviar el pedido.";
   }
 
   if (
@@ -41,7 +47,7 @@ export function validateOrderRequest(
     return { ok: false, errors };
   }
 
-  return { ok: true, data: { productId, quantity } };
+  return { ok: true, data: { productId, quantity, idempotencyKey } };
 }
 
 export function parseOrderDecision(

@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { OrderRequestForm } from "@/features/orders/order-request-form";
@@ -95,6 +96,7 @@ export default async function RequestOrderPage({
         {isBuyer && !isOwner ? (
           <OrderRequestForm
             availableQuantity={availableQuantity}
+            idempotencyKey={randomBytes(32).toString("base64url")}
             productId={product.id}
           />
         ) : !identity ? (

@@ -15,11 +15,16 @@ describe("order request validation", () => {
     const result = validateOrderRequest({
       productId: "product-1",
       quantity: "1,250",
+      idempotencyKey: "A".repeat(43),
     });
 
     assert.deepEqual(result, {
       ok: true,
-      data: { productId: "product-1", quantity: "1.250" },
+      data: {
+        productId: "product-1",
+        quantity: "1.250",
+        idempotencyKey: "A".repeat(43),
+      },
     });
   });
 
@@ -28,6 +33,7 @@ describe("order request validation", () => {
       const result = validateOrderRequest({
         productId: "product-1",
         quantity,
+        idempotencyKey: "A".repeat(43),
       });
       assert.equal(result.ok, false);
       if (!result.ok) {
@@ -38,9 +44,22 @@ describe("order request validation", () => {
 
   it("rejects invalid product identifiers and decisions", () => {
     assert.equal(
-      validateOrderRequest({ productId: " ", quantity: "1" }).ok,
+      validateOrderRequest({
+        productId: " ",
+        quantity: "1",
+        idempotencyKey: "A".repeat(43),
+      }).ok,
       false,
     );
+    const invalidKey = validateOrderRequest({
+      productId: "product-1",
+      quantity: "1",
+      idempotencyKey: "not-an-opaque-key",
+    });
+    assert.equal(invalidKey.ok, false);
+    if (!invalidKey.ok) {
+      assert.ok(invalidKey.errors.idempotencyKey);
+    }
     assert.equal(parseOrderDecision("PENDING"), null);
     assert.equal(parseOrderDecision("ACCEPTED"), "ACCEPTED");
   });
