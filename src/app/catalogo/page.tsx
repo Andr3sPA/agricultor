@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   getCatalogPageHref,
   getCatalogPagination,
+  getPublicProductHref,
   getPublicProductWhere,
   getPublicProductOrderHref,
   getPublicProducts,
@@ -139,7 +140,14 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
                 className="rounded-2xl border border-emerald-950/10 bg-white p-6 shadow-sm"
                 key={product.id}
               >
-                <h2 className="text-xl font-semibold">{product.name}</h2>
+                <h2 className="text-xl font-semibold">
+                  <Link
+                    className="underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-900"
+                    href={getPublicProductHref(product.id)}
+                  >
+                    {product.name}
+                  </Link>
+                </h2>
                 <dl className="mt-4 space-y-3 text-sm text-slate-700">
                   <div>
                     <dt className="font-medium">Categoría</dt>

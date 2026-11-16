@@ -4,6 +4,8 @@ import {
   getCatalogPageHref,
   getCatalogPagination,
   getPublicProductWhere,
+  getPublicProductHref,
+  getPublicProductMetadata,
   getPublicProductOrderHref,
   getPublicProducts,
   parseCatalogFilters,
@@ -70,6 +72,10 @@ describe("public catalog projection", () => {
       getPublicProductOrderHref(getPublicProducts(products)[0].id),
       "/catalogo/published-yuca/pedido",
     );
+    assert.equal(
+      getPublicProductHref(getPublicProducts(products)[0].id),
+      "/catalogo/published-yuca",
+    );
   });
 
   it("returns only approved public fields, even if private fields are present", () => {
@@ -103,6 +109,42 @@ describe("public catalog projection", () => {
     assert.equal("email" in publicProduct, false);
     assert.equal("phone" in publicProduct, false);
     assert.equal("preciseAddress" in publicProduct, false);
+  });
+
+  it("builds Open Graph metadata from only the public product fields", () => {
+    const privateProduct = {
+      id: "shared-yuca",
+      name: "Yuca",
+      category: "TUBERS",
+      availableQuantity: "4.5",
+      unit: "KG",
+      priceCOP: 3200,
+      municipality: "La Vega",
+      isPublished: true,
+      ownerId: "private-owner",
+      preciseAddress: "Dirección privada 123",
+    };
+    const product = getPublicProducts([
+      privateProduct,
+    ])[0];
+    const metadata = getPublicProductMetadata(
+      product,
+      new URL("https://agricultor.example"),
+    );
+
+    assert.equal(
+      metadata.openGraph.url.toString(),
+      "https://agricultor.example/catalogo/shared-yuca",
+    );
+    assert.equal(
+      metadata.alternates.canonical.toString(),
+      metadata.openGraph.url.toString(),
+    );
+    assert.match(metadata.title, /Yuca/);
+    assert.match(metadata.description, /Tubérculos/);
+    assert.match(metadata.description, /4,5 Kilogramo \(kg\) disponibles/);
+    assert.match(metadata.description, /La Vega/);
+    assert.doesNotMatch(metadata.description, /private-owner|Dirección privada/);
   });
 });
 
