@@ -21,6 +21,8 @@ function messageFor(code: string): string {
       return "Revisa los datos del pedido.";
     case "unavailable":
       return "El producto ya no tiene esa cantidad disponible o no está publicado.";
+    case "idempotency-conflict":
+      return "Esta solicitud ya fue enviada con otros datos. Actualiza el formulario para intentarlo de nuevo.";
     case "not-found":
       return "No encontramos ese pedido en tu cuenta.";
     case "already-decided":
@@ -40,6 +42,7 @@ export async function requestOrderAction(
     {
       productId: formData.get("productId"),
       quantity: formData.get("quantity"),
+      idempotencyKey: formData.get("idempotencyKey"),
     },
     prisma,
   );

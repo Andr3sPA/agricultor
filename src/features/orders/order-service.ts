@@ -21,6 +21,7 @@ export type OrderMutationResult =
         | "unauthorized"
         | "invalid"
         | "unavailable"
+        | "idempotency-conflict"
         | "not-found"
         | "already-decided";
       fieldErrors?: Record<string, string>;
@@ -50,8 +51,38 @@ export async function requestOrder(
   }
 
   const quantity = new Prisma.Decimal(validation.data.quantity);
+  const idempotencyKey = validation.data.idempotencyKey;
 
   return database.$transaction(async (transaction) => {
+    await transaction.$queryRaw`
+      SELECT pg_advisory_xact_lock(
+        hashtextextended(
+          ${`${actor.userId.length}:${actor.userId}${idempotencyKey}`},
+          0
+        )
+      )
+    `;
+
+    const existingOrder = await transaction.order.findFirst({
+      where: { buyerId: actor.userId, idempotencyKey },
+      select: {
+        id: true,
+        productId: true,
+        requestedQuantity: true,
+      },
+    });
+
+    if (existingOrder) {
+      if (
+        existingOrder.productId !== validation.data.productId ||
+        !existingOrder.requestedQuantity.equals(quantity)
+      ) {
+        return { ok: false, code: "idempotency-conflict" };
+      }
+
+      return { ok: true, orderId: existingOrder.id };
+    }
+
     const product = await transaction.product.findUnique({
       where: { id: validation.data.productId },
       select: {
@@ -104,6 +135,7 @@ export async function requestOrder(
         buyerId: actor.userId,
         producerId: product.ownerId,
         productId: product.id,
+        idempotencyKey,
         productName: snapshot.name,
         requestedQuantity: quantity,
         unit: snapshot.unit,
@@ -163,6 +195,9 @@ export async function decideOrder(
       decision,
     );
     if (!nextStatus) {
+      if (order.status === decision) {
+        return { ok: true, orderId: order.id };
+      }
       return { ok: false, code: "already-decided" };
     }
 
@@ -179,6 +214,13 @@ export async function decideOrder(
     });
 
     if (changed.count !== 1) {
+      const currentOrder = await transaction.order.findFirst({
+        where: { id: order.id, producerId: actor.userId },
+        select: { status: true },
+      });
+      if (currentOrder?.status === decision) {
+        return { ok: true, orderId: order.id };
+      }
       return { ok: false, code: "already-decided" };
     }
 

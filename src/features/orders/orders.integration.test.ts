@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { randomUUID } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 import { after, before, describe, it } from "node:test";
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
@@ -31,6 +31,10 @@ function assertDisposableLocalDatabase(connectionString: string): void {
   }
 }
 
+function newIdempotencyKey(): string {
+  return randomBytes(32).toString("base64url");
+}
+
 describe(
   "order persistence and inventory concurrency",
   { skip: enabled ? false : "Set TEST_DATABASE_URL to run against local PostgreSQL." },
@@ -42,6 +46,7 @@ describe(
     let buyerTwo: OrderActor;
     let reservedProductId: string;
     let contestedProductId: string;
+    let idempotentProductId: string;
     let fixtureUserIds: string[] = [];
 
     before(async () => {
@@ -95,8 +100,17 @@ describe(
         },
         select: { id: true },
       });
+      const idempotentProduct = await database.product.create({
+        data: {
+          ...productFields,
+          name: "Producto idempotente",
+          availableQuantity: new Prisma.Decimal("5"),
+        },
+        select: { id: true },
+      });
       reservedProductId = reservedProduct.id;
       contestedProductId = contestedProduct.id;
+      idempotentProductId = idempotentProduct.id;
     });
 
     after(async () => {
@@ -114,7 +128,11 @@ describe(
     it("persists a request, its history, and rejected stock release", async () => {
       const request = await requestOrder(
         buyerOne,
-        { productId: reservedProductId, quantity: "2.5" },
+        {
+          productId: reservedProductId,
+          quantity: "2.5",
+          idempotencyKey: newIdempotencyKey(),
+        },
         database,
       );
       assert.equal(request.ok, true);
@@ -134,13 +152,28 @@ describe(
       assert.ok(reserved.availableQuantity.equals("2.5"));
       assert.ok(reserved.reservedQuantity.equals("2.5"));
 
-      const decision = await decideOrder(
+      const decisions = await Promise.all([
+        decideOrder(producer, request.orderId, "REJECTED", database),
+        decideOrder(producer, request.orderId, "REJECTED", database),
+      ]);
+      assert.deepEqual(decisions.map(({ ok }) => ok), [true, true]);
+      const retriedDecision = await decideOrder(
         producer,
         request.orderId,
         "REJECTED",
         database,
       );
-      assert.equal(decision.ok, true);
+      assert.equal(retriedDecision.ok, true);
+      const oppositeDecision = await decideOrder(
+        producer,
+        request.orderId,
+        "ACCEPTED",
+        database,
+      );
+      assert.deepEqual(oppositeDecision, {
+        ok: false,
+        code: "already-decided",
+      });
 
       const rejectedOrder = await database.order.findUniqueOrThrow({
         where: { id: request.orderId },
@@ -156,16 +189,108 @@ describe(
       assert.ok(restored.reservedQuantity.equals("0"));
     });
 
+    it("replays concurrent requests by buyer key without reserving twice", async () => {
+      const idempotencyKey = newIdempotencyKey();
+      const requests = await Promise.all([
+        requestOrder(
+          buyerOne,
+          {
+            productId: idempotentProductId,
+            quantity: "2",
+            idempotencyKey,
+          },
+          database,
+        ),
+        requestOrder(
+          buyerOne,
+          {
+            productId: idempotentProductId,
+            quantity: "2,000",
+            idempotencyKey,
+          },
+          database,
+        ),
+      ]);
+
+      assert.equal(requests[0].ok, true);
+      assert.equal(requests[1].ok, true);
+      if (!requests[0].ok || !requests[1].ok) return;
+      assert.equal(requests[0].orderId, requests[1].orderId);
+
+      const replay = await requestOrder(
+        buyerOne,
+        {
+          productId: idempotentProductId,
+          quantity: "2.000",
+          idempotencyKey,
+        },
+        database,
+      );
+      assert.deepEqual(replay, requests[0]);
+
+      const differentBuyerRequest = await requestOrder(
+        buyerTwo,
+        {
+          productId: idempotentProductId,
+          quantity: "1",
+          idempotencyKey,
+        },
+        database,
+      );
+      assert.equal(differentBuyerRequest.ok, true);
+      if (!differentBuyerRequest.ok) return;
+      assert.notEqual(differentBuyerRequest.orderId, requests[0].orderId);
+
+      const conflictingPayload = await requestOrder(
+        buyerOne,
+        {
+          productId: idempotentProductId,
+          quantity: "2.5",
+          idempotencyKey,
+        },
+        database,
+      );
+      assert.deepEqual(conflictingPayload, {
+        ok: false,
+        code: "idempotency-conflict",
+      });
+
+      assert.equal(
+        await database.order.count({
+          where: { buyerId: buyerOne.userId, productId: idempotentProductId },
+        }),
+        1,
+      );
+      const buyerOrder = await database.order.findUniqueOrThrow({
+        where: { id: requests[0].orderId },
+        include: { history: true },
+      });
+      assert.equal(buyerOrder.history.length, 1);
+      const product = await database.product.findUniqueOrThrow({
+        where: { id: idempotentProductId },
+      });
+      assert.ok(product.availableQuantity.equals("2"));
+      assert.ok(product.reservedQuantity.equals("3"));
+    });
+
     it("allows only one concurrent request for the final unit", async () => {
       const requests = await Promise.all([
         requestOrder(
           buyerOne,
-          { productId: contestedProductId, quantity: "1" },
+          {
+            productId: contestedProductId,
+            quantity: "1",
+            idempotencyKey: newIdempotencyKey(),
+          },
           database,
         ),
         requestOrder(
           buyerTwo,
-          { productId: contestedProductId, quantity: "1" },
+          {
+            productId: contestedProductId,
+            quantity: "1",
+            idempotencyKey: newIdempotencyKey(),
+          },
           database,
         ),
       ]);

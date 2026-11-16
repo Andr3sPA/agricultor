@@ -116,6 +116,7 @@ model Order {
   buyerId            String
   producerId         String
   productId          String?
+  idempotencyKey     String?
   productName        String      @db.VarChar(100)
   requestedQuantity  Decimal     @db.Decimal(12, 3)
   unit               String      @db.VarChar(30)
@@ -131,6 +132,7 @@ model Order {
   @@index([buyerId, createdAt])
   @@index([producerId, status, createdAt])
   @@index([productId])
+  @@unique([buyerId, idempotencyKey])
 }
 
 model OrderHistory {
