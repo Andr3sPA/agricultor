@@ -10,6 +10,9 @@ type BrevoEmailDependencies = {
   fetcher?: typeof fetch;
 };
 
+const BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
+const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "::1", "[::1]"]);
+
 function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, (character) => {
     const entities: Record<string, string> = {
@@ -21,6 +24,39 @@ function escapeHtml(value: string): string {
     };
     return entities[character];
   });
+}
+
+function getBrevoApiUrl(): string {
+  const testApiUrl = process.env.BREVO_TEST_API_URL;
+  if (!testApiUrl) {
+    return BREVO_API_URL;
+  }
+
+  try {
+    const databaseUrl = new URL(process.env.TEST_DATABASE_URL ?? "");
+    const databaseName = decodeURIComponent(databaseUrl.pathname.slice(1));
+    const apiUrl = new URL(testApiUrl);
+
+    if (
+      !["postgres:", "postgresql:"].includes(databaseUrl.protocol) ||
+      !LOCAL_HOSTS.has(databaseUrl.hostname) ||
+      !/^agricultor_test(?:_|$)/.test(databaseName) ||
+      apiUrl.protocol !== "http:" ||
+      !LOCAL_HOSTS.has(apiUrl.hostname) ||
+      apiUrl.username ||
+      apiUrl.password ||
+      apiUrl.pathname !== "/v3/smtp/email" ||
+      apiUrl.search
+    ) {
+      throw new Error();
+    }
+
+    return apiUrl.toString();
+  } catch {
+    throw new Error(
+      "BREVO_TEST_API_URL solo se permite con un TEST_DATABASE_URL local y desechable.",
+    );
+  }
 }
 
 export async function sendPasswordResetEmail(
@@ -42,7 +78,7 @@ export async function sendPasswordResetEmail(
   const safeName = escapeHtml(name);
   const safeUrl = escapeHtml(url);
   const response = await (dependencies.fetcher ?? fetch)(
-    "https://api.brevo.com/v3/smtp/email",
+    getBrevoApiUrl(),
     {
       method: "POST",
       headers: {

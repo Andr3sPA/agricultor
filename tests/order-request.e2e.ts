@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { randomBytes, randomUUID } from "node:crypto";
 import { spawn, type ChildProcess } from "node:child_process";
 import { once } from "node:events";
+import { createServer as createHttpServer } from "node:http";
 import { createServer } from "node:net";
 import { PrismaPg } from "@prisma/adapter-pg";
 import {
@@ -13,6 +14,13 @@ import {
 } from "@playwright/test";
 import { Pool } from "pg";
 import { Prisma, PrismaClient } from "@/generated/prisma/client";
+
+type CapturedResetEmail = {
+  to: { email: string }[];
+  textContent: string;
+};
+
+const E2E_BREVO_API_KEY = "local-e2e-brevo-key";
 
 function assertDisposableDatabase(connectionString: string): void {
   let url: URL;
@@ -48,9 +56,95 @@ async function getFreePort(): Promise<number> {
   return address.port;
 }
 
+function isCapturedResetEmail(value: unknown): value is CapturedResetEmail {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "to" in value &&
+    Array.isArray(value.to) &&
+    value.to.every(
+      (recipient) =>
+        typeof recipient === "object" &&
+        recipient !== null &&
+        "email" in recipient &&
+        typeof recipient.email === "string",
+    ) &&
+    "textContent" in value &&
+    typeof value.textContent === "string"
+  );
+}
+
+async function startBrevoStub() {
+  const messages: CapturedResetEmail[] = [];
+  const server = createHttpServer((request, response) => {
+    if (
+      request.method !== "POST" ||
+      request.url !== "/v3/smtp/email" ||
+      request.headers["api-key"] !== E2E_BREVO_API_KEY
+    ) {
+      response.writeHead(404).end();
+      return;
+    }
+
+    const chunks: Buffer[] = [];
+    request.on("data", (chunk: Buffer) => chunks.push(chunk));
+    request.on("end", () => {
+      let payload: unknown;
+      try {
+        payload = JSON.parse(Buffer.concat(chunks).toString());
+      } catch {
+        response.writeHead(400).end();
+        return;
+      }
+
+      if (!isCapturedResetEmail(payload)) {
+        response.writeHead(400).end();
+        return;
+      }
+
+      messages.push(payload);
+      response
+        .writeHead(201, { "content-type": "application/json" })
+        .end(JSON.stringify({ messageId: "local-e2e-message" }));
+    });
+  });
+  server.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    server.close();
+    throw new Error("Could not start the local Brevo E2E stub.");
+  }
+
+  return {
+    apiUrl: `http://127.0.0.1:${address.port}/v3/smtp/email`,
+    messages,
+    close: () =>
+      new Promise<void>((resolve, reject) => {
+        server.close((error) => (error ? reject(error) : resolve()));
+      }),
+  };
+}
+
+async function waitForResetEmail(
+  messages: CapturedResetEmail[],
+  email: string,
+): Promise<CapturedResetEmail> {
+  const deadline = Date.now() + 10_000;
+  while (Date.now() < deadline) {
+    const message = messages.find((candidate) =>
+      candidate.to.some((recipient) => recipient.email === email),
+    );
+    if (message) return message;
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+  throw new Error("The local Brevo E2E stub did not capture the reset email.");
+}
+
 async function startServer(
   port: number,
   databaseUrl: string,
+  brevoApiUrl: string,
 ): Promise<ChildProcess> {
   const server = spawn(
     process.execPath,
@@ -70,6 +164,9 @@ async function startServer(
         DATABASE_URL: databaseUrl,
         NODE_ENV: "production",
         TEST_DATABASE_URL: databaseUrl,
+        API_KEY_BREVO: E2E_BREVO_API_KEY,
+        BREVO_SENDER_EMAIL: "no-reply@example.test",
+        BREVO_TEST_API_URL: brevoApiUrl,
       },
       stdio: ["ignore", "pipe", "pipe"],
     },
@@ -122,13 +219,15 @@ async function main(): Promise<void> {
   let browser: Browser | undefined;
   let server: ChildProcess | undefined;
   let producerApi: APIRequestContext | undefined;
+  let brevoStub: Awaited<ReturnType<typeof startBrevoStub>> | undefined;
   const fixtureUserIds: string[] = [];
 
   try {
     await database.$connect();
     const suffix = randomUUID();
     const port = await getFreePort();
-    server = await startServer(port, databaseUrl);
+    brevoStub = await startBrevoStub();
+    server = await startServer(port, databaseUrl, brevoStub.apiUrl);
     const baseURL = `http://localhost:${port}`;
     producerApi = await playwrightRequest.newContext({
       baseURL,
@@ -203,12 +302,47 @@ async function main(): Promise<void> {
       });
       fixtureUserIds.push(buyer.id);
 
-      const signin = await api.post("/api/auth/sign-in/email", {
+      const resetRequest = await api.post(
+        "/api/auth/request-password-reset",
+        {
+          data: { email, redirectTo: "/restablecer-contrasena" },
+        },
+      );
+      assert.equal(
+        resetRequest.ok(),
+        true,
+        `Password reset request failed: ${await resetRequest.text()}`,
+      );
+      const resetEmail = await waitForResetEmail(brevoStub.messages, email);
+      const resetUrl = resetEmail.textContent.match(/https?:\/\/\S+/)?.[0];
+      assert.ok(resetUrl, "The local reset email did not contain a link.");
+
+      const newPassword = `Reset-${randomUUID()}-pass`;
+      browser = await chromium.launch({ headless: true });
+      const resetContext = await browser.newContext();
+      const resetPage = await resetContext.newPage();
+      await resetPage.goto(resetUrl);
+      await resetPage.getByRole("heading", { name: "Cambia tu contraseña" }).waitFor();
+      await resetPage.getByLabel("Nueva contraseña").fill(newPassword);
+      await resetPage
+        .getByLabel("Confirma la nueva contraseña")
+        .fill(newPassword);
+      await resetPage.getByRole("button", { name: "Guardar contraseña" }).click();
+      await resetPage
+        .getByRole("status")
+        .getByText("Tu contraseña se actualizó.")
+        .waitFor();
+      await resetContext.close();
+
+      const oldPasswordSignin = await api.post("/api/auth/sign-in/email", {
         data: { email, password },
+      });
+      assert.equal(oldPasswordSignin.ok(), false);
+      const signin = await api.post("/api/auth/sign-in/email", {
+        data: { email, password: newPassword },
       });
       assert.equal(signin.ok(), true, `Signin failed: ${await signin.text()}`);
 
-      browser = await chromium.launch({ headless: true });
       const context = await browser.newContext({
         storageState: await api.storageState(),
       });
@@ -413,6 +547,7 @@ async function main(): Promise<void> {
     await browser?.close();
     await producerApi?.dispose();
     if (server) await stopServer(server);
+    await brevoStub?.close();
     if (fixtureUserIds.length > 0) {
       await database.user.deleteMany({
         where: { id: { in: fixtureUserIds } },
