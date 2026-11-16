@@ -336,12 +336,16 @@ async function main(): Promise<void> {
         .waitFor();
 
       await producerPage.reload();
-      const cancelRejection = producerPage.waitForEvent("dialog");
-      await producerPage.getByRole("button", { name: "Rechazar pedido" }).click();
-      const canceledDialog = await cancelRejection;
-      assert.equal(canceledDialog.type(), "confirm");
-      assert.match(canceledDialog.message(), /no podrás cambiar la decisión/);
-      await canceledDialog.dismiss();
+      let canceledRejectionMessage = "";
+      producerPage.once("dialog", (dialog) => {
+        assert.equal(dialog.type(), "confirm");
+        canceledRejectionMessage = dialog.message();
+        void dialog.dismiss();
+      });
+      await producerPage
+        .getByRole("button", { name: "Rechazar pedido" })
+        .click();
+      assert.match(canceledRejectionMessage, /no podrás cambiar la decisión/);
       await producerPage
         .getByRole("list", { name: "Seguimiento del pedido" })
         .first()
@@ -360,11 +364,16 @@ async function main(): Promise<void> {
       assert.ok(reservedInventory.availableQuantity.equals("2"));
       assert.ok(reservedInventory.reservedQuantity.equals("1"));
 
-      const confirmRejection = producerPage.waitForEvent("dialog");
-      await producerPage.getByRole("button", { name: "Rechazar pedido" }).click();
-      const acceptedDialog = await confirmRejection;
-      assert.equal(acceptedDialog.type(), "confirm");
-      await acceptedDialog.accept();
+      let confirmedRejectionMessage = "";
+      producerPage.once("dialog", (dialog) => {
+        assert.equal(dialog.type(), "confirm");
+        confirmedRejectionMessage = dialog.message();
+        void dialog.accept();
+      });
+      await producerPage
+        .getByRole("button", { name: "Rechazar pedido" })
+        .click();
+      assert.match(confirmedRejectionMessage, /no podrás cambiar la decisión/);
       await producerPage
         .getByRole("list", { name: "Seguimiento del pedido" })
         .first()
