@@ -309,24 +309,16 @@ async function main(): Promise<void> {
       await producerPage
         .getByRole("button", { name: "Aceptar pedido" })
         .click();
-      const decisionFeedback = producerPage
-        .locator("form")
-        .filter({
-          has: producerPage.getByRole("button", { name: "Aceptar pedido" }),
-        })
-        .locator('[role="status"], [role="alert"]');
-      await decisionFeedback.waitFor();
-      const decisionMessage = await decisionFeedback.innerText();
-      assert.equal(
-        await decisionFeedback.getAttribute("role"),
-        "status",
-        decisionMessage,
-      );
-      assert.match(decisionMessage, /Aceptamos el pedido/);
       await producerPage
         .getByRole("list", { name: "Seguimiento del pedido" })
         .getByText("Aceptado")
         .waitFor();
+      const acceptedOrder = await database.order.findFirstOrThrow({
+        where: { buyerId: buyer.id, productId: product.id },
+        include: { history: true },
+      });
+      assert.equal(acceptedOrder.status, "ACCEPTED");
+      assert.equal(acceptedOrder.history.length, 2);
 
       await page.goto(`${baseURL}/mi-cuenta/pedidos`);
       await page.getByText("Agricultor registra la aceptación").waitFor();
