@@ -138,17 +138,26 @@ async function main(): Promise<void> {
       },
     });
     const producerEmail = `order-e2e-producer-${suffix}@example.test`;
+    const producerPassword = `E2e-${randomUUID()}-pass`;
     const producerSignup = await producerApi.post("/api/auth/sign-up/email", {
       data: {
         name: "Productor de prueba E2E",
         email: producerEmail,
-        password: `E2e-${randomUUID()}-pass`,
+        password: producerPassword,
       },
     });
     assert.equal(
       producerSignup.ok(),
       true,
       `Producer signup failed: ${await producerSignup.text()}`,
+    );
+    const producerSignin = await producerApi.post("/api/auth/sign-in/email", {
+      data: { email: producerEmail, password: producerPassword },
+    });
+    assert.equal(
+      producerSignin.ok(),
+      true,
+      `Producer signin failed: ${await producerSignin.text()}`,
     );
     const producer = await database.user.findUniqueOrThrow({
       where: { email: producerEmail },
