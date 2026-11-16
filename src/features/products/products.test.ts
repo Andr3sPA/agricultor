@@ -54,6 +54,23 @@ describe("product management policies and validation", () => {
     }
   });
 
+  it("accepts the maximum supported price and rejects the next integer", () => {
+    const maximumPrice = validateProductInput({
+      ...validInput,
+      priceCOP: "2147483647",
+    });
+    assert.equal(maximumPrice.ok, true);
+
+    const unsupportedPrice = validateProductInput({
+      ...validInput,
+      priceCOP: "2147483648",
+    });
+    assert.equal(unsupportedPrice.ok, false);
+    if (!unsupportedPrice.ok) {
+      assert.ok(unsupportedPrice.errors.priceCOP);
+    }
+  });
+
   it("allows only the producer owner to edit and change publication", () => {
     assert.equal(canManageProducts(["PRODUCER"]), true);
     assert.equal(canManageProducts(["BUYER"]), false);
