@@ -222,7 +222,7 @@ async function main(): Promise<void> {
       assert.ok(firstInventory.reservedQuantity.equals("2"));
 
       const replayAction = page.waitForRequest(isServerAction);
-      await form.evaluate((element: HTMLFormElement) => element.requestSubmit());
+      await page.getByRole("button", { name: "Solicitar producto" }).click();
       const replayRequest = await replayAction;
       assert.ok(replayRequest.postData()?.includes(idempotencyKey));
       const replayResponse = await replayRequest.response();
