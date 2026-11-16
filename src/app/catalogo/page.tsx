@@ -9,11 +9,13 @@ import {
   getPublicProducts,
   parseCatalogFilters,
 } from "@/features/catalog/public-products";
+import { FavoriteControl } from "@/features/favorites/favorite-control";
 import {
   PRODUCT_CATEGORIES,
   PRODUCT_UNITS,
 } from "@/features/products/product-validation";
 import { prisma } from "@/lib/db";
+import { getCurrentIdentity } from "@/lib/auth/server";
 
 const copFormatter = new Intl.NumberFormat("es-CO", {
   style: "currency",
@@ -62,6 +64,18 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
       availableQuantity: product.availableQuantity.toString(),
     })),
   );
+  const identity = await getCurrentIdentity();
+  const favoriteIds =
+    identity?.roles.includes("BUYER") && products.length > 0
+      ? await prisma.favorite.findMany({
+          where: {
+            userId: identity.userId,
+            productId: { in: products.map(({ id }) => id) },
+          },
+          select: { productId: true },
+        })
+      : [];
+  const savedProductIds = new Set(favoriteIds.map(({ productId }) => productId));
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-5xl px-6 py-12">
@@ -194,6 +208,22 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
                 >
                   Solicitar este producto
                 </Link>
+                {identity?.roles.includes("BUYER") ? (
+                  <FavoriteControl
+                    isFavorite={savedProductIds.has(product.id)}
+                    productId={product.id}
+                  />
+                ) : (
+                  <p className="mt-4 text-sm text-slate-700">
+                    <Link
+                      className="font-semibold text-emerald-900 underline"
+                      href={identity ? "/mi-cuenta" : "/iniciar-sesion"}
+                    >
+                      {identity ? "Agrega el perfil de comprador" : "Inicia sesión"}
+                    </Link>{" "}
+                    para guardar favoritos.
+                  </p>
+                )}
               </li>
             );
           })}

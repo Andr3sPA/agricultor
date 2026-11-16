@@ -33,6 +33,7 @@ model User {
   accounts      Account[]
   userRoles     UserRole[]
   products      Product[]
+  favorites     Favorite[]
   buyerOrders   Order[]        @relation("OrderBuyer")
   producerOrders Order[]       @relation("OrderProducer")
   orderHistory  OrderHistory[]
@@ -108,8 +109,21 @@ model Product {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
   orders            Order[]
+  favorites         Favorite[]
 
   @@index([ownerId, updatedAt])
+}
+
+model Favorite {
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@id([userId, productId])
+  @@index([userId, createdAt])
+  @@index([productId])
 }
 
 model Order {
