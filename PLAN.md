@@ -31,6 +31,7 @@ Este documento conserva el roadmap y registra el estado real del repositorio. La
 ## Estado observado del repositorio
 
 - El repositorio ya tiene un scaffold de Next.js App Router, TypeScript, Tailwind CSS y ESLint, una portada neutral en español, scripts de lint/tipos y CI para lint, tipos, pruebas y build. CI también aplica las migraciones a un servicio PostgreSQL efímero y ejecuta la suite de integración de pedidos contra ese servicio.
+- El conversor privado de unidades agrícolas permite invertir los controles de origen y destino con una acción accesible; el resultado anterior se limpia al intercambiar.
 - `.gitignore` excluye `.env*`. Las credenciales se revisaron sin mostrar ni registrar valores; no se ha conectado a Neon ni a servicios de correo o imágenes.
 - Se inició la primera parte de identidad/permisos: autenticación por correo y contraseña, sesiones persistidas, roles básicos y migración versionada. Los cortes de productos y catálogo agregan captura privada y publicación explícita bajo una hipótesis de visibilidad pendiente de revisión; el flujo básico de pedidos está implementado. No se implementan perfiles comerciales, asociaciones ni sincronización offline. El primer corte offline posterior solo ofrece un shell estático genérico, sin cachear catálogo ni datos privados.
 
