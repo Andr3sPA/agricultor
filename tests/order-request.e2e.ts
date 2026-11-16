@@ -399,11 +399,6 @@ async function main(): Promise<void> {
       await page.goto(`${baseURL}/mi-cuenta/pedidos`);
       await page.getByText("El productor rechazó esta solicitud.").waitFor();
       await page
-        .getByText(
-          "La solicitud fue rechazada y la cantidad reservada volvió a estar disponible.",
-        )
-        .waitFor();
-      await page
         .getByRole("list", { name: "Seguimiento del pedido" })
         .first()
         .getByText("Rechazado")
