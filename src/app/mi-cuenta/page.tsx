@@ -221,6 +221,14 @@ export default async function AccountPage() {
             Ver mis pedidos
           </Link>
         )}
+        {identity.roles.includes("BUYER") && (
+          <Link
+            className="mt-6 inline-flex rounded-xl border border-emerald-900 px-5 py-3 font-semibold text-emerald-950 hover:bg-emerald-50"
+            href="/mi-cuenta/favoritos"
+          >
+            Ver mis favoritos
+          </Link>
+        )}
         <SignOutButton />
       </section>
     </main>
