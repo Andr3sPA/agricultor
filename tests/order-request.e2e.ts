@@ -138,17 +138,26 @@ async function main(): Promise<void> {
       },
     });
     const producerEmail = `order-e2e-producer-${suffix}@example.test`;
+    const producerPassword = `E2e-${randomUUID()}-pass`;
     const producerSignup = await producerApi.post("/api/auth/sign-up/email", {
       data: {
         name: "Productor de prueba E2E",
         email: producerEmail,
-        password: `E2e-${randomUUID()}-pass`,
+        password: producerPassword,
       },
     });
     assert.equal(
       producerSignup.ok(),
       true,
       `Producer signup failed: ${await producerSignup.text()}`,
+    );
+    const producerSignin = await producerApi.post("/api/auth/sign-in/email", {
+      data: { email: producerEmail, password: producerPassword },
+    });
+    assert.equal(
+      producerSignin.ok(),
+      true,
+      `Producer signin failed: ${await producerSignin.text()}`,
     );
     const producer = await database.user.findUniqueOrThrow({
       where: { email: producerEmail },
@@ -275,6 +284,7 @@ async function main(): Promise<void> {
         include: { history: true },
       });
       assert.equal(replayedOrder.id, firstOrder.id);
+      assert.equal(replayedOrder.producerId, producer.id);
       assert.equal(replayedOrder.history.length, 1);
       const replayedInventory = await database.product.findUniqueOrThrow({
         where: { id: product.id },
@@ -300,13 +310,15 @@ async function main(): Promise<void> {
         .getByRole("button", { name: "Aceptar pedido" })
         .click();
       await producerPage
-        .getByRole("status")
-        .getByText("Aceptamos el pedido")
-        .waitFor();
-      await producerPage
         .getByRole("list", { name: "Seguimiento del pedido" })
         .getByText("Aceptado")
         .waitFor();
+      const acceptedOrder = await database.order.findFirstOrThrow({
+        where: { buyerId: buyer.id, productId: product.id },
+        include: { history: true },
+      });
+      assert.equal(acceptedOrder.status, "ACCEPTED");
+      assert.equal(acceptedOrder.history.length, 2);
 
       await page.goto(`${baseURL}/mi-cuenta/pedidos`);
       await page.getByText("Agricultor registra la aceptación").waitFor();
