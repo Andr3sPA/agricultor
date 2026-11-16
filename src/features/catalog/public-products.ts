@@ -1,4 +1,7 @@
-import { PRODUCT_CATEGORIES } from "@/features/products/product-validation";
+import {
+  PRODUCT_CATEGORIES,
+  PRODUCT_UNITS,
+} from "@/features/products/product-validation";
 
 export type CatalogProductRecord = {
   id: string;
@@ -103,6 +106,50 @@ export function getCatalogPageHref(
 
 export function getPublicProductOrderHref(productId: string): string {
   return `/catalogo/${encodeURIComponent(productId)}/pedido`;
+}
+
+export function getPublicProductHref(productId: string): string {
+  return `/catalogo/${encodeURIComponent(productId)}`;
+}
+
+export function getPublicProductMetadata(
+  product: PublicProduct,
+  baseUrl: URL,
+) {
+  const category =
+    PRODUCT_CATEGORIES.find(({ value }) => value === product.category)?.label ??
+    product.category;
+  const unit =
+    PRODUCT_UNITS.find(({ value }) => value === product.unit)?.label ??
+    product.unit;
+  const quantity = new Intl.NumberFormat("es-CO", {
+    maximumFractionDigits: 3,
+  }).format(Number(product.availableQuantity));
+  const price = new Intl.NumberFormat("es-CO", {
+    style: "currency",
+    currency: "COP",
+    maximumFractionDigits: 0,
+  }).format(product.priceCOP);
+  const title = `${product.name} | Agricultor`;
+  const description = `${category} · ${quantity} ${unit} disponibles · ${price} por unidad · ${product.municipality}`;
+  const url = new URL(getPublicProductHref(product.id), baseUrl);
+
+  return {
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      type: "website" as const,
+      title,
+      description,
+      url,
+    },
+    twitter: {
+      card: "summary" as const,
+      title,
+      description,
+    },
+  };
 }
 
 export function getPublicProducts(
