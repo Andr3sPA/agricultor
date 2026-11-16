@@ -380,8 +380,9 @@ async function main(): Promise<void> {
         .getByText("Rechazado")
         .waitFor();
       await producerPage
-        .getByRole("status")
-        .getByText("Rechazamos el pedido y devolvimos la cantidad a disponibilidad.")
+        .getByText(
+          "La solicitud fue rechazada y la cantidad reservada volvió a estar disponible.",
+        )
         .waitFor();
       rejectedOrder = await database.order.findFirstOrThrow({
         where: { id: rejectedOrderId },
