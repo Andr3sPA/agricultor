@@ -32,6 +32,15 @@ export function OrderDecisionForm({ orderId }: { orderId: string }) {
         name="decision"
         type="submit"
         value="REJECTED"
+        onClick={(event) => {
+          if (
+            !window.confirm(
+              "¿Rechazar este pedido? La cantidad reservada volverá a estar disponible y no podrás cambiar la decisión.",
+            )
+          ) {
+            event.preventDefault();
+          }
+        }}
       >
         Rechazar pedido
       </button>

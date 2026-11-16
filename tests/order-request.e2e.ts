@@ -326,6 +326,84 @@ async function main(): Promise<void> {
         .getByRole("list", { name: "Seguimiento del pedido" })
         .getByText("Aceptado")
         .waitFor();
+
+      await page.goto(`${baseURL}/catalogo/${product.id}/pedido`);
+      await page.getByLabel("Cantidad que solicitas").fill("1");
+      await page.getByRole("button", { name: "Solicitar producto" }).click();
+      await page
+        .getByRole("status")
+        .getByText("Enviamos tu solicitud.")
+        .waitFor();
+
+      await producerPage.reload();
+      let canceledRejectionMessage = "";
+      producerPage.once("dialog", (dialog) => {
+        assert.equal(dialog.type(), "confirm");
+        canceledRejectionMessage = dialog.message();
+        void dialog.dismiss();
+      });
+      await producerPage
+        .getByRole("button", { name: "Rechazar pedido" })
+        .click();
+      assert.match(canceledRejectionMessage, /no podrás cambiar la decisión/);
+      await producerPage
+        .getByRole("list", { name: "Seguimiento del pedido" })
+        .first()
+        .getByText("Esperando respuesta")
+        .waitFor();
+
+      let rejectedOrder = await database.order.findFirstOrThrow({
+        where: { buyerId: buyer.id, productId: product.id, status: "PENDING" },
+        include: { history: true },
+      });
+      assert.equal(rejectedOrder.history.length, 1);
+      const rejectedOrderId = rejectedOrder.id;
+      let reservedInventory = await database.product.findUniqueOrThrow({
+        where: { id: product.id },
+      });
+      assert.ok(reservedInventory.availableQuantity.equals("2"));
+      assert.ok(reservedInventory.reservedQuantity.equals("1"));
+
+      let confirmedRejectionMessage = "";
+      producerPage.once("dialog", (dialog) => {
+        assert.equal(dialog.type(), "confirm");
+        confirmedRejectionMessage = dialog.message();
+        void dialog.accept();
+      });
+      await producerPage
+        .getByRole("button", { name: "Rechazar pedido" })
+        .click();
+      assert.match(confirmedRejectionMessage, /no podrás cambiar la decisión/);
+      await producerPage
+        .getByRole("list", { name: "Seguimiento del pedido" })
+        .first()
+        .getByText("Rechazado")
+        .waitFor();
+      await producerPage
+        .getByText(
+          "La solicitud fue rechazada y la cantidad reservada volvió a estar disponible.",
+        )
+        .waitFor();
+      rejectedOrder = await database.order.findFirstOrThrow({
+        where: { id: rejectedOrderId },
+        include: { history: true },
+      });
+      assert.equal(rejectedOrder.status, "REJECTED");
+      assert.equal(rejectedOrder.history.length, 2);
+      reservedInventory = await database.product.findUniqueOrThrow({
+        where: { id: product.id },
+      });
+      assert.ok(reservedInventory.availableQuantity.equals("3"));
+      assert.ok(reservedInventory.reservedQuantity.equals("0"));
+
+      await page.goto(`${baseURL}/mi-cuenta/pedidos`);
+      await page.getByText("El productor rechazó esta solicitud.").waitFor();
+      await page
+        .getByRole("list", { name: "Seguimiento del pedido" })
+        .first()
+        .getByText("Rechazado")
+        .waitFor();
+
       await producerContext.close();
       await context.close();
     } finally {
