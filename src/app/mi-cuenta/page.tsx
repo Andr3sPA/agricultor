@@ -139,6 +139,25 @@ export default async function AccountPage() {
                 Gestionar mis pedidos
               </Link>
             </section>
+
+            <section
+              aria-labelledby="farm-agenda-title"
+              className="rounded-2xl border border-slate-200 p-5"
+            >
+              <h2 className="text-xl font-semibold" id="farm-agenda-title">
+                Agenda de labores
+              </h2>
+              <p className="mt-4 text-slate-700">
+                Organiza y consulta las actividades planificadas para tus
+                cultivos.
+              </p>
+              <Link
+                className="mt-4 inline-flex min-h-12 w-full items-center justify-center rounded-xl border border-emerald-900 px-5 py-3 text-center font-semibold text-emerald-950 hover:bg-emerald-50 sm:w-auto"
+                href="/mi-cuenta/agenda"
+              >
+                Abrir mi agenda
+              </Link>
+            </section>
           </div>
           <Link
             className="mt-5 inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-emerald-800 px-5 py-3 text-center font-semibold text-white hover:bg-emerald-900 sm:w-auto"
