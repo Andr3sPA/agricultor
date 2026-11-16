@@ -1,0 +1,72 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import {
+  calculateAgriculturalCosts,
+  type CalculatorValues,
+} from "@/features/calculator/agricultural-costs";
+
+const validValues: CalculatorValues = {
+  productionQuantity: "100",
+  salePricePerUnit: "2500",
+  seeds: "20000",
+  supplies: "30000",
+  labor: "25000",
+  transport: "5000",
+  other: "0",
+};
+
+test("calculates total and unit cost, expected revenue, profit, and margin", () => {
+  const calculation = calculateAgriculturalCosts(validValues);
+
+  assert.deepEqual(calculation.errors, {});
+  assert.deepEqual(calculation.result, {
+    totalCost: 80000,
+    unitCost: 800,
+    expectedRevenue: 250000,
+    profit: 170000,
+    marginPercent: 68,
+  });
+});
+
+test("rejects empty values and negative amounts", () => {
+  const calculation = calculateAgriculturalCosts({
+    ...validValues,
+    productionQuantity: "",
+    salePricePerUnit: "-1",
+    labor: "-5",
+  });
+
+  assert.equal(calculation.result, null);
+  assert.equal(calculation.errors.productionQuantity, "Este campo es obligatorio.");
+  assert.equal(calculation.errors.salePricePerUnit, "El valor no puede ser negativo.");
+  assert.equal(calculation.errors.labor, "El valor no puede ser negativo.");
+});
+
+test("rejects zero production to avoid division by zero", () => {
+  const calculation = calculateAgriculturalCosts({
+    ...validValues,
+    productionQuantity: "0",
+  });
+
+  assert.equal(calculation.result, null);
+  assert.match(calculation.errors.productionQuantity ?? "", /mayor que cero/);
+});
+
+test("accepts zero costs and reports an undefined margin when revenue is zero", () => {
+  const calculation = calculateAgriculturalCosts({
+    ...validValues,
+    salePricePerUnit: "0",
+    seeds: "0",
+    supplies: "0",
+    labor: "0",
+    transport: "0",
+    other: "0",
+  });
+
+  assert.deepEqual(calculation.errors, {});
+  assert.equal(calculation.result?.totalCost, 0);
+  assert.equal(calculation.result?.unitCost, 0);
+  assert.equal(calculation.result?.expectedRevenue, 0);
+  assert.equal(calculation.result?.profit, 0);
+  assert.equal(calculation.result?.marginPercent, null);
+});

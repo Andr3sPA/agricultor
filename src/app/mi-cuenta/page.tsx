@@ -140,6 +140,12 @@ export default async function AccountPage() {
               </Link>
             </section>
           </div>
+          <Link
+            className="mt-5 inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-emerald-800 px-5 py-3 text-center font-semibold text-white hover:bg-emerald-900 sm:w-auto"
+            href="/mi-cuenta/calculadora"
+          >
+            Calcular costos y margen
+          </Link>
         </section>
       )}
 
