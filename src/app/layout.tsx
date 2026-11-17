@@ -5,7 +5,8 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Agricultor",
-  description: "Plataforma agrícola en preparación.",
+  description:
+    "Conecta con productores y explora productos del campo en Agricultor.",
   manifest: "/manifest.webmanifest",
 };
 
