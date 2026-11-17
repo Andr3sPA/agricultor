@@ -305,7 +305,10 @@ async function main(): Promise<void> {
       const resetRequest = await api.post(
         "/api/auth/request-password-reset",
         {
-          data: { email, redirectTo: "/restablecer-contrasena" },
+          data: {
+            email,
+            redirectTo: `${baseURL}/restablecer-contrasena`,
+          },
         },
       );
       assert.equal(
