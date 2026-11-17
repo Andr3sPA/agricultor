@@ -90,14 +90,18 @@ after(async () => {
   await once(server, "exit");
 });
 
-test("production home page renders the Spanish scaffold", async () => {
+test("production home page guides buyers and producers to the right starting point", async () => {
   const response = await fetch(url);
   assert.equal(response.status, 200);
   const html = await response.text();
 
   assert.match(html, /<html lang="es"/);
-  assert.match(html, /Una plataforma para conectar el campo y el mercado/);
-  assert.match(html, /Este espacio está en preparación\./);
+  assert.match(html, /Compra productos del campo o vende tu cosecha/);
+  assert.match(html, /Explorar el catálogo/);
+  assert.match(html, /href="\/catalogo"/);
+  assert.match(html, /Crear cuenta para vender/);
+  assert.match(html, /href="\/crear-cuenta"/);
+  assert.match(html, /href="\/iniciar-sesion"/);
 });
 
 test("production serves the offline worker, policy, and app manifest", async () => {
