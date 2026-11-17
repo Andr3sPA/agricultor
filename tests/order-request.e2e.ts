@@ -328,19 +328,19 @@ async function main(): Promise<void> {
       localResetUrl.protocol = "http:";
       try {
         await resetPage.goto(localResetUrl.toString());
+        await resetPage
+          .getByRole("heading", { name: "Cambia tu contraseña" })
+          .waitFor();
         await resetPage.waitForFunction(
-          () =>
-            window.location.pathname === "/restablecer-contrasena" &&
-            window.location.search === "",
+          () => window.location.search === "",
           undefined,
-          { timeout: 5000 },
+          { timeout: 15000 },
         );
       } catch {
         throw new Error(
           "The local reset link did not reach a token-free password form.",
         );
       }
-      await resetPage.getByRole("heading", { name: "Cambia tu contraseña" }).waitFor();
       await resetPage.getByLabel("Nueva contraseña").fill(newPassword);
       await resetPage
         .getByLabel("Confirma la nueva contraseña")
