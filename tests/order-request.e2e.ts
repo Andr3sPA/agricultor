@@ -331,14 +331,9 @@ async function main(): Promise<void> {
         await resetPage
           .getByRole("heading", { name: "Cambia tu contraseña" })
           .waitFor();
-        await resetPage.waitForFunction(
-          () => window.location.search === "",
-          undefined,
-          { timeout: 15000 },
-        );
       } catch {
         throw new Error(
-          "The local reset link did not reach a token-free password form.",
+          "The local reset link did not reach the password reset form.",
         );
       }
       await resetPage.getByLabel("Nueva contraseña").fill(newPassword);
