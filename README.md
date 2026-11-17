@@ -91,6 +91,7 @@ npm run lint
 npm run typecheck
 npm run test:unit
 npm run test:integration
+npm run test:e2e
 npm run build
 npm test
 ```
@@ -101,6 +102,10 @@ credenciales. La prueba de integración solo se ejecuta con
 `TEST_DATABASE_URL` apuntando a una base PostgreSQL local y desechable cuyo nombre
 empiece por `agricultor_test` y con el esquema de migraciones ya aplicado; nunca
 usa `DATABASE_URL` ni ejecuta migraciones. No apuntes `TEST_DATABASE_URL` a una
-base de producción. `npm test` ejecuta la prueba HTTP de producción y necesita
-que se corra `npm run build` antes. El build requiere `AUTH_SECRET` y
-`DATABASE_URL`, pero no ejecuta consultas ni migraciones.
+base de producción. `npm run test:e2e` prueba registro, inicio de sesión,
+recuperación y el flujo de pedidos contra el servidor de producción construido;
+también requiere esa base local desechable y el esquema aplicado. La recuperación
+usa un stub HTTP local de Brevo y no envía correos reales. `npm test` ejecuta
+pruebas HTTP de producción y necesita que se corra `npm run build` antes. El
+build requiere `AUTH_SECRET` y `DATABASE_URL`, pero no ejecuta consultas ni
+migraciones.
