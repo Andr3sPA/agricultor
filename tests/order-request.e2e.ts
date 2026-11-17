@@ -339,9 +339,14 @@ async function main(): Promise<void> {
           "The local reset link did not reach the password reset form.",
         );
       }
-      await resetPage.getByLabel("Nueva contraseña").fill(newPassword);
       await resetPage
-        .getByLabel("Confirma la nueva contraseña")
+        .getByRole("textbox", { name: "Nueva contraseña", exact: true })
+        .fill(newPassword);
+      await resetPage
+        .getByRole("textbox", {
+          name: "Confirma la nueva contraseña",
+          exact: true,
+        })
         .fill(newPassword);
       await resetPage.getByRole("button", { name: "Guardar contraseña" }).click();
       await resetPage
