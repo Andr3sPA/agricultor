@@ -164,6 +164,7 @@ async function startServer(
         DATABASE_URL: databaseUrl,
         NODE_ENV: "production",
         TEST_DATABASE_URL: databaseUrl,
+        AUTH_E2E_BASE_URL: `http://localhost:${port}`,
         API_KEY_BREVO: E2E_BREVO_API_KEY,
         BREVO_SENDER_EMAIL: "no-reply@example.test",
         BREVO_TEST_API_URL: brevoApiUrl,
@@ -320,15 +321,21 @@ async function main(): Promise<void> {
       const resetUrl = resetEmail.textContent.match(/https?:\/\/\S+/)?.[0];
       assert.ok(resetUrl, "The local reset email did not contain a link.");
 
+      const localResetUrl = new URL(resetUrl);
+      assert.ok(
+        ["localhost", "127.0.0.1"].includes(localResetUrl.hostname),
+        "The reset email did not contain a local E2E link.",
+      );
+      assert.equal(
+        localResetUrl.protocol,
+        "http:",
+        "Local E2E reset links must use HTTP.",
+      );
+
       const newPassword = `Reset-${randomUUID()}-pass`;
       browser = await chromium.launch({ headless: true });
       const resetContext = await browser.newContext();
       const resetPage = await resetContext.newPage();
-      const localResetUrl = new URL(resetUrl);
-      if (!["localhost", "127.0.0.1"].includes(localResetUrl.hostname)) {
-        throw new Error("The reset email did not contain a local E2E link.");
-      }
-      localResetUrl.protocol = "http:";
       try {
         await resetPage.goto(localResetUrl.toString());
         await resetPage
