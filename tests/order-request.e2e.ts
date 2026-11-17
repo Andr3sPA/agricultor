@@ -305,7 +305,10 @@ async function main(): Promise<void> {
       const resetRequest = await api.post(
         "/api/auth/request-password-reset",
         {
-          data: { email, redirectTo: "/restablecer-contrasena" },
+          data: {
+            email,
+            redirectTo: `${baseURL}/restablecer-contrasena`,
+          },
         },
       );
       assert.equal(
@@ -321,11 +324,29 @@ async function main(): Promise<void> {
       browser = await chromium.launch({ headless: true });
       const resetContext = await browser.newContext();
       const resetPage = await resetContext.newPage();
-      await resetPage.goto(resetUrl);
-      await resetPage.getByRole("heading", { name: "Cambia tu contraseña" }).waitFor();
-      await resetPage.getByLabel("Nueva contraseña").fill(newPassword);
+      const localResetUrl = new URL(resetUrl);
+      if (!["localhost", "127.0.0.1"].includes(localResetUrl.hostname)) {
+        throw new Error("The reset email did not contain a local E2E link.");
+      }
+      localResetUrl.protocol = "http:";
+      try {
+        await resetPage.goto(localResetUrl.toString());
+        await resetPage
+          .getByRole("heading", { name: "Cambia tu contraseña" })
+          .waitFor();
+      } catch {
+        throw new Error(
+          "The local reset link did not reach the password reset form.",
+        );
+      }
       await resetPage
-        .getByLabel("Confirma la nueva contraseña")
+        .getByRole("textbox", { name: "Nueva contraseña", exact: true })
+        .fill(newPassword);
+      await resetPage
+        .getByRole("textbox", {
+          name: "Confirma la nueva contraseña",
+          exact: true,
+        })
         .fill(newPassword);
       await resetPage.getByRole("button", { name: "Guardar contraseña" }).click();
       await resetPage
