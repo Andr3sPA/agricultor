@@ -9,6 +9,7 @@ export default async function SignInPage({
 }) {
   const params = await searchParams;
   const redirectTo = getOrderRequestRedirect(params.redirectTo);
+  const producerIntent = params.intent === "producer";
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-xl items-center px-4 py-8 sm:px-6 sm:py-12">
@@ -26,7 +27,11 @@ export default async function SignInPage({
         <p className="mt-3 leading-7 text-slate-700">
           Ingresa con el correo y la contraseña de tu cuenta.
         </p>
-        <AuthForm mode="sign-in" redirectTo={redirectTo} />
+        <AuthForm
+          mode="sign-in"
+          producerIntent={producerIntent}
+          redirectTo={redirectTo}
+        />
       </section>
     </main>
   );

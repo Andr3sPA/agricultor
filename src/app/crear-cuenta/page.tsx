@@ -9,6 +9,7 @@ export default async function SignUpPage({
 }) {
   const params = await searchParams;
   const redirectTo = getOrderRequestRedirect(params.redirectTo);
+  const producerIntent = params.intent === "producer";
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-xl items-center px-4 py-8 sm:px-6 sm:py-12">
@@ -22,11 +23,19 @@ export default async function SignUpPage({
         <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-800">
           Agricultor
         </p>
-        <h1 className="mt-4 text-3xl font-semibold">Crea tu cuenta</h1>
+        <h1 className="mt-4 text-3xl font-semibold">
+          {producerIntent ? "Crea tu cuenta para vender" : "Crea tu cuenta"}
+        </h1>
         <p className="mt-3 leading-7 text-slate-700">
-          Tu cuenta empieza como comprador. Luego puedes agregar otros perfiles.
+          {producerIntent
+            ? "Después de crear tu cuenta e iniciar sesión, agrega el perfil de productor para registrar y publicar tu cosecha."
+            : "Tu cuenta empieza como comprador. Luego puedes agregar otros perfiles."}
         </p>
-        <AuthForm mode="sign-up" redirectTo={redirectTo} />
+        <AuthForm
+          mode="sign-up"
+          producerIntent={producerIntent}
+          redirectTo={redirectTo}
+        />
       </section>
     </main>
   );

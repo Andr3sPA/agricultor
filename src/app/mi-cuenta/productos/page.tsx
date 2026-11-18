@@ -50,9 +50,26 @@ export default async function ProductsPage() {
         </p>
         <h1 className="mt-4 text-3xl font-semibold">Mis productos</h1>
         <p className="mt-3 text-slate-700">
-          Guarda la información de tu oferta. Todavía no se publica para otras
-          personas ni se conecta con pedidos.
+          Registra tu oferta y publícala en el catálogo cuando esté lista. Las
+          solicitudes recibidas aparecerán en el seguimiento de pedidos.
         </p>
+        <nav
+          aria-label="Acciones de productor"
+          className="mt-4 flex flex-wrap gap-4"
+        >
+          <Link
+            className="font-semibold text-emerald-900 underline underline-offset-4"
+            href="/mi-cuenta/pedidos"
+          >
+            Ver pedidos recibidos
+          </Link>
+          <Link
+            className="font-semibold text-emerald-900 underline underline-offset-4"
+            href="/catalogo"
+          >
+            Ver catálogo publicado
+          </Link>
+        </nav>
         <ProductForm />
       </section>
       <section className="mt-8 rounded-3xl border border-emerald-950/10 bg-white p-8 shadow-sm sm:p-12">

@@ -15,14 +15,25 @@ const roleLabels = {
   ADMIN: "Administrador",
 } as const;
 
-export default async function AccountPage() {
+export default async function AccountPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = await searchParams;
+  const producerIntent = params.intent === "producer";
   const identity = await getCurrentIdentity();
 
   if (!identity) {
-    redirect("/iniciar-sesion");
+    redirect(
+      producerIntent ? "/iniciar-sesion?intent=producer" : "/iniciar-sesion",
+    );
   }
 
   const isProducer = canManageProducts(identity.roles);
+  if (producerIntent && isProducer) {
+    redirect("/mi-cuenta/productos");
+  }
   const dashboard = isProducer
     ? await getProducerDashboardSummary(identity, prisma)
     : null;
@@ -242,12 +253,23 @@ export default async function AccountPage() {
           <h1 className="mt-4 text-3xl font-semibold">Tu cuenta</h1>
         )}
         <h2 className="mt-8 text-lg font-semibold">Tus perfiles</h2>
+        {producerIntent && (
+          <div className="mt-4 rounded-2xl bg-emerald-50 p-4">
+            <h3 className="font-semibold text-emerald-950">
+              Continúa como productor
+            </h3>
+            <p className="mt-1 text-sm text-slate-700">
+              Agrega este perfil para registrar productos, publicarlos y hacer
+              seguimiento de los pedidos que recibas.
+            </p>
+          </div>
+        )}
         <ul className="mt-3 list-inside list-disc space-y-2 text-slate-700">
           {identity.roles.map((role) => (
             <li key={role}>{roleLabels[role]}</li>
           ))}
         </ul>
-        <RoleForm />
+        <RoleForm initialRole={producerIntent ? "PRODUCER" : undefined} />
         {canManageProducts(identity.roles) && (
           <Link
             className="mt-6 inline-flex rounded-xl bg-emerald-800 px-5 py-3 font-semibold text-white hover:bg-emerald-900"

@@ -126,7 +126,7 @@ export default function Home() {
             </p>
             <Link
               className="mt-5 inline-flex min-h-12 w-full items-center justify-center rounded-xl border-2 border-emerald-800 px-5 py-3 text-center font-bold text-emerald-950 hover:bg-emerald-50 sm:w-auto"
-              href="/crear-cuenta"
+              href="/crear-cuenta?intent=producer"
             >
               Crear cuenta para vender
             </Link>
