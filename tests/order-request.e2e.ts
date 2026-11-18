@@ -355,10 +355,15 @@ async function main(): Promise<void> {
         municipio: municipality,
       });
       await anonymousPage.goto(`${baseURL}/catalogo?${catalogQuery}`);
+      const resultCount = anonymousPage.getByRole("status").filter({
+        hasText: "13 ofertas encontradas",
+      });
+      await expect(resultCount).toBeVisible();
       await anonymousPage.getByRole("link", { name: "Siguiente" }).click();
       catalogQuery.set("pagina", "2");
       const catalogUrl = `${baseURL}/catalogo?${catalogQuery}`;
       await anonymousPage.waitForURL(catalogUrl);
+      await expect(resultCount).toBeVisible();
       const productLink = anonymousPage.getByRole("link", {
         name: product.name,
         exact: true,

@@ -25,6 +25,7 @@ const copFormatter = new Intl.NumberFormat("es-CO", {
 const quantityFormatter = new Intl.NumberFormat("es-CO", {
   maximumFractionDigits: 3,
 });
+const resultCountFormatter = new Intl.NumberFormat("es-CO");
 
 export const metadata = {
   title: "Catálogo público | Agricultor",
@@ -169,6 +170,13 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
           Restablecer filtros y orden
         </Link>
       ) : null}
+      {total > 0 && products.length > 0 ? (
+        <p className="mt-6 text-sm text-slate-700" role="status">
+          {total === 1
+            ? "1 oferta encontrada"
+            : `${resultCountFormatter.format(total)} ofertas encontradas`}
+        </p>
+      ) : null}
       {products.length === 0 ? (
         <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-5 text-slate-700 sm:p-6">
           <p>
@@ -178,7 +186,7 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
           </p>
         </div>
       ) : (
-        <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {products.map((product) => {
             const category =
               PRODUCT_CATEGORIES.find(({ value }) => value === product.category)
