@@ -22,6 +22,7 @@ test("calculates total and unit cost, expected revenue, profit, and margin", () 
   assert.deepEqual(calculation.result, {
     totalCost: 80000,
     unitCost: 800,
+    wholePesoUnitCost: 800,
     expectedRevenue: 250000,
     profit: 170000,
     marginPercent: 68,
@@ -73,12 +74,27 @@ test("shows costs without treating an undecided sale price as zero income", () =
     result: {
       totalCost: 80000,
       unitCost: 800,
+      wholePesoUnitCost: 800,
       expectedRevenue: null,
       profit: null,
       marginPercent: null,
     },
     errors: {},
   });
+});
+
+test("rounds the unit cost up to a whole peso so the estimate covers costs", () => {
+  const result = calculateAgriculturalCosts({
+    productionQuantity: "2,5",
+    salePricePerUnit: "",
+    seeds: "1.250,50",
+    supplies: "",
+    labor: "",
+    transport: "",
+    other: "",
+  }).result;
+  assert.equal(result?.unitCost, 500.2);
+  assert.equal(result?.wholePesoUnitCost, 501);
 });
 
 test("rejects an invalid grouping instead of guessing the amount", () => {

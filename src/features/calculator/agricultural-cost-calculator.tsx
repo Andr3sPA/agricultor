@@ -64,9 +64,18 @@ function ResultSummary({ result }: { result: CalculatorResult }) {
           </div>
         ))}
       </dl>
+      <div className="mt-4 rounded-xl border border-emerald-200 bg-white p-4 text-emerald-950">
+        <p className="text-sm font-medium">Precio por unidad para cubrir tus costos</p>
+        <p className="mt-1 text-xl font-semibold wrap-anywhere">
+          {copFormatter.format(result.wholePesoUnitCost)}
+        </p>
+        <p className="mt-2 text-sm">
+          Redondeado hacia arriba a pesos enteros. Supone que vendes toda la
+          cantidad que anotaste.
+        </p>
+      </div>
       {result.expectedRevenue === null ? (
         <p className="mt-4 text-sm text-emerald-950">
-          Usa el costo por unidad como punto de partida para fijar tu precio.
           Ingresa un precio de venta si quieres estimar tu ganancia.
         </p>
       ) : (

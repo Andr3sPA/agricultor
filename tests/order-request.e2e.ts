@@ -440,6 +440,7 @@ async function main(): Promise<void> {
       await producerPage.getByRole("button", { name: "Calcular costos y margen" }).click();
       const costResult = producerPage.getByRole("region", { name: "Resultado estimado" });
       await expect(costResult).toContainText(/Costo por unidad\s*\$\s*500,2/);
+      await expect(costResult).toContainText(/Precio por unidad para cubrir tus costos\s*\$\s*501/);
       await expect(costResult.getByText("Ingreso esperado", { exact: true })).toHaveCount(0);
       await producerPage.getByLabel("Precio de venta por unidad").fill("$2.000");
       await expect(costResult).toContainText(/Ingreso esperado\s*\$\s*5\.000/);

@@ -20,6 +20,7 @@ export type CalculatorValues = {
 export type CalculatorResult = {
   totalCost: number;
   unitCost: number;
+  wholePesoUnitCost: number;
   expectedRevenue: number | null;
   profit: number | null;
   marginPercent: number | null;
@@ -102,6 +103,7 @@ export function calculateAgriculturalCosts(
     result: {
       totalCost,
       unitCost,
+      wholePesoUnitCost: Math.ceil(unitCost),
       expectedRevenue,
       profit,
       marginPercent: expectedRevenue && profit !== null
