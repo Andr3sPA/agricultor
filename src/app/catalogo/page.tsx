@@ -39,6 +39,8 @@ type CatalogPageProps = {
 
 export default async function CatalogPage({ searchParams }: CatalogPageProps) {
   const filters = parseCatalogFilters(await searchParams);
+  const hasFilters = Boolean(filters.category || filters.municipality);
+  const filterHref = getCatalogPageHref(filters, 1);
   const where = getPublicProductWhere(filters);
   const total = await prisma.product.count({ where });
   const pagination = getCatalogPagination(total, filters.page);
@@ -98,6 +100,7 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
       <form
         action="/catalogo"
         className="mt-6 grid gap-4 rounded-2xl border border-slate-200 bg-white p-4 sm:grid-cols-2 sm:items-end sm:p-6 lg:grid-cols-[1fr_1fr_1fr_auto]"
+        key={filterHref}
         method="get"
       >
         <div>
@@ -158,21 +161,21 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
           Filtrar
         </button>
       </form>
+      {filterHref !== "/catalogo" ? (
+        <Link
+          className="mt-2 inline-flex min-h-12 items-center font-semibold text-emerald-900 underline underline-offset-4"
+          href="/catalogo"
+        >
+          Restablecer filtros y orden
+        </Link>
+      ) : null}
       {products.length === 0 ? (
         <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-5 text-slate-700 sm:p-6">
           <p>
-            {filters.category || filters.municipality
-              ? "No encontramos productos con estos filtros. Puedes ver todos los productos y volver a empezar."
+            {hasFilters
+              ? "No encontramos productos con estos filtros."
               : "No hay productos publicados y disponibles en este momento."}
           </p>
-          {filters.category || filters.municipality ? (
-            <Link
-              className="mt-4 inline-flex min-h-12 items-center font-semibold text-emerald-900 underline underline-offset-4"
-              href="/catalogo"
-            >
-              Ver todos los productos
-            </Link>
-          ) : null}
         </div>
       ) : (
         <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

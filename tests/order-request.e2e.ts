@@ -7,6 +7,7 @@ import { createServer } from "node:net";
 import { PrismaPg } from "@prisma/adapter-pg";
 import {
   chromium,
+  expect,
   request as playwrightRequest,
   type APIRequestContext,
   type Browser,
@@ -371,6 +372,17 @@ async function main(): Promise<void> {
         .click();
       await anonymousPage.waitForURL(catalogUrl);
       await productLink.waitFor();
+      catalogQuery.set("orden", "precio-asc");
+      await anonymousPage.goto(`${baseURL}/catalogo?${catalogQuery}`);
+      const resetFilters = anonymousPage.getByRole("link", {
+        name: "Restablecer filtros y orden",
+      });
+      await resetFilters.click();
+      await anonymousPage.waitForURL(`${baseURL}/catalogo`);
+      await expect(anonymousPage.getByLabel("Categoría")).toHaveValue("");
+      await expect(anonymousPage.getByLabel("Municipio")).toHaveValue("");
+      await expect(anonymousPage.getByLabel("Ordenar por")).toHaveValue("");
+      await expect(resetFilters).toHaveCount(0);
       for (const path of ["/mi-cuenta", "/mi-cuenta/pedidos"]) {
         await anonymousPage.goto(`${baseURL}${path}`);
         assert.equal(

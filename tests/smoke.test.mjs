@@ -171,7 +171,7 @@ test("catalog helps people recover from loading, filter, and connection problems
   assert.match(catalogError, /onClick=\{reset\}/);
   assert.match(catalogPage, /aria-describedby="municipio-ayuda"/);
   assert.match(catalogPage, /No encontramos productos con estos filtros/);
-  assert.match(catalogPage, /Ver todos los productos/);
+  assert.match(catalogPage, /Restablecer filtros y orden/);
   assert.match(catalogPage, /min-h-12 w-full/);
 });
 
