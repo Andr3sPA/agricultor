@@ -26,6 +26,7 @@ const copFormatter = new Intl.NumberFormat("es-CO", {
 const dateFormatter = new Intl.DateTimeFormat("es-CO", {
   dateStyle: "medium",
   timeStyle: "short",
+  timeZone: "America/Bogota",
 });
 
 export const dynamic = "force-dynamic";
@@ -237,7 +238,8 @@ export default async function OrdersPage() {
         </p>
         <h1 className="mt-4 text-3xl font-semibold">Mis pedidos</h1>
         <p className="mt-3 text-slate-700">
-          Consulta el estado y la respuesta a cada solicitud.
+          Consulta el estado y la respuesta a cada solicitud. Las fechas y
+          horas se muestran en hora de Colombia.
         </p>
       </section>
       {isBuyer && (

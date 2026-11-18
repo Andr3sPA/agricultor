@@ -164,6 +164,7 @@ async function startServer(
           process.env.AUTH_SECRET ?? randomBytes(32).toString("base64url"),
         DATABASE_URL: databaseUrl,
         NODE_ENV: "production",
+        TZ: "UTC",
         TEST_DATABASE_URL: databaseUrl,
         AUTH_E2E_BASE_URL: `http://localhost:${port}`,
         API_KEY_BREVO: E2E_BREVO_API_KEY,
@@ -607,6 +608,15 @@ async function main(): Promise<void> {
       });
       assert.equal(acceptedOrder.status, "ACCEPTED");
       assert.equal(acceptedOrder.history.length, 2);
+      const acceptance = acceptedOrder.history.find(
+        (event) => event.toStatus === "ACCEPTED",
+      );
+      assert.ok(acceptance);
+      const colombianTime = new Intl.DateTimeFormat("es-CO", {
+        dateStyle: "medium",
+        timeStyle: "short",
+        timeZone: "America/Bogota",
+      });
 
       await page.goto(`${baseURL}/mi-cuenta/pedidos`);
       await page
@@ -620,6 +630,12 @@ async function main(): Promise<void> {
         .getByRole("list", { name: "Seguimiento de tu solicitud" })
         .getByText("Aceptado")
         .waitFor();
+      await expect(
+        page.getByRole("list", { name: "Seguimiento de tu solicitud" }).locator("time"),
+      ).toHaveText([
+        colombianTime.format(acceptedOrder.createdAt),
+        colombianTime.format(acceptance.createdAt),
+      ]);
 
       await page.goto(`${baseURL}/catalogo/${product.id}/pedido`);
       await page.getByLabel("Cantidad que solicitas").fill("1");
