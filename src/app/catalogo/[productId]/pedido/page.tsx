@@ -66,18 +66,20 @@ export default async function RequestOrderPage({
   )}`;
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-2xl px-6 py-12">
+    <main className="mx-auto min-h-screen w-full max-w-2xl px-4 py-8 sm:px-6 sm:py-12">
       <Link
-        className="font-semibold text-emerald-900 underline"
+        className="inline-flex min-h-12 items-center font-semibold text-emerald-900 underline"
         href="/catalogo"
       >
         Volver al catálogo
       </Link>
-      <section className="mt-6 rounded-3xl border border-emerald-950/10 bg-white p-8 shadow-sm sm:p-12">
+      <section className="mt-4 rounded-3xl border border-emerald-950/10 bg-white p-5 shadow-sm sm:mt-6 sm:p-12">
         <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-800">
           Solicitud de compra
         </p>
-        <h1 className="mt-4 text-3xl font-semibold">{product.name}</h1>
+        <h1 className="mt-4 text-3xl font-semibold wrap-anywhere">
+          {product.name}
+        </h1>
         <dl className="mt-6 grid gap-4 text-slate-700 sm:grid-cols-2">
           <div>
             <dt className="font-medium">Categoría</dt>
@@ -93,7 +95,7 @@ export default async function RequestOrderPage({
           </div>
           <div>
             <dt className="font-medium">Municipio</dt>
-            <dd>{product.municipality}</dd>
+            <dd className="wrap-anywhere">{product.municipality}</dd>
           </div>
         </dl>
         {isBuyer && !isOwner ? (
@@ -103,15 +105,17 @@ export default async function RequestOrderPage({
             productId={product.id}
           />
         ) : !identity ? (
-          <p className="mt-6 text-slate-700">
+          <div className="mt-6 space-y-3">
+            <p className="text-slate-700">
+              Necesitas un perfil de comprador para solicitar este producto.
+            </p>
             <Link
-              className="font-semibold text-emerald-900 underline"
+              className="inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-emerald-800 px-5 py-3 font-semibold text-white hover:bg-emerald-900 sm:w-auto"
               href={signInHref}
             >
               Inicia sesión
-            </Link>{" "}
-            con un perfil de comprador para solicitar este producto.
-          </p>
+            </Link>
+          </div>
         ) : isOwner ? (
           <p className="mt-6 text-slate-700">
             No puedes solicitar tu propio producto.

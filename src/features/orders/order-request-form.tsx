@@ -38,7 +38,7 @@ export function OrderRequestForm({
           }
           aria-invalid={Boolean(state.fieldErrors?.quantity)}
           autoComplete="off"
-          className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3"
+          className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 px-4 py-3"
           id="order-quantity"
           inputMode="decimal"
           name="quantity"
@@ -64,7 +64,7 @@ export function OrderRequestForm({
         </p>
       )}
       <button
-        className="w-full rounded-xl bg-emerald-800 px-5 py-3 font-semibold text-white hover:bg-emerald-900 disabled:opacity-60"
+        className="min-h-12 w-full rounded-xl bg-emerald-800 px-5 py-3 font-semibold text-white hover:bg-emerald-900 disabled:opacity-60"
         disabled={pending}
         type="submit"
       >

@@ -448,10 +448,15 @@ async function main(): Promise<void> {
       });
       assert.equal(signin.ok(), true, `Signin failed: ${await signin.text()}`);
 
-      const context = await browser.newContext();
+      const context = await browser.newContext({
+        viewport: { width: 320, height: 640 },
+      });
       const page = await context.newPage();
       await page.goto(`${baseURL}/catalogo/${product.id}/pedido`);
-      await page.getByRole("link", { name: "Inicia sesión" }).click();
+      const signInLink = page.getByRole("link", { name: "Inicia sesión" });
+      const signInBounds = await signInLink.boundingBox();
+      assert.ok(signInBounds && signInBounds.height >= 48);
+      await signInLink.click();
       await page.getByLabel("Correo electrónico").fill(email);
       await page.getByLabel("Contraseña").fill(newPassword);
       await page.getByRole("button", { name: "Iniciar sesión" }).click();
@@ -459,6 +464,13 @@ async function main(): Promise<void> {
       await page.getByText("Solicitud de compra", { exact: true }).waitFor();
       await expect(page.getByLabel("Cantidad que solicitas"))
         .toHaveAccessibleDescription("Disponible ahora: 5 Kilogramo (kg)");
+      assert.equal(
+        await page.locator("html").evaluate(
+          (root) => root.scrollWidth <= root.clientWidth,
+        ),
+        true,
+        "The order form should fit a 320px viewport without horizontal scrolling.",
+      );
       await page.goto(`${baseURL}/mi-cuenta`);
       await page
         .getByRole("heading", { name: "Encuentra productos locales" })
