@@ -3,8 +3,21 @@ export const UNIT_CATEGORIES = [
     key: "mass",
     label: "Peso",
     units: [
-      { key: "lb500", label: "Libras de 500 g", priceUnit: "libra de 500 g", exponent: 3, half: true },
+      {
+        key: "lb500",
+        label: "Libras de 500 g",
+        priceUnit: "libra de 500 g",
+        exponent: 3,
+        halvings: 1,
+      },
       { key: "kg", label: "Kilogramos (kg)", priceUnit: "kilo", exponent: 3 },
+      {
+        key: "arroba125",
+        label: "Arrobas de 12,5 kg",
+        priceUnit: "arroba de 12,5 kg",
+        exponent: 5,
+        halvings: 3,
+      },
       { key: "g", label: "Gramos (g)", priceUnit: "gramo", exponent: 0 },
       { key: "t", label: "Toneladas (t)", priceUnit: "tonelada", exponent: 6 },
     ],
@@ -116,12 +129,17 @@ export function convertAgriculturalUnits(
   const normalizedInput = value.replace(",", ".");
   const normalized = normalizeDecimal(normalizedInput);
   let converted = shiftDecimal(normalized, from.exponent - to.exponent);
-  const fromHalf = "half" in from;
-  const toHalf = "half" in to;
-  if (fromHalf && !toHalf) {
-    converted = shiftDecimal(multiplyDecimalByInteger(converted, BigInt(5)), -1);
-  } else if (toHalf && !fromHalf) {
-    converted = multiplyDecimalByInteger(converted, BigInt(2));
+  const fromHalvings = "halvings" in from ? from.halvings : 0;
+  const toHalvings = "halvings" in to ? to.halvings : 0;
+  const halvings = fromHalvings - toHalvings;
+  if (halvings > 0) {
+    // Dividing by 2 is equivalent to multiplying by 5 and shifting one place.
+    converted = shiftDecimal(
+      multiplyDecimalByInteger(converted, BigInt(5) ** BigInt(halvings)),
+      -halvings,
+    );
+  } else if (halvings < 0) {
+    converted = multiplyDecimalByInteger(converted, BigInt(2) ** BigInt(-halvings));
   }
 
   return {

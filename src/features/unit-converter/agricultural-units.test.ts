@@ -24,6 +24,13 @@ test("calculates a COP estimate from the converted weight and rounds half up", (
   assert.equal(calculateWeightPrice("5", "2,50").value, null);
 });
 
+test("converts arrobas of 12.5 kg across pounds, kilograms and tonnes", () => {
+  assert.equal(convertAgriculturalUnits("1", "mass", "arroba125", "kg").value, "12.5");
+  assert.equal(convertAgriculturalUnits("0,5", "mass", "arroba125", "lb500").value, "12.5");
+  assert.equal(convertAgriculturalUnits("25", "mass", "lb500", "arroba125").value, "1");
+  assert.equal(convertAgriculturalUnits("1", "mass", "t", "arroba125").value, "80");
+});
+
 test("converts mass units without losing decimal precision", () => {
   assert.deepEqual(convertAgriculturalUnits("1250", "mass", "g", "kg"), {
     value: "1.25",

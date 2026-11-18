@@ -247,7 +247,7 @@ export function AgriculturalUnitConverter() {
             Conversión exacta; no se redondeó el resultado.
           </p>
           {priceResult?.value != null && (
-            <p className="mt-3 text-emerald-950">
+            <p className="mt-3 text-emerald-950 wrap-anywhere">
               Valor estimado: <strong>$ {formatAgriculturalValue(priceResult.value)} COP</strong>
               {" "}al peso más cercano.
             </p>

@@ -415,6 +415,14 @@ async function main(): Promise<void> {
       await expect(producerPage.getByLabel("Precio por libra de 500 g en pesos"))
         .toHaveValue("");
       await expect(conversionResult).toHaveCount(0);
+      await producerPage.getByLabel("Cantidad", { exact: true }).fill("25");
+      await producerPage.getByLabel("Convertir a", { exact: true })
+        .selectOption({ label: "Arrobas de 12,5 kg" });
+      await producerPage.getByLabel("Precio por arroba de 12,5 kg en pesos")
+        .fill("32.000");
+      await producerPage.getByRole("button", { name: "Convertir unidades" }).click();
+      await expect(conversionResult).toContainText("25 Kilogramos (kg) = 2 Arrobas de 12,5 kg");
+      await expect(conversionResult).toContainText(/64\.000 COP/);
       await producerPage.setViewportSize({ width: 1280, height: 720 });
       await producerPage.goto(`${baseURL}/mi-cuenta/pedidos`);
       const producerOrdersSection = producerPage.getByRole("region", {
