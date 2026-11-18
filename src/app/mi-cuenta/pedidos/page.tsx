@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { OrderDecisionForm } from "@/features/orders/order-decision-form";
+import { PRODUCT_UNITS } from "@/features/products/product-validation";
 import type { OrderStatus } from "@/generated/prisma/enums";
 import { getCurrentIdentity } from "@/lib/auth/server";
 import { prisma } from "@/lib/db";
@@ -89,6 +90,8 @@ export default async function OrdersPage() {
       order.status === "PENDING"
         ? null
         : order.history.find((event) => event.toStatus === order.status);
+    const unit =
+      PRODUCT_UNITS.find(({ value }) => value === order.unit)?.label ?? order.unit;
 
     return (
       <li
@@ -109,7 +112,7 @@ export default async function OrdersPage() {
             <dt className="font-medium">Cantidad</dt>
             <dd>
               {quantityFormatter.format(order.requestedQuantity.toNumber())}{" "}
-              {order.unit}
+              {unit}
             </dd>
           </div>
           <div>

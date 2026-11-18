@@ -575,6 +575,7 @@ async function main(): Promise<void> {
       assert.ok(replayedInventory.reservedQuantity.equals("2"));
 
       await page.goto(`${baseURL}/mi-cuenta/pedidos`);
+      await expect(page.getByText("2 Kilogramo (kg)", { exact: true })).toBeVisible();
       await page
         .getByText("El productor debe revisar la solicitud.")
         .waitFor();
@@ -588,6 +589,9 @@ async function main(): Promise<void> {
         .waitFor();
 
       await producerPage.goto(`${baseURL}/mi-cuenta/pedidos`);
+      await expect(
+        producerPage.getByText("2 Kilogramo (kg)", { exact: true }),
+      ).toBeVisible();
       await producerPage
         .getByRole("heading", { name: "Solicitudes recibidas" })
         .waitFor();
