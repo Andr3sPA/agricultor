@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useRef, useState } from "react";
 import {
   createFarmActivity,
   deleteFarmActivity,
@@ -152,17 +152,51 @@ export function DeleteFarmActivityForm({
     deleteFarmActivity,
     initialState,
   );
+  const [confirming, setConfirming] = useState(false);
+  const deleteTrigger = useRef<HTMLButtonElement>(null);
+  const confirmationId = `confirm-delete-labor-${activityId}`;
 
   return (
     <form action={action} className="mt-4">
       <input name="activityId" type="hidden" value={activityId} />
       <button
-        className="min-h-11 rounded-xl border border-red-800 px-4 py-2 font-semibold text-red-900 hover:bg-red-50 disabled:opacity-60"
+        aria-controls={confirmationId}
+        aria-expanded={confirming}
+        className="min-h-12 rounded-xl border border-red-800 px-4 py-2 font-semibold text-red-900 hover:bg-red-50 disabled:opacity-60"
         disabled={pending}
-        type="submit"
+        onClick={() => setConfirming(!confirming)}
+        ref={deleteTrigger}
+        type="button"
       >
         Eliminar actividad
       </button>
+      <div className="mt-3 space-y-3 rounded-xl bg-red-50 p-4" hidden={!confirming} id={confirmationId}>
+        <p className="text-sm text-red-950">
+          ¿Quieres borrar esta labor de tu agenda? Una vez borrada, no podrás recuperarla.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <button
+            className="min-h-12 rounded-xl border border-slate-500 px-4 py-2 font-semibold"
+            disabled={pending}
+            onClick={() => {
+              setConfirming(false);
+              deleteTrigger.current?.focus();
+            }}
+            type="button"
+          >
+            Conservar labor
+          </button>
+          {confirming && (
+            <button
+              className="min-h-12 rounded-xl bg-red-800 px-4 py-2 font-semibold text-white disabled:opacity-60"
+              disabled={pending}
+              type="submit"
+            >
+              {pending ? "Eliminando…" : "Sí, eliminar labor"}
+            </button>
+          )}
+        </div>
+      </div>
       <FormMessage state={state} />
     </form>
   );

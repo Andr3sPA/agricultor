@@ -546,6 +546,18 @@ async function main(): Promise<void> {
       await expect(comingTasks.getByText("Revisar lote antes de sembrar")).toBeVisible();
       await expect(comingTasks.getByText("Papa de registro anterior")).toHaveCount(1);
       await expect(history).toHaveCount(0);
+      const rescheduled = comingTasks.getByRole("listitem").filter({
+        hasText: "Papa de registro anterior",
+      });
+      const removeLabor = rescheduled.getByRole("button", { name: "Eliminar actividad" });
+      await removeLabor.click();
+      await rescheduled.getByRole("button", { name: "Conservar labor" }).click();
+      await expect(removeLabor).toBeFocused();
+      await expect(rescheduled).toBeVisible();
+      await removeLabor.click();
+      await rescheduled.getByRole("button", { name: "Sí, eliminar labor" }).click();
+      await expect(rescheduled).toHaveCount(0);
+      await expect(comingTasks.getByText("Papa para cosechar")).toBeVisible();
       await producerPage.setViewportSize({ width: 1280, height: 720 });
       await producerPage.goto(`${baseURL}/mi-cuenta/pedidos`);
       const producerOrdersSection = producerPage.getByRole("region", {
