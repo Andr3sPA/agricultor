@@ -89,6 +89,7 @@ export function AuthForm({ mode }: AuthFormProps) {
           Correo electrónico
         </label>
         <input
+          autoCapitalize="none"
           autoComplete="email"
           className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 px-4 py-3"
           id="email"
@@ -109,8 +110,14 @@ export function AuthForm({ mode }: AuthFormProps) {
           minLength={8}
           name="password"
           required
+          aria-describedby={isSignUp ? "password-hint" : undefined}
           type="password"
         />
+        {isSignUp && (
+          <p className="mt-2 text-sm text-slate-600" id="password-hint">
+            Usa al menos 8 caracteres.
+          </p>
+        )}
       </div>
       {message && (
         <p

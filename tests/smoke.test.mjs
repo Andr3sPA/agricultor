@@ -26,6 +26,14 @@ const roleForm = await readFile(
   new URL("../src/features/auth/role-form.tsx", import.meta.url),
   "utf8",
 );
+const authForm = await readFile(
+  new URL("../src/features/auth/auth-form.tsx", import.meta.url),
+  "utf8",
+);
+const passwordResetForms = await readFile(
+  new URL("../src/features/auth/password-reset-forms.tsx", import.meta.url),
+  "utf8",
+);
 const catalogPage = await readFile(
   new URL("../src/app/catalogo/page.tsx", import.meta.url),
   "utf8",
@@ -179,6 +187,8 @@ test("production registration page keeps labels associated with their fields", a
   assert.match(html, /<label[^>]*for="password"[^>]*>Contraseña<\/label>/);
   assert.match(html, /<input[^>]*id="password"[^>]*name="password"/);
   assert.match(html, /Volver al inicio/);
+  assert.match(html, /href="\/iniciar-sesion"/);
+  assert.match(html, /¿Ya tienes cuenta\?/);
   assert.match(html, /min-h-12/);
 });
 
@@ -190,29 +200,49 @@ test("production sign-in page offers clear recovery and return navigation", asyn
   assert.match(html, /Inicia sesión/);
   assert.match(html, /Volver al inicio/);
   assert.match(html, /¿Olvidaste tu contraseña\?/);
+  assert.match(html, /href="\/recuperar-contrasena"/);
+  assert.match(html, /href="\/crear-cuenta"/);
   assert.match(html, /aria-busy="false"/);
   assert.match(html, /min-h-12/);
 });
 
 test("production password recovery pages render without sending email", async () => {
-  const [requestResponse, resetResponse] = await Promise.all([
+  const [requestResponse, resetResponse, missingTokenResponse] = await Promise.all([
     fetch(`${url}/recuperar-contrasena`),
     fetch(`${url}/restablecer-contrasena?token=local-test-token`),
+    fetch(`${url}/restablecer-contrasena`),
   ]);
   assert.equal(requestResponse.status, 200);
   assert.equal(resetResponse.status, 200);
+  assert.equal(missingTokenResponse.status, 200);
 
-  const [requestHtml, resetHtml] = await Promise.all([
+  const [requestHtml, resetHtml, missingTokenHtml] = await Promise.all([
     requestResponse.text(),
     resetResponse.text(),
+    missingTokenResponse.text(),
   ]);
   assert.match(requestHtml, /Recupera tu contraseña/);
   assert.match(requestHtml, /Enviar instrucciones/);
   assert.match(requestHtml, /Correo electrónico/);
   assert.match(requestHtml, /Volver al inicio/);
+  assert.match(requestHtml, /href="\/iniciar-sesion"/);
   assert.match(requestHtml, /aria-busy="false"/);
   assert.match(resetHtml, /Cambia tu contraseña/);
   assert.match(resetHtml, /Confirma la nueva contraseña/);
+  assert.match(resetHtml, /href="\/recuperar-contrasena"/);
   assert.match(resetHtml, /Volver al inicio/);
   assert.match(resetHtml, /min-h-12/);
+  assert.match(missingTokenHtml, /Este enlace no es válido o está incompleto/);
+  assert.match(missingTokenHtml, /Solicitar otro enlace/);
+  assert.match(missingTokenHtml, /href="\/recuperar-contrasena"/);
+  assert.match(missingTokenHtml, /href="\/iniciar-sesion"/);
+});
+
+test("account forms explain password requirements and link mismatch errors to fields", () => {
+  assert.match(authForm, /autoCapitalize="none"[\s\S]*?autoComplete="email"/);
+  assert.match(authForm, /id="password-hint"/);
+  assert.match(passwordResetForms, /if \(!token\) \{\s*return \(/);
+  assert.match(passwordResetForms, /aria-invalid=\{passwordMismatch\}/);
+  assert.match(passwordResetForms, /aria-describedby=\{[\s\S]*?"password-mismatch"/);
+  assert.match(passwordResetForms, /id="password-mismatch" role="alert"/);
 });
