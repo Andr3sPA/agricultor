@@ -6,6 +6,7 @@ import {
   getFarmActivities,
   groupFarmActivities,
   removeFarmActivity,
+  updateOwnedFarmActivity,
 } from "./farm-agenda-service";
 import { validateFarmActivityInput } from "./farm-agenda-validation";
 
@@ -16,7 +17,7 @@ const validInput = {
   scheduledFor: "2026-11-20",
   cropProduct: "Maíz",
   notes: "Lote norte",
-};
+} as const;
 
 it("uses Colombia's day for upcoming tasks and shows past tasks newest first", () => {
   const activities = ["2026-11-18", "2026-11-19", "2026-11-20", "2026-11-21"].map(
@@ -161,5 +162,31 @@ describe("farm agenda authorization", () => {
       { where: { id: "activity-1", userId: "producer-1" } },
       { where: { id: "activity-1", userId: "producer-2" } },
     ]);
+  });
+
+  it("updates only a labor owned by the producer and stores a date without a local time", async () => {
+    const queries: unknown[] = [];
+    const database = {
+      farmActivity: {
+        updateMany: async (args: { where: { userId: string } }) => {
+          queries.push(args);
+          return { count: Number(args.where.userId === "producer-1") };
+        },
+      },
+    } as unknown as FarmAgendaDatabase;
+
+    assert.equal(await updateOwnedFarmActivity(
+      { userId: "buyer-1", roles: ["BUYER"] }, "activity-1", validInput, database,
+    ), false);
+    assert.equal(await updateOwnedFarmActivity(
+      { userId: "producer-2", roles: ["PRODUCER"] }, "activity-1", validInput, database,
+    ), false);
+    assert.equal(await updateOwnedFarmActivity(
+      { userId: "producer-1", roles: ["PRODUCER"] }, "activity-1", validInput, database,
+    ), true);
+    assert.deepEqual(queries, ["producer-2", "producer-1"].map((userId) => ({
+      where: { id: "activity-1", userId },
+      data: { ...validInput, scheduledFor: new Date("2026-11-20T00:00:00.000Z") },
+    })));
   });
 });

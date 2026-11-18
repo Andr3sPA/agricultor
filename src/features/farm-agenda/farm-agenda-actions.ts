@@ -4,7 +4,11 @@ import { revalidatePath } from "next/cache";
 import { getCurrentIdentity } from "@/lib/auth/server";
 import { prisma } from "@/lib/db";
 import { canManageFarmAgenda } from "./farm-agenda-access";
-import { removeFarmActivity } from "./farm-agenda-service";
+import {
+  farmActivityData,
+  removeFarmActivity,
+  updateOwnedFarmActivity,
+} from "./farm-agenda-service";
 import {
   validateFarmActivityInput,
   type FarmActivityFieldErrors,
@@ -40,16 +44,44 @@ export async function createFarmActivity(
   await prisma.farmActivity.create({
     data: {
       userId: identity.userId,
-      activityType: result.data.activityType,
-      scheduledFor: new Date(`${result.data.scheduledFor}T00:00:00.000Z`),
-      cropProduct: result.data.cropProduct,
-      notes: result.data.notes,
+      ...farmActivityData(result.data),
     },
   });
 
   revalidatePath("/mi-cuenta/agenda");
   revalidatePath("/mi-cuenta");
   return { ok: true, message: "Guardamos la actividad en tu agenda." };
+}
+
+export async function updateFarmActivity(
+  _previousState: FarmActivityFormState,
+  formData: FormData,
+): Promise<FarmActivityFormState> {
+  const identity = await getCurrentIdentity();
+  if (!identity) {
+    return { message: "Inicia sesión para gestionar tu agenda." };
+  }
+  if (!canManageFarmAgenda(identity.roles)) {
+    return { message: "Agrega el perfil de productor para gestionar tu agenda." };
+  }
+
+  const activityId = formData.get("activityId");
+  if (typeof activityId !== "string" || !activityId) {
+    return { message: "No encontramos esa actividad en tu agenda." };
+  }
+
+  const result = validationResult(formData);
+  if (!result.ok) {
+    return { message: "Revisa los datos de la actividad.", fieldErrors: result.errors };
+  }
+  if (!(await updateOwnedFarmActivity(identity, activityId, result.data, prisma))) {
+    return { message: "No encontramos esa actividad en tu agenda." };
+  }
+
+  revalidatePath("/mi-cuenta/agenda");
+  revalidatePath(`/mi-cuenta/agenda/${encodeURIComponent(activityId)}/editar`);
+  revalidatePath("/mi-cuenta");
+  return { ok: true, message: "Guardamos los cambios en tu agenda." };
 }
 
 export async function deleteFarmActivity(

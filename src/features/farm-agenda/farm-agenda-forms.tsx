@@ -4,9 +4,10 @@ import { useActionState } from "react";
 import {
   createFarmActivity,
   deleteFarmActivity,
+  updateFarmActivity,
   type FarmActivityFormState,
 } from "./farm-agenda-actions";
-import { FARM_ACTIVITY_TYPES } from "./farm-agenda-validation";
+import { FARM_ACTIVITY_TYPES, type FarmActivityInput } from "./farm-agenda-validation";
 
 const initialState: FarmActivityFormState = {};
 
@@ -25,15 +26,20 @@ function FormMessage({ state }: { state: FarmActivityFormState }) {
   );
 }
 
-export function FarmActivityForm() {
+export function FarmActivityForm({
+  activity,
+}: {
+  activity?: FarmActivityInput & { id: string };
+}) {
   const [state, action, pending] = useActionState(
-    createFarmActivity,
+    activity ? updateFarmActivity : createFarmActivity,
     initialState,
   );
   const errors = state.fieldErrors ?? {};
 
   return (
     <form action={action} className="mt-6 space-y-5">
+      {activity && <input name="activityId" type="hidden" value={activity.id} />}
       <div>
         <label className="mb-2 block font-medium" htmlFor="activityType">
           Actividad
@@ -42,6 +48,8 @@ export function FarmActivityForm() {
           aria-describedby={errors.activityType ? "activityType-error" : undefined}
           aria-invalid={Boolean(errors.activityType)}
           className="min-h-12 w-full rounded-xl border border-slate-300 bg-white px-4"
+          defaultValue={activity?.activityType ?? ""}
+          key={activity?.activityType}
           id="activityType"
           name="activityType"
           required
@@ -68,6 +76,7 @@ export function FarmActivityForm() {
           aria-describedby={errors.scheduledFor ? "scheduledFor-error" : undefined}
           aria-invalid={Boolean(errors.scheduledFor)}
           className="min-h-12 w-full rounded-xl border border-slate-300 px-4"
+          defaultValue={activity?.scheduledFor ?? ""}
           id="scheduledFor"
           name="scheduledFor"
           required
@@ -88,6 +97,7 @@ export function FarmActivityForm() {
           aria-describedby={errors.cropProduct ? "cropProduct-error" : undefined}
           aria-invalid={Boolean(errors.cropProduct)}
           className="min-h-12 w-full rounded-xl border border-slate-300 px-4"
+          defaultValue={activity?.cropProduct ?? ""}
           id="cropProduct"
           maxLength={100}
           name="cropProduct"
@@ -108,6 +118,7 @@ export function FarmActivityForm() {
           aria-describedby={errors.notes ? "notes-error" : undefined}
           aria-invalid={Boolean(errors.notes)}
           className="min-h-28 w-full rounded-xl border border-slate-300 p-4"
+          defaultValue={activity?.notes ?? ""}
           id="notes"
           maxLength={1000}
           name="notes"
@@ -125,7 +136,7 @@ export function FarmActivityForm() {
         disabled={pending}
         type="submit"
       >
-        {pending ? "Guardando…" : "Agregar a mi agenda"}
+        {pending ? "Guardando…" : activity ? "Guardar cambios" : "Agregar a mi agenda"}
       </button>
       <FormMessage state={state} />
     </form>

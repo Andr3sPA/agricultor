@@ -3,6 +3,7 @@ import {
   canManageFarmAgenda,
   type FarmAgendaActor,
 } from "./farm-agenda-access";
+import type { FarmActivityInput } from "./farm-agenda-validation";
 
 type FarmAgendaDatabase = Pick<PrismaClient, "farmActivity">;
 
@@ -58,4 +59,26 @@ export async function removeFarmActivity(
     where: { id: activityId, userId: actor.userId },
   });
   return deleted.count === 1;
+}
+
+export function farmActivityData(input: FarmActivityInput) {
+  return {
+    ...input,
+    scheduledFor: new Date(`${input.scheduledFor}T00:00:00.000Z`),
+  };
+}
+
+export async function updateOwnedFarmActivity(
+  actor: FarmAgendaActor,
+  activityId: string,
+  input: FarmActivityInput,
+  database: FarmAgendaDatabase,
+): Promise<boolean> {
+  if (!canManageFarmAgenda(actor.roles)) return false;
+
+  const updated = await database.farmActivity.updateMany({
+    where: { id: activityId, userId: actor.userId },
+    data: farmActivityData(input),
+  });
+  return updated.count === 1;
 }

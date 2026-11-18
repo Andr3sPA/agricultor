@@ -533,6 +533,19 @@ async function main(): Promise<void> {
       await expect(comingTasks.getByText("Papa de registro anterior")).toBeHidden();
       await history.click();
       await expect(comingTasks.getByText("Papa de registro anterior")).toBeVisible();
+      await comingTasks.getByRole("listitem").filter({ hasText: "Papa de registro anterior" })
+        .getByRole("link", { name: "Editar labor" }).click();
+      await expect(producerPage.getByRole("heading", { name: "Editar labor" })).toBeVisible();
+      const scheduledFor = producerPage.getByLabel("Fecha", { exact: true });
+      await expect(scheduledFor).toHaveValue("2000-01-01");
+      await scheduledFor.fill("2099-01-03");
+      await producerPage.getByLabel("Nota").fill("Revisar lote antes de sembrar");
+      await producerPage.getByRole("button", { name: "Guardar cambios" }).click();
+      await expect(producerPage.getByText("Guardamos los cambios en tu agenda.")).toBeVisible();
+      await producerPage.getByRole("link", { name: "Volver a mi agenda" }).click();
+      await expect(comingTasks.getByText("Revisar lote antes de sembrar")).toBeVisible();
+      await expect(comingTasks.getByText("Papa de registro anterior")).toHaveCount(1);
+      await expect(history).toHaveCount(0);
       await producerPage.setViewportSize({ width: 1280, height: 720 });
       await producerPage.goto(`${baseURL}/mi-cuenta/pedidos`);
       const producerOrdersSection = producerPage.getByRole("region", {

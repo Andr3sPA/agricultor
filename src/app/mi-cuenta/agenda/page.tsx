@@ -66,6 +66,12 @@ export default async function FarmAgendaPage() {
                   )}
                 </dl>
               )}
+              <Link
+                className="mt-3 inline-flex min-h-12 items-center font-semibold text-emerald-900 underline"
+                href={`/mi-cuenta/agenda/${encodeURIComponent(activity.id)}/editar`}
+              >
+                Editar labor
+              </Link>
               <DeleteFarmActivityForm activityId={activity.id} />
             </li>
           );
