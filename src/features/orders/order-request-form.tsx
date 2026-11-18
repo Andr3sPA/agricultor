@@ -10,11 +10,11 @@ const initialState: OrderFormState = {};
 
 export function OrderRequestForm({
   productId,
-  availableQuantity,
+  availableQuantityLabel,
   idempotencyKey,
 }: {
   productId: string;
-  availableQuantity: string;
+  availableQuantityLabel: string;
   idempotencyKey: string;
 }) {
   const [state, action, pending] = useActionState(
@@ -32,7 +32,9 @@ export function OrderRequestForm({
         </label>
         <input
           aria-describedby={
-            state.fieldErrors?.quantity ? "order-quantity-error" : undefined
+            state.fieldErrors?.quantity
+              ? "order-quantity-availability order-quantity-error"
+              : "order-quantity-availability"
           }
           aria-invalid={Boolean(state.fieldErrors?.quantity)}
           autoComplete="off"
@@ -49,8 +51,8 @@ export function OrderRequestForm({
             {state.fieldErrors.quantity}
           </p>
         )}
-        <p className="mt-1 text-sm text-slate-600">
-          Disponible ahora: {availableQuantity}
+        <p className="mt-1 text-sm text-slate-600" id="order-quantity-availability">
+          Disponible ahora: {availableQuantityLabel}
         </p>
       </div>
       {state.message && (

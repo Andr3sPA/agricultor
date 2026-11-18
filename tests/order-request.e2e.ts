@@ -457,7 +457,8 @@ async function main(): Promise<void> {
       await page.getByRole("button", { name: "Iniciar sesión" }).click();
       await page.getByRole("heading", { name: product.name }).waitFor();
       await page.getByText("Solicitud de compra", { exact: true }).waitFor();
-      await page.getByLabel("Cantidad que solicitas").waitFor();
+      await expect(page.getByLabel("Cantidad que solicitas"))
+        .toHaveAccessibleDescription("Disponible ahora: 5 Kilogramo (kg)");
       await page.goto(`${baseURL}/mi-cuenta`);
       await page
         .getByRole("heading", { name: "Encuentra productos locales" })

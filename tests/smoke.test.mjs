@@ -154,7 +154,8 @@ test("interactive controls expose a visible keyboard focus indicator", () => {
 
 test("order quantity validation is linked to its invalid field", () => {
   assert.match(orderRequestForm, /aria-invalid=\{Boolean\(state\.fieldErrors\?\.quantity\)\}/);
-  assert.match(orderRequestForm, /"order-quantity-error"/);
+  assert.match(orderRequestForm, /"order-quantity-availability order-quantity-error"/);
+  assert.match(orderRequestForm, /id="order-quantity-availability"/);
   assert.match(orderRequestForm, /id="order-quantity-error"/);
 });
 

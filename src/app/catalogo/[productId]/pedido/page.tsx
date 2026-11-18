@@ -58,7 +58,9 @@ export default async function RequestOrderPage({
   const unit =
     PRODUCT_UNITS.find(({ value }) => value === product.unit)?.label ??
     product.unit;
-  const availableQuantity = product.availableQuantity.toString();
+  const availableQuantityLabel = `${quantityFormatter.format(
+    product.availableQuantity.toNumber(),
+  )} ${unit}`;
   const signInHref = `/iniciar-sesion?redirectTo=${encodeURIComponent(
     getPublicProductOrderHref(product.id),
   )}`;
@@ -83,10 +85,7 @@ export default async function RequestOrderPage({
           </div>
           <div>
             <dt className="font-medium">Disponible</dt>
-            <dd>
-              {quantityFormatter.format(product.availableQuantity.toNumber())}{" "}
-              {unit}
-            </dd>
+            <dd>{availableQuantityLabel}</dd>
           </div>
           <div>
             <dt className="font-medium">Precio por unidad</dt>
@@ -99,7 +98,7 @@ export default async function RequestOrderPage({
         </dl>
         {isBuyer && !isOwner ? (
           <OrderRequestForm
-            availableQuantity={availableQuantity}
+            availableQuantityLabel={availableQuantityLabel}
             idempotencyKey={randomBytes(32).toString("base64url")}
             productId={product.id}
           />
