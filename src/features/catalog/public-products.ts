@@ -108,7 +108,7 @@ export function getCatalogPagination(total: number, requestedPage: number) {
   };
 }
 
-export function getCatalogPageHref(
+function getCatalogQuery(
   filters: Pick<CatalogFilters, "category" | "municipality" | "sort">,
   page: number,
 ): string {
@@ -121,15 +121,28 @@ export function getCatalogPageHref(
   if (page > 1) searchParams.set("pagina", String(page));
 
   const query = searchParams.toString();
-  return query ? `/catalogo?${query}` : "/catalogo";
+  return query ? `?${query}` : "";
+}
+
+export function getCatalogPageHref(
+  filters: Pick<CatalogFilters, "category" | "municipality" | "sort">,
+  page: number,
+): string {
+  return `/catalogo${getCatalogQuery(filters, page)}`;
 }
 
 export function getPublicProductOrderHref(productId: string): string {
   return `/catalogo/${encodeURIComponent(productId)}/pedido`;
 }
 
-export function getPublicProductHref(productId: string): string {
-  return `/catalogo/${encodeURIComponent(productId)}`;
+export function getPublicProductHref(
+  productId: string,
+  filters?: CatalogFilters,
+): string {
+  const path = `/catalogo/${encodeURIComponent(productId)}`;
+  return filters
+    ? `${path}${getCatalogQuery(filters, filters.page)}`
+    : path;
 }
 
 export function getPublicProductMetadata(

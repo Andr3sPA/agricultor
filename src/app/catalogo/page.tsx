@@ -192,7 +192,10 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
                 <h2 className="text-xl font-semibold">
                   <Link
                     className="underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-900"
-                    href={getPublicProductHref(product.id)}
+                    href={getPublicProductHref(product.id, {
+                      ...filters,
+                      page: pagination.page,
+                    })}
                   >
                     {product.name}
                   </Link>

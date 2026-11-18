@@ -150,6 +150,27 @@ describe("public catalog projection", () => {
 });
 
 describe("public catalog query and pagination", () => {
+  it("round-trips catalog context through a product detail URL", () => {
+    const filters = {
+      category: "TUBERS",
+      municipality: "San José & La Vega",
+      sort: "precio-desc",
+      page: 2,
+    } as const;
+    const detail = new URL(
+      getPublicProductHref("shared/yuca", filters),
+      "https://agricultor.example",
+    );
+    assert.equal(detail.pathname, "/catalogo/shared%2Fyuca");
+    const restored = parseCatalogFilters(Object.fromEntries(detail.searchParams));
+    assert.deepEqual(restored, filters);
+    assert.equal(
+      getCatalogPageHref(restored, restored.page),
+      "/catalogo?categoria=TUBERS&municipio=San+Jos%C3%A9+%26+La+Vega&orden=precio-desc&pagina=2",
+    );
+    assert.equal(getPublicProductHref("yuca", { page: 1 }), "/catalogo/yuca");
+  });
+
   it("parses optional filters and ignores unknown categories and invalid pages", () => {
     assert.deepEqual(
       parseCatalogFilters({

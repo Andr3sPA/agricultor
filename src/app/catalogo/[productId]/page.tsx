@@ -4,10 +4,12 @@ import { notFound } from "next/navigation";
 import { cache } from "react";
 import { ShareProductButton } from "@/features/catalog/share-product-button";
 import {
+  getCatalogPageHref,
   getPublicProductHref,
   getPublicProductMetadata,
   getPublicProductOrderHref,
   getPublicProducts,
+  parseCatalogFilters,
 } from "@/features/catalog/public-products";
 import {
   PRODUCT_CATEGORIES,
@@ -69,6 +71,7 @@ const getPublicProduct = cache(async (productId: string) => {
 
 type PublicProductPageProps = {
   params: Promise<{ productId: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
 export async function generateMetadata({
@@ -92,6 +95,7 @@ export async function generateMetadata({
 
 export default async function PublicProductPage({
   params,
+  searchParams,
 }: PublicProductPageProps) {
   const { productId } = await params;
   const product = await getPublicProduct(productId);
@@ -100,6 +104,7 @@ export default async function PublicProductPage({
     notFound();
   }
 
+  const filters = parseCatalogFilters(await searchParams);
   const category =
     PRODUCT_CATEGORIES.find(({ value }) => value === product.category)?.label ??
     product.category;
@@ -111,7 +116,7 @@ export default async function PublicProductPage({
     <main className="mx-auto min-h-screen w-full max-w-2xl px-4 py-8 sm:px-6 sm:py-12">
       <Link
         className="inline-flex min-h-12 items-center font-semibold text-emerald-900 underline"
-        href="/catalogo"
+        href={getCatalogPageHref(filters, filters.page)}
       >
         Volver al catálogo
       </Link>

@@ -268,6 +268,7 @@ async function main(): Promise<void> {
       data: { userId: producer.id, role: "PRODUCER" },
     });
 
+    const municipality = `Municipio E2E ${suffix}`;
     const product = await database.product.create({
       data: {
         ownerId: producer.id,
@@ -276,7 +277,7 @@ async function main(): Promise<void> {
         availableQuantity: new Prisma.Decimal("5"),
         unit: "KG",
         priceCOP: 1000,
-        municipality: "Local",
+        municipality,
         isPublished: true,
       },
       select: { id: true, name: true },
@@ -336,6 +337,26 @@ async function main(): Promise<void> {
       browser = await chromium.launch({ headless: true });
       const anonymousContext = await browser.newContext();
       const anonymousPage = await anonymousContext.newPage();
+      const catalogQuery = new URLSearchParams({
+        categoria: "OTHER",
+        municipio: municipality,
+        orden: "precio-asc",
+      });
+      const catalogUrl = `${baseURL}/catalogo?${catalogQuery}`;
+      await anonymousPage.goto(catalogUrl);
+      const productLink = anonymousPage.getByRole("link", {
+        name: product.name,
+        exact: true,
+      });
+      await productLink.click();
+      await anonymousPage.waitForURL(
+        `${baseURL}/catalogo/${product.id}?${catalogQuery}`,
+      );
+      await anonymousPage
+        .getByRole("link", { name: "Volver al catálogo" })
+        .click();
+      await anonymousPage.waitForURL(catalogUrl);
+      await productLink.waitFor();
       for (const path of ["/mi-cuenta", "/mi-cuenta/pedidos"]) {
         await anonymousPage.goto(`${baseURL}${path}`);
         assert.equal(
