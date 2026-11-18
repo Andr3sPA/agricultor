@@ -44,6 +44,7 @@ export function RequestPasswordResetForm() {
           Correo electrónico
         </label>
         <input
+          autoCapitalize="none"
           autoComplete="email"
           className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 px-4 py-3"
           id="email"
@@ -80,6 +81,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
   const [message, setMessage] = useState("");
   const [success, setSuccess] = useState(false);
   const [pending, setPending] = useState(false);
+  const [passwordMismatch, setPasswordMismatch] = useState(false);
 
   useEffect(() => {
     if (token) {
@@ -96,10 +98,12 @@ export function ResetPasswordForm({ token }: { token: string }) {
     const confirmation = String(formData.get("confirmation") ?? "");
 
     if (password !== confirmation) {
-      setMessage("Las contraseñas no coinciden.");
+      setPasswordMismatch(true);
+      setMessage("");
       setSuccess(false);
       return;
     }
+    setPasswordMismatch(false);
     if (!token) {
       setMessage("El enlace no es válido. Solicita uno nuevo.");
       setSuccess(false);
@@ -131,6 +135,30 @@ export function ResetPasswordForm({ token }: { token: string }) {
     }
   }
 
+  if (!token) {
+    return (
+      <div className="mt-8 space-y-5">
+        <p className="text-sm text-red-800" role="alert">
+          Este enlace no es válido o está incompleto. Solicita uno nuevo.
+        </p>
+        <Link
+          className="flex min-h-12 w-full items-center justify-center rounded-xl bg-emerald-800 px-5 py-3 text-center font-semibold text-white hover:bg-emerald-900"
+          href="/recuperar-contrasena"
+        >
+          Solicitar otro enlace
+        </Link>
+        <p className="text-center text-sm text-slate-700">
+          <Link
+            className="inline-flex min-h-12 items-center font-semibold text-emerald-900 underline"
+            href="/iniciar-sesion"
+          >
+            Volver a iniciar sesión
+          </Link>
+        </p>
+      </div>
+    );
+  }
+
   return (
     <form action={submit} aria-busy={pending} className="mt-8 space-y-5">
       <div>
@@ -145,8 +173,21 @@ export function ResetPasswordForm({ token }: { token: string }) {
           minLength={8}
           name="password"
           required
+          aria-describedby={
+            passwordMismatch
+              ? "reset-password-hint password-mismatch"
+              : "reset-password-hint"
+          }
+          aria-invalid={passwordMismatch}
+          onChange={() => {
+            setPasswordMismatch(false);
+            setMessage("");
+          }}
           type="password"
         />
+        <p className="mt-2 text-sm text-slate-600" id="reset-password-hint">
+          Usa al menos 8 caracteres.
+        </p>
       </div>
       <div>
         <label className="block text-sm font-medium" htmlFor="confirmation">
@@ -160,9 +201,24 @@ export function ResetPasswordForm({ token }: { token: string }) {
           minLength={8}
           name="confirmation"
           required
+          aria-describedby={
+            passwordMismatch
+              ? "reset-password-hint password-mismatch"
+              : "reset-password-hint"
+          }
+          aria-invalid={passwordMismatch}
+          onChange={() => {
+            setPasswordMismatch(false);
+            setMessage("");
+          }}
           type="password"
         />
       </div>
+      {passwordMismatch && (
+        <p className="text-sm text-red-800" id="password-mismatch" role="alert">
+          Las contraseñas no coinciden.
+        </p>
+      )}
       {message && (
         <p
           className={success ? "text-sm text-emerald-900" : "text-sm text-red-800"}
