@@ -29,16 +29,20 @@ const percentFormatter = new Intl.NumberFormat("es-CO", {
 });
 
 function ResultSummary({ result }: { result: CalculatorResult }) {
-  const items = [
+  const items: { label: string; value: string; emphasis?: boolean }[] = [
     { label: "Costo total", value: copFormatter.format(result.totalCost) },
     { label: "Costo por unidad", value: copFormatter.format(result.unitCost) },
-    { label: "Ingreso esperado", value: copFormatter.format(result.expectedRevenue) },
-    {
-      label: "Ganancia o pérdida",
-      value: copFormatter.format(result.profit),
-      emphasis: true,
-    },
   ];
+  if (result.expectedRevenue !== null && result.profit !== null) {
+    items.push(
+      { label: "Ingreso esperado", value: copFormatter.format(result.expectedRevenue) },
+      {
+        label: "Ganancia o pérdida",
+        value: copFormatter.format(result.profit),
+        emphasis: true,
+      },
+    );
+  }
 
   return (
     <section
@@ -60,14 +64,21 @@ function ResultSummary({ result }: { result: CalculatorResult }) {
           </div>
         ))}
       </dl>
-      <p className="mt-4 text-sm text-emerald-950">
-        Margen sobre ingresos:{" "}
-        <strong>
-          {result.marginPercent === null
-            ? "No calculable porque el ingreso esperado es $0."
-            : `${percentFormatter.format(result.marginPercent)}%`}
-        </strong>
-      </p>
+      {result.expectedRevenue === null ? (
+        <p className="mt-4 text-sm text-emerald-950">
+          Usa el costo por unidad como punto de partida para fijar tu precio.
+          Ingresa un precio de venta si quieres estimar tu ganancia.
+        </p>
+      ) : (
+        <p className="mt-4 text-sm text-emerald-950">
+          Margen sobre ingresos:{" "}
+          <strong>
+            {result.marginPercent === null
+              ? "No calculable porque el ingreso esperado es $0."
+              : `${percentFormatter.format(result.marginPercent)}%`}
+          </strong>
+        </p>
+      )}
     </section>
   );
 }
@@ -149,7 +160,8 @@ export function AgriculturalCostCalculator() {
       <fieldset className="space-y-5">
         <legend className="text-lg font-semibold">Producción y venta</legend>
         <p className="text-sm text-slate-700">
-          Ingresa una cantidad positiva y el precio de venta por unidad.
+          Escribe cuánto produces. Puedes calcular tus costos aunque todavía
+          no hayas decidido el precio de venta.
         </p>
         <div className="grid gap-5 sm:grid-cols-2">
           {amountField(
@@ -159,7 +171,7 @@ export function AgriculturalCostCalculator() {
           )}
           {amountField(
             "salePricePerUnit",
-            "Precio de venta por unidad (COP)",
+            "Precio de venta por unidad en pesos (opcional)",
             "Por ejemplo, 2.000 si vendes cada kilo a dos mil pesos.",
           )}
         </div>

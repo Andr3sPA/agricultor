@@ -68,6 +68,19 @@ test("supports Colombian number formats and treats blank costs as zero", () => {
   assert.equal(result?.profit, 3749.5);
 });
 
+test("shows costs without treating an undecided sale price as zero income", () => {
+  assert.deepEqual(calculateAgriculturalCosts({ ...validValues, salePricePerUnit: "" }), {
+    result: {
+      totalCost: 80000,
+      unitCost: 800,
+      expectedRevenue: null,
+      profit: null,
+      marginPercent: null,
+    },
+    errors: {},
+  });
+});
+
 test("rejects an invalid grouping instead of guessing the amount", () => {
   const { errors } = calculateAgriculturalCosts({
     ...validValues,

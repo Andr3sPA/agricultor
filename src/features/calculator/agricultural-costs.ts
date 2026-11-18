@@ -20,8 +20,8 @@ export type CalculatorValues = {
 export type CalculatorResult = {
   totalCost: number;
   unitCost: number;
-  expectedRevenue: number;
-  profit: number;
+  expectedRevenue: number | null;
+  profit: number | null;
   marginPercent: number | null;
 };
 
@@ -65,7 +65,9 @@ export function calculateAgriculturalCosts(
 ): CalculatorCalculation {
   const errors: Partial<Record<CalculatorField, string>> = {};
   const quantity = parseAmount(values.productionQuantity, "productionQuantity", errors);
-  const salePrice = parseAmount(values.salePricePerUnit, "salePricePerUnit", errors);
+  const salePrice = values.salePricePerUnit.trim()
+    ? parseAmount(values.salePricePerUnit, "salePricePerUnit", errors)
+    : null;
   const costs = COST_CATEGORIES.map(({ key }) =>
     parseAmount(values[key].trim() || "0", key, errors),
   );
@@ -75,20 +77,20 @@ export function calculateAgriculturalCosts(
       "La cantidad debe ser mayor que cero para calcular el costo por unidad.";
   }
 
-  if (Object.keys(errors).length > 0 || quantity === null || salePrice === null) {
+  if (Object.keys(errors).length > 0 || quantity === null) {
     return { result: null, errors };
   }
 
   const totalCost = costs.reduce<number>((total, cost) => total + (cost ?? 0), 0);
-  const expectedRevenue = quantity * salePrice;
+  const expectedRevenue = salePrice === null ? null : quantity * salePrice;
   const unitCost = totalCost / quantity;
-  const profit = expectedRevenue - totalCost;
+  const profit = expectedRevenue === null ? null : expectedRevenue - totalCost;
 
   if (
     !Number.isFinite(totalCost) ||
-    !Number.isFinite(expectedRevenue) ||
+    (expectedRevenue !== null && !Number.isFinite(expectedRevenue)) ||
     !Number.isFinite(unitCost) ||
-    !Number.isFinite(profit)
+    (profit !== null && !Number.isFinite(profit))
   ) {
     return {
       result: null,
@@ -102,7 +104,9 @@ export function calculateAgriculturalCosts(
       unitCost,
       expectedRevenue,
       profit,
-      marginPercent: expectedRevenue === 0 ? null : (profit / expectedRevenue) * 100,
+      marginPercent: expectedRevenue && profit !== null
+        ? (profit / expectedRevenue) * 100
+        : null,
     },
     errors: {},
   };
