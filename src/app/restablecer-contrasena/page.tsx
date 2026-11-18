@@ -1,4 +1,5 @@
 import { ResetPasswordForm } from "@/features/auth/password-reset-forms";
+import Link from "next/link";
 
 export default async function ResetPasswordPage({
   searchParams,
@@ -8,8 +9,14 @@ export default async function ResetPasswordPage({
   const { token } = await searchParams;
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-xl items-center px-6 py-12">
-      <section className="w-full rounded-3xl border border-emerald-950/10 bg-white p-8 shadow-sm sm:p-12">
+    <main className="mx-auto flex min-h-screen w-full max-w-xl items-center px-4 py-8 sm:px-6 sm:py-12">
+      <section className="w-full rounded-3xl border border-emerald-950/10 bg-white p-6 shadow-sm sm:p-10">
+        <Link
+          className="mb-5 inline-flex min-h-12 items-center font-semibold text-emerald-900 underline underline-offset-4"
+          href="/"
+        >
+          Volver al inicio
+        </Link>
         <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-800">
           Agricultor
         </p>

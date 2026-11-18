@@ -108,14 +108,14 @@ export default async function PublicProductPage({
     product.unit;
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-2xl px-6 py-12">
+    <main className="mx-auto min-h-screen w-full max-w-2xl px-4 py-8 sm:px-6 sm:py-12">
       <Link
-        className="font-semibold text-emerald-900 underline"
+        className="inline-flex min-h-12 items-center font-semibold text-emerald-900 underline"
         href="/catalogo"
       >
         Volver al catálogo
       </Link>
-      <article className="mt-6 rounded-3xl border border-emerald-950/10 bg-white p-8 shadow-sm sm:p-12">
+      <article className="mt-4 rounded-3xl border border-emerald-950/10 bg-white p-6 shadow-sm sm:mt-6 sm:p-12">
         <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-800">
           Producto publicado
         </p>
@@ -150,7 +150,7 @@ export default async function PublicProductPage({
         />
         <Link
           aria-label={`Solicitar este producto: ${product.name}`}
-          className="mt-6 inline-flex min-h-11 items-center justify-center rounded-lg bg-emerald-800 px-4 py-2 font-semibold text-white underline-offset-4 hover:bg-emerald-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-900"
+          className="mt-6 inline-flex min-h-12 w-full items-center justify-center rounded-lg bg-emerald-800 px-4 py-2 text-center font-semibold text-white underline-offset-4 hover:bg-emerald-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-900 sm:w-auto"
           href={getPublicProductOrderHref(product.id)}
         >
           Solicitar este producto

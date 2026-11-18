@@ -66,6 +66,7 @@ export function AuthForm({ mode }: AuthFormProps) {
       action={submit}
       className="mt-8 space-y-5"
       aria-describedby={message ? "auth-message" : undefined}
+      aria-busy={pending}
     >
       {isSignUp && (
         <div>
@@ -74,7 +75,7 @@ export function AuthForm({ mode }: AuthFormProps) {
           </label>
           <input
             autoComplete="name"
-            className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3"
+            className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 px-4 py-3"
             id="name"
             maxLength={100}
             minLength={2}
@@ -89,7 +90,7 @@ export function AuthForm({ mode }: AuthFormProps) {
         </label>
         <input
           autoComplete="email"
-          className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3"
+          className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 px-4 py-3"
           id="email"
           name="email"
           required
@@ -102,7 +103,7 @@ export function AuthForm({ mode }: AuthFormProps) {
         </label>
         <input
           autoComplete={isSignUp ? "new-password" : "current-password"}
-          className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3"
+          className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 px-4 py-3"
           id="password"
           maxLength={128}
           minLength={8}
@@ -125,7 +126,7 @@ export function AuthForm({ mode }: AuthFormProps) {
         </p>
       )}
       <button
-        className="w-full rounded-xl bg-emerald-800 px-5 py-3 font-semibold text-white hover:bg-emerald-900 disabled:opacity-60"
+        className="min-h-12 w-full rounded-xl bg-emerald-800 px-5 py-3 font-semibold text-white hover:bg-emerald-900 disabled:opacity-60"
         disabled={pending}
         type="submit"
       >
@@ -138,7 +139,7 @@ export function AuthForm({ mode }: AuthFormProps) {
       {!isSignUp && (
         <p className="text-center text-sm">
           <Link
-            className="font-semibold text-emerald-900 underline"
+            className="inline-flex min-h-12 items-center font-semibold text-emerald-900 underline"
             href="/recuperar-contrasena"
           >
             ¿Olvidaste tu contraseña?
@@ -148,7 +149,7 @@ export function AuthForm({ mode }: AuthFormProps) {
       <p className="text-center text-sm text-slate-700">
         {isSignUp ? "¿Ya tienes cuenta?" : "¿Primera vez por aquí?"}{" "}
         <Link
-          className="font-semibold text-emerald-900 underline"
+          className="inline-flex min-h-12 items-center font-semibold text-emerald-900 underline"
           href={isSignUp ? "/iniciar-sesion" : "/crear-cuenta"}
         >
           {isSignUp ? "Inicia sesión" : "Crea tu cuenta"}

@@ -26,6 +26,18 @@ const roleForm = await readFile(
   new URL("../src/features/auth/role-form.tsx", import.meta.url),
   "utf8",
 );
+const catalogPage = await readFile(
+  new URL("../src/app/catalogo/page.tsx", import.meta.url),
+  "utf8",
+);
+const catalogLoading = await readFile(
+  new URL("../src/app/catalogo/loading.tsx", import.meta.url),
+  "utf8",
+);
+const catalogError = await readFile(
+  new URL("../src/app/catalogo/error.tsx", import.meta.url),
+  "utf8",
+);
 let server;
 let serverError = "";
 let url;
@@ -144,6 +156,17 @@ test("action feedback distinguishes success statuses from errors", () => {
   }
 });
 
+test("catalog helps people recover from loading, filter, and connection problems", () => {
+  assert.match(catalogLoading, /aria-busy="true"/);
+  assert.match(catalogLoading, /Cargando el catálogo/);
+  assert.match(catalogError, /Revisa tu conexión e inténtalo de nuevo/);
+  assert.match(catalogError, /onClick=\{reset\}/);
+  assert.match(catalogPage, /aria-describedby="municipio-ayuda"/);
+  assert.match(catalogPage, /No encontramos productos con estos filtros/);
+  assert.match(catalogPage, /Ver todos los productos/);
+  assert.match(catalogPage, /min-h-12 w-full/);
+});
+
 test("production registration page keeps labels associated with their fields", async () => {
   const response = await fetch(`${url}/crear-cuenta`);
   assert.equal(response.status, 200);
@@ -155,6 +178,20 @@ test("production registration page keeps labels associated with their fields", a
   assert.match(html, /<input[^>]*id="email"[^>]*name="email"/);
   assert.match(html, /<label[^>]*for="password"[^>]*>Contraseña<\/label>/);
   assert.match(html, /<input[^>]*id="password"[^>]*name="password"/);
+  assert.match(html, /Volver al inicio/);
+  assert.match(html, /min-h-12/);
+});
+
+test("production sign-in page offers clear recovery and return navigation", async () => {
+  const response = await fetch(`${url}/iniciar-sesion`);
+  assert.equal(response.status, 200);
+  const html = await response.text();
+
+  assert.match(html, /Inicia sesión/);
+  assert.match(html, /Volver al inicio/);
+  assert.match(html, /¿Olvidaste tu contraseña\?/);
+  assert.match(html, /aria-busy="false"/);
+  assert.match(html, /min-h-12/);
 });
 
 test("production password recovery pages render without sending email", async () => {
@@ -172,6 +209,10 @@ test("production password recovery pages render without sending email", async ()
   assert.match(requestHtml, /Recupera tu contraseña/);
   assert.match(requestHtml, /Enviar instrucciones/);
   assert.match(requestHtml, /Correo electrónico/);
+  assert.match(requestHtml, /Volver al inicio/);
+  assert.match(requestHtml, /aria-busy="false"/);
   assert.match(resetHtml, /Cambia tu contraseña/);
   assert.match(resetHtml, /Confirma la nueva contraseña/);
+  assert.match(resetHtml, /Volver al inicio/);
+  assert.match(resetHtml, /min-h-12/);
 });
