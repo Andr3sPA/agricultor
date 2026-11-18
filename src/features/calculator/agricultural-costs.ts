@@ -35,13 +35,19 @@ function parseAmount(
   field: CalculatorField,
   errors: Partial<Record<CalculatorField, string>>,
 ) {
-  if (!value.trim()) {
+  const trimmed = value.trim();
+  if (!trimmed) {
     errors[field] = "Este campo es obligatorio.";
     return null;
   }
 
-  const amount = Number(value);
-  if (!Number.isFinite(amount)) {
+  const isCurrency = field !== "productionQuantity";
+  const input = isCurrency ? trimmed.replace(/^\$\s*/, "") : trimmed;
+  const groupedCurrency = isCurrency && /^-?\d{1,3}(?:\.\d{3})+(?:,\d+)?$/.test(input);
+  const decimal = /^-?(?:\d+(?:[.,]\d+)?|[.,]\d+)$/.test(input);
+  const normalized = groupedCurrency ? input.replaceAll(".", "") : input;
+  const amount = Number(normalized.replace(",", "."));
+  if ((!groupedCurrency && !decimal) || !Number.isFinite(amount)) {
     errors[field] = "Ingresa un número válido.";
     return null;
   }
@@ -61,7 +67,7 @@ export function calculateAgriculturalCosts(
   const quantity = parseAmount(values.productionQuantity, "productionQuantity", errors);
   const salePrice = parseAmount(values.salePricePerUnit, "salePricePerUnit", errors);
   const costs = COST_CATEGORIES.map(({ key }) =>
-    parseAmount(values[key], key, errors),
+    parseAmount(values[key].trim() || "0", key, errors),
   );
 
   if (quantity === 0) {

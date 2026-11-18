@@ -56,7 +56,7 @@ function ResultSummary({ result }: { result: CalculatorResult }) {
             key={label}
           >
             <dt className="text-sm font-medium">{label}</dt>
-            <dd className="mt-1 text-xl font-semibold">{value}</dd>
+            <dd className="mt-1 text-xl font-semibold wrap-anywhere">{value}</dd>
           </div>
         ))}
       </dl>
@@ -130,9 +130,8 @@ export function AgriculturalCostCalculator() {
             id={inputId}
             inputMode="decimal"
             onChange={(event) => updateValue(field, event.target.value)}
-            type="number"
-            min="0"
-            step="any"
+            type="text"
+            maxLength={24}
             value={values[field]}
           />
         </div>
@@ -156,12 +155,12 @@ export function AgriculturalCostCalculator() {
           {amountField(
             "productionQuantity",
             "Cantidad de producción",
-            "Usa la misma unidad de medida para toda tu estimación.",
+            "Usa la misma medida en toda la cuenta. Por ejemplo, 2,5 kilos.",
           )}
           {amountField(
             "salePricePerUnit",
             "Precio de venta por unidad (COP)",
-            "Puedes ingresar 0 si aún no estimas ingresos.",
+            "Por ejemplo, 2.000 si vendes cada kilo a dos mil pesos.",
           )}
         </div>
       </fieldset>
@@ -169,7 +168,7 @@ export function AgriculturalCostCalculator() {
       <fieldset className="space-y-5">
         <legend className="text-lg font-semibold">Costos de producción</legend>
         <p className="text-sm text-slate-700">
-          Registra cada costo en pesos colombianos. Si no aplica, escribe 0.
+          Escribe los costos en pesos. Si un costo no aplica, déjalo vacío.
         </p>
         <div className="grid gap-5 sm:grid-cols-2">
           {COST_CATEGORIES.map(({ key, label }) => (

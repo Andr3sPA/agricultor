@@ -52,6 +52,32 @@ test("rejects zero production to avoid division by zero", () => {
   assert.match(calculation.errors.productionQuantity ?? "", /mayor que cero/);
 });
 
+test("supports Colombian number formats and treats blank costs as zero", () => {
+  const { result, errors } = calculateAgriculturalCosts({
+    productionQuantity: "2,5",
+    salePricePerUnit: "$2.000",
+    seeds: "1.250,50",
+    supplies: "",
+    labor: "",
+    transport: "",
+    other: "",
+  });
+  assert.deepEqual(errors, {});
+  assert.equal(result?.expectedRevenue, 5000);
+  assert.equal(result?.totalCost, 1250.5);
+  assert.equal(result?.profit, 3749.5);
+});
+
+test("rejects an invalid grouping instead of guessing the amount", () => {
+  const { errors } = calculateAgriculturalCosts({
+    ...validValues,
+    salePricePerUnit: "2.00.0",
+    productionQuantity: "2,5 kilos",
+  });
+  assert.equal(errors.salePricePerUnit, "Ingresa un número válido.");
+  assert.equal(errors.productionQuantity, "Ingresa un número válido.");
+});
+
 test("accepts zero costs and reports an undefined margin when revenue is zero", () => {
   const calculation = calculateAgriculturalCosts({
     ...validValues,

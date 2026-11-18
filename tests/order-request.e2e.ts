@@ -423,6 +423,15 @@ async function main(): Promise<void> {
       await producerPage.getByRole("button", { name: "Convertir unidades" }).click();
       await expect(conversionResult).toContainText("25 Kilogramos (kg) = 2 Arrobas de 12,5 kg");
       await expect(conversionResult).toContainText(/64\.000 COP/);
+      await producerPage.goto(`${baseURL}/mi-cuenta`);
+      await producerPage.getByRole("link", { name: "Calcular costos y margen" }).click();
+      await producerPage.getByLabel("Cantidad de producción").fill("2,5");
+      await producerPage.getByLabel("Precio de venta por unidad").fill("$2.000");
+      await producerPage.getByLabel("Semillas", { exact: true }).fill("1.250,50");
+      await producerPage.getByRole("button", { name: "Calcular costos y margen" }).click();
+      const costResult = producerPage.getByRole("region", { name: "Resultado estimado" });
+      await expect(costResult).toContainText(/Ingreso esperado\s*\$\s*5\.000/);
+      await expect(costResult).toContainText(/Ganancia o pérdida\s*\$\s*3\.749,5/);
       await producerPage.setViewportSize({ width: 1280, height: 720 });
       await producerPage.goto(`${baseURL}/mi-cuenta/pedidos`);
       const producerOrdersSection = producerPage.getByRole("region", {
