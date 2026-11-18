@@ -120,7 +120,7 @@ test("production home page guides buyers and producers to the right starting poi
   assert.match(html, /Explorar el catálogo/);
   assert.match(html, /href="\/catalogo"/);
   assert.match(html, /Crear cuenta para vender/);
-  assert.match(html, /href="\/crear-cuenta"/);
+  assert.match(html, /href="\/crear-cuenta\?intent=producer"/);
   assert.match(html, /href="\/iniciar-sesion"/);
 });
 
@@ -190,6 +190,23 @@ test("production registration page keeps labels associated with their fields", a
   assert.match(html, /href="\/iniciar-sesion"/);
   assert.match(html, /¿Ya tienes cuenta\?/);
   assert.match(html, /min-h-12/);
+});
+
+test("producer registration keeps its intent through sign-in and role selection", async () => {
+  const signupResponse = await fetch(`${url}/crear-cuenta?intent=producer`);
+  assert.equal(signupResponse.status, 200);
+  const signupHtml = await signupResponse.text();
+  assert.match(signupHtml, /Crea tu cuenta para vender/);
+  assert.match(signupHtml, /agrega el perfil de productor/);
+  assert.match(signupHtml, /href="\/iniciar-sesion\?intent=producer"/);
+
+  const signinResponse = await fetch(`${url}/iniciar-sesion?intent=producer`);
+  assert.equal(signinResponse.status, 200);
+  const signinHtml = await signinResponse.text();
+  assert.match(signinHtml, /href="\/crear-cuenta\?intent=producer"/);
+  assert.match(authForm, /\/mi-cuenta\?intent=producer/);
+  assert.match(authForm, /Inicia sesión y continúa como productor/);
+  assert.match(roleForm, /Agregar perfil y continuar/);
 });
 
 test("production sign-in page offers clear recovery and return navigation", async () => {

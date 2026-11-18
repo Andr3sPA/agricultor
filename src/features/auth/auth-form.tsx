@@ -7,10 +7,15 @@ import { authClient } from "@/lib/auth-client";
 
 type AuthFormProps = {
   mode: "sign-in" | "sign-up";
+  producerIntent?: boolean;
   redirectTo?: string | null;
 };
 
-export function AuthForm({ mode, redirectTo }: AuthFormProps) {
+export function AuthForm({
+  mode,
+  producerIntent = false,
+  redirectTo,
+}: AuthFormProps) {
   const router = useRouter();
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"error" | "success">("error");
@@ -45,13 +50,18 @@ export function AuthForm({ mode, redirectTo }: AuthFormProps) {
 
       if (isSignUp) {
         setMessage(
-          "Si el correo está disponible, tu cuenta quedó lista. Inicia sesión para continuar.",
+          producerIntent
+            ? "Si el correo está disponible, tu cuenta quedó lista. Inicia sesión para agregar el perfil de productor."
+            : "Si el correo está disponible, tu cuenta quedó lista. Inicia sesión para continuar.",
         );
         setMessageType("success");
         return;
       }
 
-      router.push(redirectTo ?? "/mi-cuenta");
+      router.push(
+        redirectTo ??
+          (producerIntent ? "/mi-cuenta?intent=producer" : "/mi-cuenta"),
+      );
       router.refresh();
     } catch {
       setMessage(
@@ -61,6 +71,18 @@ export function AuthForm({ mode, redirectTo }: AuthFormProps) {
       setPending(false);
     }
   }
+
+  const authPage = isSignUp ? "/iniciar-sesion" : "/crear-cuenta";
+  const authQuery = new URLSearchParams();
+  if (redirectTo) authQuery.set("redirectTo", redirectTo);
+  if (producerIntent) authQuery.set("intent", "producer");
+  const authQueryString = authQuery.toString();
+  const authPageHref = authQueryString
+    ? `${authPage}?${authQueryString}`
+    : authPage;
+  const producerSignInQuery = new URLSearchParams();
+  producerSignInQuery.set("intent", "producer");
+  if (redirectTo) producerSignInQuery.set("redirectTo", redirectTo);
 
   return (
     <form
@@ -133,6 +155,14 @@ export function AuthForm({ mode, redirectTo }: AuthFormProps) {
           {message}
         </p>
       )}
+      {isSignUp && producerIntent && messageType === "success" && (
+        <Link
+          className="inline-flex min-h-12 w-full items-center justify-center rounded-xl border border-emerald-900 px-5 py-3 text-center font-semibold text-emerald-950 hover:bg-emerald-50"
+          href={`/iniciar-sesion?${producerSignInQuery.toString()}`}
+        >
+          Inicia sesión y continúa como productor
+        </Link>
+      )}
       <button
         className="min-h-12 w-full rounded-xl bg-emerald-800 px-5 py-3 font-semibold text-white hover:bg-emerald-900 disabled:opacity-60"
         disabled={pending}
@@ -158,13 +188,7 @@ export function AuthForm({ mode, redirectTo }: AuthFormProps) {
         {isSignUp ? "¿Ya tienes cuenta?" : "¿Primera vez por aquí?"}{" "}
         <Link
           className="inline-flex min-h-12 items-center font-semibold text-emerald-900 underline"
-          href={
-            redirectTo
-              ? `${isSignUp ? "/iniciar-sesion" : "/crear-cuenta"}?redirectTo=${encodeURIComponent(redirectTo)}`
-              : isSignUp
-                ? "/iniciar-sesion"
-                : "/crear-cuenta"
-          }
+          href={authPageHref}
         >
           {isSignUp ? "Inicia sesión" : "Crea tu cuenta"}
         </Link>

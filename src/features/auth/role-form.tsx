@@ -1,12 +1,36 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import {
+  isSelfAssignableRole,
+  type SelfAssignableRole,
+} from "@/lib/auth/roles";
 import { adoptRole, type RoleActionState } from "./role-actions";
 
 const initialState: RoleActionState = {};
 
-export function RoleForm() {
+export function RoleForm({
+  initialRole,
+}: {
+  initialRole?: SelfAssignableRole;
+}) {
+  const router = useRouter();
+  const [selectedRole, setSelectedRole] = useState<SelfAssignableRole>(
+    initialRole ?? "BUYER",
+  );
   const [state, action, pending] = useActionState(adoptRole, initialState);
+
+  useEffect(() => {
+    if (
+      state.ok &&
+      initialRole === "PRODUCER" &&
+      selectedRole === "PRODUCER"
+    ) {
+      router.replace("/mi-cuenta/productos");
+      router.refresh();
+    }
+  }, [initialRole, router, selectedRole, state.ok]);
 
   return (
     <form action={action} className="mt-6 space-y-4">
@@ -18,6 +42,12 @@ export function RoleForm() {
         id="role"
         name="role"
         required
+        value={selectedRole}
+        onChange={(event) => {
+          if (isSelfAssignableRole(event.target.value)) {
+            setSelectedRole(event.target.value);
+          }
+        }}
       >
         <option value="BUYER">Comprador o compradora</option>
         <option value="PRODUCER">Productor o productora</option>
@@ -28,7 +58,11 @@ export function RoleForm() {
         disabled={pending}
         type="submit"
       >
-        {pending ? "Guardando..." : "Agregar este perfil"}
+        {pending
+          ? "Guardando..."
+          : initialRole === "PRODUCER" && selectedRole === "PRODUCER"
+            ? "Agregar perfil y continuar"
+            : "Agregar este perfil"}
       </button>
       {state.message && (
         <p
