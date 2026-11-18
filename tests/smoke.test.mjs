@@ -206,6 +206,31 @@ test("production sign-in page offers clear recovery and return navigation", asyn
   assert.match(html, /min-h-12/);
 });
 
+test("production sign-in preserves a validated order request through account creation", async () => {
+  const response = await fetch(
+    `${url}/iniciar-sesion?redirectTo=${encodeURIComponent(
+      "/catalogo/product-1/pedido",
+    )}`,
+  );
+  assert.equal(response.status, 200);
+  const html = await response.text();
+
+  assert.match(
+    html,
+    /href="\/crear-cuenta\?redirectTo=%2Fcatalogo%2Fproduct-1%2Fpedido"/,
+  );
+
+  const unsafeResponse = await fetch(
+    `${url}/iniciar-sesion?redirectTo=${encodeURIComponent(
+      "https://example.com/",
+    )}`,
+  );
+  assert.equal(unsafeResponse.status, 200);
+  const unsafeHtml = await unsafeResponse.text();
+  assert.match(unsafeHtml, /href="\/crear-cuenta"/);
+  assert.doesNotMatch(unsafeHtml, /redirectTo=https:\/\/example\.com/);
+});
+
 test("production password recovery pages render without sending email", async () => {
   const [requestResponse, resetResponse, missingTokenResponse] = await Promise.all([
     fetch(`${url}/recuperar-contrasena`),
