@@ -90,7 +90,7 @@ export function getCatalogOrderBy(sort: CatalogSort | undefined) {
     return [{ priceCOP: "desc" as const }, { id: "asc" as const }];
   }
 
-  return { updatedAt: "desc" as const };
+  return [{ updatedAt: "desc" as const }, { id: "asc" as const }];
 }
 
 export function getCatalogPagination(total: number, requestedPage: number) {

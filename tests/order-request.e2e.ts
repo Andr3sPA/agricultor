@@ -269,18 +269,30 @@ async function main(): Promise<void> {
     });
 
     const municipality = `Municipio E2E ${suffix}`;
+    const catalogProduct = {
+      ownerId: producer.id,
+      category: "OTHER",
+      availableQuantity: new Prisma.Decimal("5"),
+      unit: "KG",
+      priceCOP: 1000,
+      municipality,
+      isPublished: true,
+      updatedAt: new Date(),
+    } as const;
     const product = await database.product.create({
       data: {
-        ownerId: producer.id,
+        ...catalogProduct,
+        id: `${suffix}-last`,
         name: `Producto E2E ${suffix}`,
-        category: "OTHER",
-        availableQuantity: new Prisma.Decimal("5"),
-        unit: "KG",
-        priceCOP: 1000,
-        municipality,
-        isPublished: true,
       },
       select: { id: true, name: true },
+    });
+    await database.product.createMany({
+      data: Array.from({ length: 12 }, (_, index) => ({
+        ...catalogProduct,
+        id: `${suffix}-${index}`,
+        name: `Oferta E2E ${index}`,
+      })),
     });
     const email = `order-e2e-buyer-${suffix}@example.test`;
     const password = `E2e-${randomUUID()}-pass`;
@@ -340,10 +352,12 @@ async function main(): Promise<void> {
       const catalogQuery = new URLSearchParams({
         categoria: "OTHER",
         municipio: municipality,
-        orden: "precio-asc",
       });
+      await anonymousPage.goto(`${baseURL}/catalogo?${catalogQuery}`);
+      await anonymousPage.getByRole("link", { name: "Siguiente" }).click();
+      catalogQuery.set("pagina", "2");
       const catalogUrl = `${baseURL}/catalogo?${catalogQuery}`;
-      await anonymousPage.goto(catalogUrl);
+      await anonymousPage.waitForURL(catalogUrl);
       const productLink = anonymousPage.getByRole("link", {
         name: product.name,
         exact: true,

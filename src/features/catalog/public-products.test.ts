@@ -216,8 +216,11 @@ describe("public catalog query and pagination", () => {
     );
   });
 
-  it("uses the current recency order by default and stable price orders when selected", () => {
-    assert.deepEqual(getCatalogOrderBy(undefined), { updatedAt: "desc" });
+  it("breaks ties by product ID for recency and price orders", () => {
+    assert.deepEqual(getCatalogOrderBy(undefined), [
+      { updatedAt: "desc" },
+      { id: "asc" },
+    ]);
     assert.deepEqual(getCatalogOrderBy("precio-asc"), [
       { priceCOP: "asc" },
       { id: "asc" },
