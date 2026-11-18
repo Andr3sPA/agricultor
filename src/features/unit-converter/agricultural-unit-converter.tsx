@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import {
   calculateWeightPrice,
   convertAgriculturalUnits,
+  convertBagsToWeight,
   formatAgriculturalValue,
   getUnitLabel,
   UNIT_CATEGORIES,
@@ -16,6 +17,8 @@ export function AgriculturalUnitConverter() {
   const [fromUnit, setFromUnit] = useState("lb500");
   const [toUnit, setToUnit] = useState("kg");
   const [amount, setAmount] = useState("");
+  const [bagWeight, setBagWeight] = useState("");
+  const [bagWeightError, setBagWeightError] = useState<string | null>(null);
   const [convertedValue, setConvertedValue] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [price, setPrice] = useState("");
@@ -23,6 +26,7 @@ export function AgriculturalUnitConverter() {
   const selectedCategory = UNIT_CATEGORIES.find(
     (item) => item.key === category,
   )!;
+  const convertingBags = fromUnit === "bulto";
   const priceUnit =
     selectedCategory.key === "mass"
       ? selectedCategory.units.find(({ key }) => key === toUnit)?.priceUnit
@@ -31,6 +35,7 @@ export function AgriculturalUnitConverter() {
   function resetResult() {
     setConvertedValue(null);
     setError(null);
+    setBagWeightError(null);
     setPriceResult(null);
   }
 
@@ -49,13 +54,12 @@ export function AgriculturalUnitConverter() {
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const conversion = convertAgriculturalUnits(
-      amount,
-      category,
-      fromUnit,
-      toUnit,
-    );
-    setError(conversion.error);
+    const conversion = convertingBags
+      ? convertBagsToWeight(amount, bagWeight, toUnit)
+      : convertAgriculturalUnits(amount, category, fromUnit, toUnit);
+    const invalidBagWeight = "field" in conversion && conversion.field === "bagWeight";
+    setError(invalidBagWeight ? null : conversion.error);
+    setBagWeightError(invalidBagWeight ? conversion.error : null);
     setConvertedValue(conversion.value);
     setPriceResult(
       category === "mass" && conversion.value !== null && price.trim()
@@ -95,7 +99,7 @@ export function AgriculturalUnitConverter() {
             className="block font-medium text-slate-900"
             htmlFor="unit-converter-amount"
           >
-            Cantidad
+            {convertingBags ? "Cantidad de bultos" : "Cantidad"}
           </label>
           <p className="mt-1 text-sm text-slate-600" id="unit-converter-hint">
             Se aceptan decimales con punto o coma. El cero es válido.
@@ -137,6 +141,10 @@ export function AgriculturalUnitConverter() {
             id="unit-converter-from"
             onChange={(event) => {
               setFromUnit(event.target.value);
+              if (event.target.value === "bulto") {
+                setToUnit("kg");
+                setPrice("");
+              }
               resetResult();
             }}
             value={fromUnit}
@@ -146,6 +154,7 @@ export function AgriculturalUnitConverter() {
                 {unit.label}
               </option>
             ))}
+            {category === "mass" && <option value="bulto">Bultos</option>}
           </select>
         </div>
 
@@ -174,6 +183,36 @@ export function AgriculturalUnitConverter() {
           </select>
         </div>
       </div>
+
+      {convertingBags && (
+        <div>
+          <label className="block font-medium" htmlFor="unit-converter-bag-weight">
+            Peso de cada bulto en kilos
+          </label>
+          <p className="mt-1 text-sm text-slate-600" id="bag-weight-hint">
+            Escribe cuánto pesa un bulto. Por ejemplo, 25,5.
+          </p>
+          <input
+            aria-describedby={`bag-weight-hint${bagWeightError ? " bag-weight-error" : ""}`}
+            aria-invalid={Boolean(bagWeightError)}
+            className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 bg-white px-3 text-slate-950 focus-visible:outline-2 focus-visible:outline-emerald-800"
+            id="unit-converter-bag-weight"
+            inputMode="decimal"
+            maxLength={60}
+            onChange={(event) => {
+              setBagWeight(event.target.value);
+              resetResult();
+            }}
+            type="text"
+            value={bagWeight}
+          />
+          {bagWeightError && (
+            <p className="mt-1 text-sm text-rose-800" id="bag-weight-error" role="alert">
+              {bagWeightError}
+            </p>
+          )}
+        </div>
+      )}
 
       {priceUnit && (
         <div>
@@ -205,18 +244,20 @@ export function AgriculturalUnitConverter() {
         </div>
       )}
 
-      <button
-        className="min-h-11 rounded-xl border border-emerald-800 px-4 font-semibold text-emerald-900 hover:bg-emerald-50 focus-visible:outline-2 focus-visible:outline-emerald-800"
-        onClick={() => {
-          setFromUnit(toUnit);
-          setToUnit(fromUnit);
-          setPrice("");
-          resetResult();
-        }}
-        type="button"
-      >
-        Intercambiar unidades
-      </button>
+      {!convertingBags && (
+        <button
+          className="min-h-11 rounded-xl border border-emerald-800 px-4 font-semibold text-emerald-900 hover:bg-emerald-50 focus-visible:outline-2 focus-visible:outline-emerald-800"
+          onClick={() => {
+            setFromUnit(toUnit);
+            setToUnit(fromUnit);
+            setPrice("");
+            resetResult();
+          }}
+          type="button"
+        >
+          Intercambiar unidades
+        </button>
+      )}
 
       <button
         className="inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-emerald-800 px-5 py-3 font-semibold text-white hover:bg-emerald-900 sm:w-auto"
@@ -239,7 +280,7 @@ export function AgriculturalUnitConverter() {
           </h2>
           <p className="mt-3 break-words text-lg text-emerald-950">
             <strong>{formatAgriculturalValue(amount.trim().replace(",", "."))}</strong>{" "}
-            {getUnitLabel(category, fromUnit)} ={" "}
+            {convertingBags ? "bultos" : getUnitLabel(category, fromUnit)} ={" "}
             <strong>{formatAgriculturalValue(convertedValue)}</strong>{" "}
             {getUnitLabel(category, toUnit)}
           </p>

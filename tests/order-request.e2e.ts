@@ -423,6 +423,16 @@ async function main(): Promise<void> {
       await producerPage.getByRole("button", { name: "Convertir unidades" }).click();
       await expect(conversionResult).toContainText("25 Kilogramos (kg) = 2 Arrobas de 12,5 kg");
       await expect(conversionResult).toContainText(/64\.000 COP/);
+      await producerPage.getByLabel("Convertir desde", { exact: true }).selectOption("bulto");
+      await producerPage.getByLabel("Cantidad de bultos").fill("3");
+      const bagWeight = producerPage.getByLabel("Peso de cada bulto en kilos");
+      await producerPage.getByRole("button", { name: "Convertir unidades" }).click();
+      await expect(bagWeight).toHaveAttribute("aria-invalid", "true");
+      await bagWeight.fill("25,5");
+      await producerPage.getByLabel("Precio por kilo en pesos").fill("2.000");
+      await producerPage.getByRole("button", { name: "Convertir unidades" }).click();
+      await expect(conversionResult).toContainText("3 bultos = 76,5 Kilogramos (kg)");
+      await expect(conversionResult).toContainText(/153\.000 COP/);
       await producerPage.goto(`${baseURL}/mi-cuenta`);
       await producerPage.getByRole("link", { name: "Calcular costos y margen" }).click();
       await producerPage.getByLabel("Cantidad de producción").fill("2,5");

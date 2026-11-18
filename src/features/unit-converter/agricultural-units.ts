@@ -148,6 +148,31 @@ export function convertAgriculturalUnits(
   };
 }
 
+export function convertBagsToWeight(
+  amount: string,
+  weightPerBag: string,
+  toUnit: string,
+): UnitConversion & { field?: "bagWeight" } {
+  const count = convertAgriculturalUnits(amount, "mass", "kg", "kg");
+  if (count.value === null) return count;
+
+  const weight = convertAgriculturalUnits(weightPerBag, "mass", "kg", "kg");
+  if (weight.value === null || weight.value === "0") {
+    return {
+      value: null,
+      error: "Escribe un peso mayor que cero para cada bulto.",
+      field: "bagWeight",
+    };
+  }
+
+  const [whole, fraction = ""] = weight.value.split(".");
+  const kilos = shiftDecimal(
+    multiplyDecimalByInteger(count.value, BigInt(`${whole}${fraction}`)),
+    -fraction.length,
+  );
+  return convertAgriculturalUnits(kilos, "mass", "kg", toUnit);
+}
+
 export function calculateWeightPrice(quantity: string, input: string): UnitConversion {
   const price = input.trim();
   if (!/^(?:\d+|\d{1,3}(?:\.\d{3})+)$/.test(price)) {

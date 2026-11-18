@@ -34,7 +34,8 @@ export default async function UnitConverterPage() {
           Convierte libras de 500 g, kilos y arrobas de 12,5 kg, y calcula cuánto vale tu cosecha
           con el precio que tú ingreses. Por ejemplo, 10 libras de papa son
           5 kilos y, a $2.000 por kilo, valen $10.000. También puedes convertir
-          medidas de área y volumen.
+          medidas de área y volumen, o calcular el peso total de tus bultos
+          a partir del peso de cada uno.
         </p>
         <AgriculturalUnitConverter />
       </section>

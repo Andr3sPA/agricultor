@@ -2,9 +2,20 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   calculateWeightPrice,
+  convertBagsToWeight,
   convertAgriculturalUnits,
   formatAgriculturalValue,
 } from "@/features/unit-converter/agricultural-units";
+
+test("converts bags using the weight of each bag and preserves decimals", () => {
+  assert.equal(convertBagsToWeight("3", "25,5", "kg").value, "76.5");
+  assert.equal(convertBagsToWeight("0,5", "25,5", "lb500").value, "25.5");
+  assert.equal(convertBagsToWeight("0", "25", "kg").value, "0");
+  for (const weight of ["", "0", "-1", "abc"]) {
+    assert.equal(convertBagsToWeight("3", weight, "kg").field, "bagWeight");
+  }
+  assert.equal(convertBagsToWeight("-3", "25", "kg").value, null);
+});
 
 test("converts 500 g pounds exactly in either direction", () => {
   assert.equal(convertAgriculturalUnits("10", "mass", "lb500", "kg").value, "5");
