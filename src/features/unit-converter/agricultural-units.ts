@@ -1,11 +1,12 @@
 export const UNIT_CATEGORIES = [
   {
     key: "mass",
-    label: "Masa",
+    label: "Peso",
     units: [
-      { key: "g", label: "Gramos (g)", exponent: 0 },
-      { key: "kg", label: "Kilogramos (kg)", exponent: 3 },
-      { key: "t", label: "Toneladas (t)", exponent: 6 },
+      { key: "lb500", label: "Libras de 500 g", priceUnit: "libra de 500 g", exponent: 3, half: true },
+      { key: "kg", label: "Kilogramos (kg)", priceUnit: "kilo", exponent: 3 },
+      { key: "g", label: "Gramos (g)", priceUnit: "gramo", exponent: 0 },
+      { key: "t", label: "Toneladas (t)", priceUnit: "tonelada", exponent: 6 },
     ],
   },
   {
@@ -74,6 +75,12 @@ function shiftDecimal(value: string, places: number) {
   return `${digits.slice(0, decimalPosition)}.${digits.slice(decimalPosition)}`;
 }
 
+function multiplyDecimalByInteger(value: string, multiplier: bigint) {
+  const [whole, fraction = ""] = value.split(".");
+  const digits = BigInt(`${whole}${fraction}`);
+  return shiftDecimal((digits * multiplier).toString(), -fraction.length);
+}
+
 function findUnit(categoryKey: UnitCategoryKey, unitKey: string) {
   const category = UNIT_CATEGORIES.find(
     (item): item is UnitCategory => item.key === categoryKey,
@@ -108,10 +115,35 @@ export function convertAgriculturalUnits(
 
   const normalizedInput = value.replace(",", ".");
   const normalized = normalizeDecimal(normalizedInput);
-  const exponentDifference = from.exponent - to.exponent;
+  let converted = shiftDecimal(normalized, from.exponent - to.exponent);
+  const fromHalf = "half" in from;
+  const toHalf = "half" in to;
+  if (fromHalf && !toHalf) {
+    converted = shiftDecimal(multiplyDecimalByInteger(converted, BigInt(5)), -1);
+  } else if (toHalf && !fromHalf) {
+    converted = multiplyDecimalByInteger(converted, BigInt(2));
+  }
 
   return {
-    value: normalizeDecimal(shiftDecimal(normalized, exponentDifference)),
+    value: normalizeDecimal(converted),
+    error: null,
+  };
+}
+
+export function calculateWeightPrice(quantity: string, input: string): UnitConversion {
+  const price = input.trim();
+  if (!/^(?:\d+|\d{1,3}(?:\.\d{3})+)$/.test(price)) {
+    return {
+      value: null,
+      error: "Escribe un precio en pesos enteros, por ejemplo 2000 o 2.000.",
+    };
+  }
+
+  const total = multiplyDecimalByInteger(quantity, BigInt(price.replaceAll(".", "")));
+  const [whole, fraction = ""] = total.split(".");
+  const roundUp = fraction.charAt(0) >= "5";
+  return {
+    value: (BigInt(whole) + BigInt(roundUp ? 1 : 0)).toString(),
     error: null,
   };
 }

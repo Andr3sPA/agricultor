@@ -2,27 +2,36 @@
 
 import { useState, type FormEvent } from "react";
 import {
+  calculateWeightPrice,
   convertAgriculturalUnits,
   formatAgriculturalValue,
   getUnitLabel,
   UNIT_CATEGORIES,
   type UnitCategoryKey,
+  type UnitConversion,
 } from "@/features/unit-converter/agricultural-units";
 
 export function AgriculturalUnitConverter() {
   const [category, setCategory] = useState<UnitCategoryKey>("mass");
-  const [fromUnit, setFromUnit] = useState("g");
+  const [fromUnit, setFromUnit] = useState("lb500");
   const [toUnit, setToUnit] = useState("kg");
   const [amount, setAmount] = useState("");
   const [convertedValue, setConvertedValue] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [price, setPrice] = useState("");
+  const [priceResult, setPriceResult] = useState<UnitConversion | null>(null);
   const selectedCategory = UNIT_CATEGORIES.find(
     (item) => item.key === category,
   )!;
+  const priceUnit =
+    selectedCategory.key === "mass"
+      ? selectedCategory.units.find(({ key }) => key === toUnit)?.priceUnit
+      : undefined;
 
   function resetResult() {
     setConvertedValue(null);
     setError(null);
+    setPriceResult(null);
   }
 
   function handleCategoryChange(value: string) {
@@ -34,6 +43,7 @@ export function AgriculturalUnitConverter() {
     setCategory(nextCategory.key);
     setFromUnit(nextCategory.units[0].key);
     setToUnit(nextCategory.units[1].key);
+    setPrice("");
     resetResult();
   }
 
@@ -47,6 +57,11 @@ export function AgriculturalUnitConverter() {
     );
     setError(conversion.error);
     setConvertedValue(conversion.value);
+    setPriceResult(
+      category === "mass" && conversion.value !== null && price.trim()
+        ? calculateWeightPrice(conversion.value, price)
+        : null,
+    );
   }
 
   const amountErrorId = "unit-converter-amount-error";
@@ -146,6 +161,7 @@ export function AgriculturalUnitConverter() {
             id="unit-converter-to"
             onChange={(event) => {
               setToUnit(event.target.value);
+              setPrice("");
               resetResult();
             }}
             value={toUnit}
@@ -159,11 +175,42 @@ export function AgriculturalUnitConverter() {
         </div>
       </div>
 
+      {priceUnit && (
+        <div>
+          <label className="block font-medium" htmlFor="unit-converter-price">
+            Precio por {priceUnit} en pesos (opcional)
+          </label>
+          <p className="mt-1 text-sm text-slate-600" id="unit-converter-price-hint">
+            Escribe el precio que acordaste. Por ejemplo, 2.000.
+          </p>
+          <input
+            aria-describedby={`unit-converter-price-hint${priceResult?.error ? " unit-converter-price-error" : ""}`}
+            aria-invalid={Boolean(priceResult?.error)}
+            className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 bg-white px-3 text-slate-950 focus-visible:outline-2 focus-visible:outline-emerald-800"
+            id="unit-converter-price"
+            inputMode="numeric"
+            maxLength={18}
+            onChange={(event) => {
+              setPrice(event.target.value);
+              resetResult();
+            }}
+            type="text"
+            value={price}
+          />
+          {priceResult?.error && (
+            <p className="mt-1 text-sm text-rose-800" id="unit-converter-price-error" role="alert">
+              {priceResult.error}
+            </p>
+          )}
+        </div>
+      )}
+
       <button
         className="min-h-11 rounded-xl border border-emerald-800 px-4 font-semibold text-emerald-900 hover:bg-emerald-50 focus-visible:outline-2 focus-visible:outline-emerald-800"
         onClick={() => {
           setFromUnit(toUnit);
           setToUnit(fromUnit);
+          setPrice("");
           resetResult();
         }}
         type="button"
@@ -199,6 +246,12 @@ export function AgriculturalUnitConverter() {
           <p className="mt-2 text-sm text-emerald-950">
             Conversión exacta; no se redondeó el resultado.
           </p>
+          {priceResult?.value != null && (
+            <p className="mt-3 text-emerald-950">
+              Valor estimado: <strong>$ {formatAgriculturalValue(priceResult.value)} COP</strong>
+              {" "}al peso más cercano.
+            </p>
+          )}
         </section>
       )}
     </form>

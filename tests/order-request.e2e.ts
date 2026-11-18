@@ -402,6 +402,20 @@ async function main(): Promise<void> {
         storageState: await producerApi.storageState(),
       });
       const producerPage = await producerContext.newPage();
+      await producerPage.setViewportSize({ width: 320, height: 640 });
+      await producerPage.goto(`${baseURL}/mi-cuenta`);
+      await producerPage.getByRole("link", { name: "Abrir conversor" }).click();
+      await producerPage.getByLabel("Cantidad", { exact: true }).fill("10");
+      await producerPage.getByLabel("Precio por kilo en pesos").fill("2.000");
+      await producerPage.getByRole("button", { name: "Convertir unidades" }).click();
+      const conversionResult = producerPage.getByRole("region", { name: "Resultado" });
+      await expect(conversionResult).toContainText("10 Libras de 500 g = 5 Kilogramos (kg)");
+      await expect(conversionResult).toContainText(/10\.000 COP/);
+      await producerPage.getByRole("button", { name: "Intercambiar unidades" }).click();
+      await expect(producerPage.getByLabel("Precio por libra de 500 g en pesos"))
+        .toHaveValue("");
+      await expect(conversionResult).toHaveCount(0);
+      await producerPage.setViewportSize({ width: 1280, height: 720 });
       await producerPage.goto(`${baseURL}/mi-cuenta/pedidos`);
       const producerOrdersSection = producerPage.getByRole("region", {
         name: "Solicitudes recibidas",

@@ -1,9 +1,28 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  calculateWeightPrice,
   convertAgriculturalUnits,
   formatAgriculturalValue,
 } from "@/features/unit-converter/agricultural-units";
+
+test("converts 500 g pounds exactly in either direction", () => {
+  assert.equal(convertAgriculturalUnits("10", "mass", "lb500", "kg").value, "5");
+  assert.equal(convertAgriculturalUnits("1,25", "mass", "kg", "lb500").value, "2.5");
+  assert.equal(convertAgriculturalUnits("250", "mass", "g", "lb500").value, "0.5");
+  assert.equal(convertAgriculturalUnits("0.1", "mass", "lb500", "g").value, "50");
+});
+
+test("calculates a COP estimate from the converted weight and rounds half up", () => {
+  assert.deepEqual(calculateWeightPrice("5", "2.000"), {
+    value: "10000",
+    error: null,
+  });
+  assert.equal(calculateWeightPrice("0.5", "101").value, "51");
+  assert.equal(calculateWeightPrice("0.49", "1").value, "0");
+  assert.equal(calculateWeightPrice("5", "0").value, "0");
+  assert.equal(calculateWeightPrice("5", "2,50").value, null);
+});
 
 test("converts mass units without losing decimal precision", () => {
   assert.deepEqual(convertAgriculturalUnits("1250", "mass", "g", "kg"), {

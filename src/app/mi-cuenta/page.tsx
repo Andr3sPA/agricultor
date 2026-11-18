@@ -175,10 +175,10 @@ export default async function AccountPage({
               className="rounded-2xl border border-slate-200 p-5"
             >
               <h2 className="text-xl font-semibold" id="unit-converter-title">
-                Conversor de unidades
+                Conversor de peso y precio
               </h2>
               <p className="mt-4 text-slate-700">
-                Convierte cantidades de masa, área y volumen con precisión.
+                Pasa de libras a kilos y calcula el valor de tu cosecha en pesos.
               </p>
               <Link
                 className="mt-4 inline-flex min-h-12 w-full items-center justify-center rounded-xl border border-emerald-900 px-5 py-3 text-center font-semibold text-emerald-950 hover:bg-emerald-50 sm:w-auto"
