@@ -37,14 +37,14 @@ export default async function ProductsPage() {
   });
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-3xl px-6 py-12">
+    <main className="mx-auto min-h-screen w-full max-w-3xl px-4 py-8 sm:px-6 sm:py-12">
       <Link
         className="font-semibold text-emerald-900 underline"
         href="/mi-cuenta"
       >
         Volver a mi cuenta
       </Link>
-      <section className="mt-6 rounded-3xl border border-emerald-950/10 bg-white p-8 shadow-sm sm:p-12">
+      <section className="mt-6 rounded-3xl border border-emerald-950/10 bg-white p-5 shadow-sm sm:p-12">
         <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-800">
           Agricultor
         </p>
@@ -72,7 +72,7 @@ export default async function ProductsPage() {
         </nav>
         <ProductForm />
       </section>
-      <section className="mt-8 rounded-3xl border border-emerald-950/10 bg-white p-8 shadow-sm sm:p-12">
+      <section className="mt-8 rounded-3xl border border-emerald-950/10 bg-white p-5 shadow-sm sm:p-12">
         <h2 className="text-2xl font-semibold">Productos guardados</h2>
         {products.length === 0 ? (
           <p className="mt-4 text-slate-700">Aún no tienes productos registrados.</p>
@@ -88,8 +88,10 @@ export default async function ProductsPage() {
 
               return (
                 <li
-                  className="rounded-2xl border border-slate-200 p-5"
+                  className="scroll-mt-4 rounded-2xl border border-slate-200 p-4 sm:p-5"
+                  id={`producto-${product.id}`}
                   key={product.id}
+                  tabIndex={-1}
                 >
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>

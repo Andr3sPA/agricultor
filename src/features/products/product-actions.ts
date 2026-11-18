@@ -2,15 +2,25 @@
 
 import { Prisma } from "@/generated/prisma/client";
 import { revalidatePath } from "next/cache";
+import {
+  getPublicProductHref,
+  getPublicProductOrderHref,
+} from "@/features/catalog/public-products";
 import { getCurrentIdentity } from "@/lib/auth/server";
 import { prisma } from "@/lib/db";
 import { canEditProduct, canManageProducts } from "./product-access";
-import { validateProductInput, type ProductFieldErrors } from "./product-validation";
+import {
+  validateProductInput,
+  type ProductField,
+  type ProductFieldErrors,
+} from "./product-validation";
 
 export type ProductFormState = {
   ok?: boolean;
   message?: string;
   fieldErrors?: ProductFieldErrors;
+  values?: Partial<Record<ProductField, string>>;
+  createdProductId?: string;
 };
 
 function productData(data: {
@@ -35,6 +45,24 @@ function validationResult(formData: FormData) {
   return validateProductInput(Object.fromEntries(formData.entries()));
 }
 
+function revalidatePublicProduct(productId: string) {
+  revalidatePath("/catalogo");
+  revalidatePath(getPublicProductHref(productId));
+  revalidatePath(getPublicProductOrderHref(productId));
+}
+
+function submittedValues(formData: FormData): ProductFormState["values"] {
+  const values: Partial<Record<ProductField, string>> = {};
+  const fields: ProductField[] = [
+    "name", "category", "availableQuantity", "unit", "priceCOP", "municipality",
+  ];
+  for (const field of fields) {
+    const value = formData.get(field);
+    if (typeof value === "string") values[field] = value.slice(0, 100);
+  }
+  return values;
+}
+
 export async function createProduct(
   _previousState: ProductFormState,
   formData: FormData,
@@ -49,19 +77,28 @@ export async function createProduct(
 
   const result = validationResult(formData);
   if (!result.ok) {
-    return { message: "Revisa los datos del producto.", fieldErrors: result.errors };
+    return {
+      message: "Revisa los datos del producto.",
+      fieldErrors: result.errors,
+      values: submittedValues(formData),
+    };
   }
 
-  await prisma.product.create({
+  const product = await prisma.product.create({
     data: {
       ownerId: identity.userId,
       ...productData(result.data),
     },
+    select: { id: true },
   });
 
   revalidatePath("/mi-cuenta");
   revalidatePath("/mi-cuenta/productos");
-  return { ok: true, message: "Guardamos el producto en tu cuenta." };
+  return {
+    ok: true,
+    message: "Guardamos el producto en tu cuenta.",
+    createdProductId: product.id,
+  };
 }
 
 export async function updateProduct(
@@ -92,7 +129,11 @@ export async function updateProduct(
 
   const result = validationResult(formData);
   if (!result.ok) {
-    return { message: "Revisa los datos del producto.", fieldErrors: result.errors };
+    return {
+      message: "Revisa los datos del producto.",
+      fieldErrors: result.errors,
+      values: submittedValues(formData),
+    };
   }
 
   const updated = await prisma.product.updateMany({
@@ -112,12 +153,14 @@ export async function updateProduct(
     return {
       message:
         "No encontramos ese producto o la cantidad disponible más las reservas supera el inventario permitido.",
+      values: submittedValues(formData),
     };
   }
 
   revalidatePath("/mi-cuenta");
   revalidatePath("/mi-cuenta/productos");
   revalidatePath(`/mi-cuenta/productos/${productId}/editar`);
+  revalidatePublicProduct(productId);
   return { ok: true, message: "Actualizamos el producto." };
 }
 
@@ -169,7 +212,7 @@ export async function setProductPublication(
   }
 
   revalidatePath("/mi-cuenta/productos");
-  revalidatePath("/catalogo");
+  revalidatePublicProduct(productId);
   return {
     ok: true,
     message: isPublished ? "Publicamos el producto." : "Retiramos el producto.",

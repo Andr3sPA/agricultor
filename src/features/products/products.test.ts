@@ -88,6 +88,18 @@ describe("product management policies and validation", () => {
     }
   });
 
+  it("accepts whole Colombian pesos with grouping and rejects ambiguous cents", () => {
+    const grouped = validateProductInput({ ...validInput, priceCOP: "$ 2.500" });
+    assert.ok(grouped.ok);
+    assert.equal(grouped.data.priceCOP, 2500);
+
+    for (const priceCOP of ["2.50", "2.500,50", "2.50.0", "$0"]) {
+      const result = validateProductInput({ ...validInput, priceCOP });
+      assert.ok(!result.ok);
+      assert.ok(result.errors.priceCOP);
+    }
+  });
+
   it("allows only the producer owner to edit and change publication", () => {
     assert.equal(canManageProducts(["PRODUCER"]), true);
     assert.equal(canManageProducts(["BUYER"]), false);

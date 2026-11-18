@@ -432,6 +432,74 @@ async function main(): Promise<void> {
       const costResult = producerPage.getByRole("region", { name: "Resultado estimado" });
       await expect(costResult).toContainText(/Ingreso esperado\s*\$\s*5\.000/);
       await expect(costResult).toContainText(/Ganancia o pérdida\s*\$\s*3\.749,5/);
+      await producerPage.goto(`${baseURL}/mi-cuenta/productos`);
+      const harvestName = `Papa E2E ${suffix}`;
+      const harvestMunicipality = `Municipio para papa ${suffix}`;
+      const cropName = producerPage.getByLabel("Nombre del producto");
+      const cropCategory = producerPage.getByLabel("Categoría", { exact: true });
+      const cropQuantity = producerPage.getByLabel("Cantidad disponible");
+      const cropUnit = producerPage.getByLabel("Unidad de medida");
+      const cropPrice = producerPage.getByLabel("Precio en pesos por unidad");
+      const cropMunicipality = producerPage.getByLabel("Municipio o localidad");
+      await cropName.fill(harvestName);
+      await cropCategory.selectOption("TUBERS");
+      await cropQuantity.fill("12,5");
+      await cropUnit.selectOption("KG");
+      await cropPrice.fill("2.00");
+      await cropMunicipality.fill(harvestMunicipality);
+      const addProduct = producerPage.getByRole("button", { name: "Agregar producto" });
+      await addProduct.click();
+      await expect(cropPrice).toHaveAttribute("aria-invalid", "true");
+      await expect(cropName).toHaveValue(harvestName);
+      await expect(cropCategory).toHaveValue("TUBERS");
+      await expect(cropQuantity).toHaveValue("12,5");
+      await expect(cropUnit).toHaveValue("KG");
+      await expect(cropMunicipality).toHaveValue(harvestMunicipality);
+      await cropPrice.fill("$2.000");
+      await addProduct.click();
+      const savedCrop = producerPage.getByRole("listitem").filter({ hasText: harvestName });
+      const publicationShortcut = producerPage.getByRole("link", {
+        name: "Ir al producto guardado para publicarlo",
+      });
+      await expect(publicationShortcut).toBeVisible();
+      await publicationShortcut.click();
+      await expect(savedCrop.getByText("Privado", { exact: true })).toBeVisible();
+      const publicCatalog = await browser.newPage();
+      const harvestCatalogUrl = `${baseURL}/catalogo?${new URLSearchParams({
+        municipio: harvestMunicipality,
+      })}`;
+      await publicCatalog.goto(harvestCatalogUrl);
+      await expect(publicCatalog.getByText("No encontramos productos con estos filtros."))
+        .toBeVisible();
+      await savedCrop.getByRole("button", { name: "Publicar en catálogo" }).click();
+      await expect(savedCrop.getByText("Publicado", { exact: true })).toBeVisible();
+      await publicCatalog.reload();
+      const publicCrop = publicCatalog.getByRole("listitem").filter({ hasText: harvestName });
+      await expect(publicCrop).toContainText("12,5 Kilogramo (kg)");
+      await expect(publicCrop).toContainText(/2\.000/);
+      await savedCrop.getByRole("link", { name: "Editar producto" }).click();
+      await expect(
+        producerPage.getByRole("heading", { name: "Editar producto" }),
+      ).toBeVisible();
+      await cropQuantity.fill("10,25");
+      await cropPrice.fill("$2.500");
+      await producerPage.getByRole("button", { name: "Guardar cambios" }).click();
+      await expect(producerPage.getByText("Actualizamos el producto.")).toBeVisible();
+      const editedCrop = await database.product.findFirstOrThrow({
+        where: { ownerId: producer.id, name: harvestName },
+        select: { availableQuantity: true, priceCOP: true },
+      });
+      assert.ok(editedCrop.availableQuantity.equals("10.25"));
+      assert.equal(editedCrop.priceCOP, 2500);
+      await publicCatalog.reload();
+      await expect(publicCrop).toContainText("10,25 Kilogramo (kg)");
+      await expect(publicCrop).toContainText(/2\.500/);
+      await producerPage.getByRole("link", { name: "Volver a mis productos" }).click();
+      await savedCrop.getByRole("button", { name: "Retirar del catálogo" }).click();
+      await expect(savedCrop.getByText("Privado", { exact: true })).toBeVisible();
+      await publicCatalog.reload();
+      await expect(publicCrop).toHaveCount(0);
+      await publicCatalog.close();
       await producerPage.setViewportSize({ width: 1280, height: 720 });
       await producerPage.goto(`${baseURL}/mi-cuenta/pedidos`);
       const producerOrdersSection = producerPage.getByRole("region", {

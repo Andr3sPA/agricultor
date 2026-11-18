@@ -50,7 +50,7 @@ export function validateProductInput(
   const rawQuantity = asString(input.availableQuantity);
   const quantity = rawQuantity.replace(",", ".");
   const unit = asString(input.unit);
-  const rawPrice = asString(input.priceCOP);
+  const rawPrice = asString(input.priceCOP).replace(/^\$\s*/, "");
   const municipality = asString(input.municipality);
   const categoryOption = PRODUCT_CATEGORIES.find(
     (option) => option.value === category,
@@ -76,7 +76,10 @@ export function validateProductInput(
     errors.unit = "Elige una unidad de la lista.";
   }
 
-  const priceCOP = /^\d{1,10}$/.test(rawPrice) ? Number(rawPrice) : Number.NaN;
+  const priceDigits = /^\d{1,3}(?:\.\d{3})+$/.test(rawPrice)
+    ? rawPrice.replaceAll(".", "")
+    : rawPrice;
+  const priceCOP = /^\d{1,10}$/.test(priceDigits) ? Number(priceDigits) : Number.NaN;
   if (!Number.isInteger(priceCOP) || priceCOP < 1 || priceCOP > 2_147_483_647) {
     errors.priceCOP = "Escribe un precio entero mayor que cero en pesos colombianos.";
   }

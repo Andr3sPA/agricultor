@@ -26,6 +26,7 @@ export function ProductForm({ product }: ProductFormProps) {
     initialState,
   );
   const editing = Boolean(product);
+  const values = state.values ?? product;
 
   return (
     <form action={action} className="mt-6 space-y-5">
@@ -38,7 +39,7 @@ export function ProductForm({ product }: ProductFormProps) {
           aria-describedby={state.fieldErrors?.name ? "name-error" : undefined}
           aria-invalid={Boolean(state.fieldErrors?.name)}
           className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3"
-          defaultValue={product?.name ?? ""}
+          defaultValue={values?.name ?? ""}
           id="name"
           maxLength={100}
           minLength={2}
@@ -59,8 +60,9 @@ export function ProductForm({ product }: ProductFormProps) {
           aria-describedby={state.fieldErrors?.category ? "category-error" : undefined}
           aria-invalid={Boolean(state.fieldErrors?.category)}
           className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3"
-          defaultValue={product?.category ?? ""}
+          defaultValue={values?.category ?? ""}
           id="category"
+          key={values?.category}
           name="category"
           required
         >
@@ -83,19 +85,23 @@ export function ProductForm({ product }: ProductFormProps) {
         </label>
         <input
           aria-describedby={
-            state.fieldErrors?.availableQuantity ? "quantity-error" : undefined
+            state.fieldErrors?.availableQuantity
+              ? "quantity-hint quantity-error"
+              : "quantity-hint"
           }
           aria-invalid={Boolean(state.fieldErrors?.availableQuantity)}
           className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3"
-          defaultValue={product?.availableQuantity ?? ""}
+          defaultValue={values?.availableQuantity ?? ""}
           id="availableQuantity"
           inputMode="decimal"
-          min="0"
+          maxLength={13}
           name="availableQuantity"
           required
-          step="0.001"
-          type="number"
+          type="text"
         />
+        <p className="mt-1 text-sm text-slate-600" id="quantity-hint">
+          Por ejemplo, 12,5 si tienes doce kilos y medio.
+        </p>
         {state.fieldErrors?.availableQuantity && (
           <p className="mt-1 text-sm text-red-800" id="quantity-error">
             {state.fieldErrors.availableQuantity}
@@ -110,8 +116,9 @@ export function ProductForm({ product }: ProductFormProps) {
           aria-describedby={state.fieldErrors?.unit ? "unit-error" : undefined}
           aria-invalid={Boolean(state.fieldErrors?.unit)}
           className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3"
-          defaultValue={product?.unit ?? ""}
+          defaultValue={values?.unit ?? ""}
           id="unit"
+          key={values?.unit}
           name="unit"
           required
         >
@@ -130,21 +137,23 @@ export function ProductForm({ product }: ProductFormProps) {
       </div>
       <div>
         <label className="block text-sm font-medium" htmlFor="priceCOP">
-          Precio por unidad de medida (COP)
+          Precio en pesos por unidad (COP)
         </label>
         <input
-          aria-describedby={state.fieldErrors?.priceCOP ? "price-error" : undefined}
+          aria-describedby={state.fieldErrors?.priceCOP ? "price-hint price-error" : "price-hint"}
           aria-invalid={Boolean(state.fieldErrors?.priceCOP)}
           className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3"
-          defaultValue={product?.priceCOP ?? ""}
+          defaultValue={values?.priceCOP ?? ""}
           id="priceCOP"
           inputMode="numeric"
-          min="1"
+          maxLength={16}
           name="priceCOP"
           required
-          step="1"
-          type="number"
+          type="text"
         />
+        <p className="mt-1 text-sm text-slate-600" id="price-hint">
+          Por ejemplo, $2.000 si vendes cada kilo a dos mil pesos.
+        </p>
         {state.fieldErrors?.priceCOP && (
           <p className="mt-1 text-sm text-red-800" id="price-error">
             {state.fieldErrors.priceCOP}
@@ -161,7 +170,7 @@ export function ProductForm({ product }: ProductFormProps) {
           }
           aria-invalid={Boolean(state.fieldErrors?.municipality)}
           className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3"
-          defaultValue={product?.municipality ?? ""}
+          defaultValue={values?.municipality ?? ""}
           id="municipality"
           maxLength={100}
           minLength={2}
@@ -188,8 +197,16 @@ export function ProductForm({ product }: ProductFormProps) {
           {state.message}
         </p>
       )}
+      {state.createdProductId && (
+        <a
+          className="inline-flex min-h-12 items-center font-semibold text-emerald-900 underline"
+          href={`#producto-${state.createdProductId}`}
+        >
+          Ir al producto guardado para publicarlo
+        </a>
+      )}
       <button
-        className="w-full rounded-xl bg-emerald-800 px-5 py-3 font-semibold text-white hover:bg-emerald-900 disabled:opacity-60"
+        className="min-h-12 w-full rounded-xl bg-emerald-800 px-5 py-3 font-semibold text-white hover:bg-emerald-900 disabled:opacity-60"
         disabled={pending}
         type="submit"
       >
