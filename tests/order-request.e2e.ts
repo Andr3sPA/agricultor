@@ -334,6 +334,31 @@ async function main(): Promise<void> {
 
       const newPassword = `Reset-${randomUUID()}-pass`;
       browser = await chromium.launch({ headless: true });
+      const anonymousContext = await browser.newContext();
+      const anonymousPage = await anonymousContext.newPage();
+      for (const path of ["/mi-cuenta", "/mi-cuenta/pedidos"]) {
+        await anonymousPage.goto(`${baseURL}${path}`);
+        assert.equal(
+          new URL(anonymousPage.url()).pathname,
+          "/iniciar-sesion",
+          `${path} should require a session.`,
+        );
+      }
+      await anonymousContext.close();
+      const producerContext = await browser.newContext({
+        storageState: await producerApi.storageState(),
+      });
+      const producerPage = await producerContext.newPage();
+      await producerPage.goto(`${baseURL}/mi-cuenta/pedidos`);
+      const producerOrdersSection = producerPage.getByRole("region", {
+        name: "Solicitudes recibidas",
+      });
+      await producerOrdersSection
+        .getByText("Aún no has recibido pedidos.")
+        .waitFor();
+      await producerOrdersSection
+        .getByRole("link", { name: "Gestionar mis productos" })
+        .waitFor();
       const resetContext = await browser.newContext();
       const resetPage = await resetContext.newPage();
       try {
@@ -381,6 +406,29 @@ async function main(): Promise<void> {
       await page.getByRole("heading", { name: product.name }).waitFor();
       await page.getByText("Solicitud de compra", { exact: true }).waitFor();
       await page.getByLabel("Cantidad que solicitas").waitFor();
+      await page.goto(`${baseURL}/mi-cuenta`);
+      await page
+        .getByRole("heading", { name: "Encuentra productos locales" })
+        .waitFor();
+      await page
+        .getByRole("link", { name: "Consultar mis pedidos" })
+        .waitFor();
+      await page.goto(`${baseURL}/mi-cuenta/pedidos`);
+      const buyerOrdersSection = page.getByRole("region", {
+        name: "Solicitudes que enviaste",
+      });
+      await buyerOrdersSection
+        .getByText("Aún no has solicitado productos.")
+        .waitFor();
+      await buyerOrdersSection
+        .getByRole("link", { name: "Explorar el catálogo" })
+        .waitFor();
+      await page.goto(`${baseURL}/mi-cuenta/productos`);
+      assert.equal(
+        new URL(page.url()).pathname,
+        "/mi-cuenta",
+        "A buyer should not access producer product management.",
+      );
       await page.goto(`${baseURL}/catalogo/${product.id}/pedido`);
       await page.getByRole("heading", { name: product.name }).waitFor();
 
@@ -464,12 +512,15 @@ async function main(): Promise<void> {
       await page
         .getByText("El productor debe revisar la solicitud.")
         .waitFor();
-      await page.getByText("Esperando respuesta").waitFor();
+      await page
+        .getByRole("list", { name: "Seguimiento de tu solicitud" })
+        .getByText("Respuesta del productor")
+        .waitFor();
+      await page
+        .getByRole("list", { name: "Seguimiento de tu solicitud" })
+        .getByText("Esperando respuesta")
+        .waitFor();
 
-      const producerContext = await browser.newContext({
-        storageState: await producerApi.storageState(),
-      });
-      const producerPage = await producerContext.newPage();
       await producerPage.goto(`${baseURL}/mi-cuenta/pedidos`);
       await producerPage
         .getByRole("heading", { name: "Solicitudes recibidas" })
@@ -478,7 +529,11 @@ async function main(): Promise<void> {
         .getByRole("button", { name: "Aceptar pedido" })
         .click();
       await producerPage
-        .getByRole("list", { name: "Seguimiento del pedido" })
+        .getByRole("list", { name: "Seguimiento de la solicitud recibida" })
+        .getByText("Tu respuesta")
+        .waitFor();
+      await producerPage
+        .getByRole("list", { name: "Seguimiento de la solicitud recibida" })
         .getByText("Aceptado")
         .waitFor();
       const acceptedOrder = await database.order.findFirstOrThrow({
@@ -489,9 +544,15 @@ async function main(): Promise<void> {
       assert.equal(acceptedOrder.history.length, 2);
 
       await page.goto(`${baseURL}/mi-cuenta/pedidos`);
-      await page.getByText("Agricultor registra la aceptación").waitFor();
       await page
-        .getByRole("list", { name: "Seguimiento del pedido" })
+        .getByText("El productor aceptó esta solicitud.")
+        .waitFor();
+      await page
+        .getByRole("list", { name: "Seguimiento de tu solicitud" })
+        .getByText("Respuesta del productor")
+        .waitFor();
+      await page
+        .getByRole("list", { name: "Seguimiento de tu solicitud" })
         .getByText("Aceptado")
         .waitFor();
 
@@ -515,7 +576,12 @@ async function main(): Promise<void> {
         .click();
       assert.match(canceledRejectionMessage, /no podrás cambiar la decisión/);
       await producerPage
-        .getByRole("list", { name: "Seguimiento del pedido" })
+        .getByRole("list", { name: "Seguimiento de la solicitud recibida" })
+        .first()
+        .getByText("Tu respuesta")
+        .waitFor();
+      await producerPage
+        .getByRole("list", { name: "Seguimiento de la solicitud recibida" })
         .first()
         .getByText("Esperando respuesta")
         .waitFor();
@@ -543,7 +609,12 @@ async function main(): Promise<void> {
         .click();
       assert.match(confirmedRejectionMessage, /no podrás cambiar la decisión/);
       await producerPage
-        .getByRole("list", { name: "Seguimiento del pedido" })
+        .getByRole("list", { name: "Seguimiento de la solicitud recibida" })
+        .first()
+        .getByText("Tu respuesta")
+        .waitFor();
+      await producerPage
+        .getByRole("list", { name: "Seguimiento de la solicitud recibida" })
         .first()
         .getByText("Rechazado")
         .waitFor();
@@ -567,7 +638,12 @@ async function main(): Promise<void> {
       await page.goto(`${baseURL}/mi-cuenta/pedidos`);
       await page.getByText("El productor rechazó esta solicitud.").waitFor();
       await page
-        .getByRole("list", { name: "Seguimiento del pedido" })
+        .getByRole("list", { name: "Seguimiento de tu solicitud" })
+        .first()
+        .getByText("Respuesta del productor")
+        .waitFor();
+      await page
+        .getByRole("list", { name: "Seguimiento de tu solicitud" })
         .first()
         .getByText("Rechazado")
         .waitFor();

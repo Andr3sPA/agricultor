@@ -186,13 +186,57 @@ export default async function AccountPage() {
         </section>
       )}
 
+      {identity.roles.includes("BUYER") && (
+        <section
+          aria-labelledby="buyer-next-steps-title"
+          className={`${dashboard ? "mt-6" : ""} rounded-3xl border border-emerald-950/10 bg-white p-5 shadow-sm sm:p-8`}
+        >
+          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-800">
+            Compras
+          </p>
+          {dashboard ? (
+            <h2
+              className="mt-3 text-2xl font-semibold"
+              id="buyer-next-steps-title"
+            >
+              Encuentra productos locales
+            </h2>
+          ) : (
+            <h1
+              className="mt-3 text-3xl font-semibold"
+              id="buyer-next-steps-title"
+            >
+              Encuentra productos locales
+            </h1>
+          )}
+          <p className="mt-3 text-slate-700">
+            Explora la oferta disponible y vuelve aquí para consultar las
+            respuestas a tus solicitudes.
+          </p>
+          <div className="mt-5 grid gap-3 sm:flex">
+            <Link
+              className="inline-flex min-h-12 items-center justify-center rounded-xl bg-emerald-800 px-5 py-3 text-center font-semibold text-white hover:bg-emerald-900"
+              href="/catalogo"
+            >
+              Explorar el catálogo
+            </Link>
+            <Link
+              className="inline-flex min-h-12 items-center justify-center rounded-xl border border-emerald-900 px-5 py-3 text-center font-semibold text-emerald-950 hover:bg-emerald-50"
+              href="/mi-cuenta/pedidos"
+            >
+              Consultar mis pedidos
+            </Link>
+          </div>
+        </section>
+      )}
+
       <section
-        className={`${dashboard ? "mt-6" : ""} rounded-3xl border border-emerald-950/10 bg-white p-5 shadow-sm sm:p-8`}
+        className={`${dashboard || identity.roles.includes("BUYER") ? "mt-6" : ""} rounded-3xl border border-emerald-950/10 bg-white p-5 shadow-sm sm:p-8`}
       >
         <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-800">
           Agricultor
         </p>
-        {dashboard ? (
+        {dashboard || identity.roles.includes("BUYER") ? (
           <h2 className="mt-4 text-2xl font-semibold">Tu cuenta</h2>
         ) : (
           <h1 className="mt-4 text-3xl font-semibold">Tu cuenta</h1>
@@ -210,15 +254,6 @@ export default async function AccountPage() {
             href="/mi-cuenta/productos"
           >
             Gestionar mis productos
-          </Link>
-        )}
-        {(identity.roles.includes("BUYER") ||
-          identity.roles.includes("PRODUCER")) && (
-          <Link
-            className="mt-6 inline-flex rounded-xl border border-emerald-900 px-5 py-3 font-semibold text-emerald-950 hover:bg-emerald-50"
-            href="/mi-cuenta/pedidos"
-          >
-            Ver mis pedidos
           </Link>
         )}
         {identity.roles.includes("BUYER") && (

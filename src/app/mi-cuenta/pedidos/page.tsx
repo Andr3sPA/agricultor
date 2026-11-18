@@ -10,6 +10,11 @@ const statusLabels: Record<OrderStatus, string> = {
   ACCEPTED: "Aceptado",
   REJECTED: "Rechazado",
 };
+const statusClasses: Record<OrderStatus, string> = {
+  PENDING: "bg-amber-100 text-amber-950",
+  ACCEPTED: "bg-emerald-100 text-emerald-950",
+  REJECTED: "bg-rose-100 text-rose-950",
+};
 const quantityFormatter = new Intl.NumberFormat("es-CO", {
   maximumFractionDigits: 3,
 });
@@ -91,7 +96,10 @@ export default async function OrdersPage() {
       >
         <div className="flex flex-wrap items-start justify-between gap-3">
           <h3 className="text-lg font-semibold">{order.productName}</h3>
-          <span className="rounded-full bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-900">
+          <span
+            aria-label={`Estado del pedido: ${statusLabels[order.status]}`}
+            className={`shrink-0 rounded-full px-3 py-1 text-sm font-semibold ${statusClasses[order.status]}`}
+          >
             {statusLabels[order.status]}
           </span>
         </div>
@@ -115,7 +123,11 @@ export default async function OrdersPage() {
         <section className="mt-4 rounded-xl bg-slate-50 p-4">
           <h4 className="font-medium">Seguimiento</h4>
           <ol
-            aria-label="Seguimiento del pedido"
+            aria-label={
+              producerView
+                ? "Seguimiento de la solicitud recibida"
+                : "Seguimiento de tu solicitud"
+            }
             className="mt-2 space-y-3 text-sm text-slate-700"
           >
             <li>
@@ -132,7 +144,7 @@ export default async function OrdersPage() {
                 {dateFormatter.format(order.createdAt)}
               </time>
             </li>
-            <li aria-current="step">
+            <li aria-current={order.status === "PENDING" ? "step" : undefined}>
               <p className="font-medium">
                 <span
                   aria-hidden="true"
@@ -140,7 +152,7 @@ export default async function OrdersPage() {
                 >
                   2
                 </span>
-                Respuesta del productor
+                {producerView ? "Tu respuesta" : "Respuesta del productor"}
               </p>
               {order.status === "PENDING" ? (
                 <p>Esperando respuesta</p>
@@ -176,7 +188,9 @@ export default async function OrdersPage() {
                   ? "Revisa la solicitud y elige aceptar o rechazar."
                   : "El productor debe revisar la solicitud."
                 : order.status === "ACCEPTED"
-                  ? "Agricultor registra la aceptación, pero no gestiona la entrega ni el pago."
+                  ? producerView
+                    ? "Registraste la aceptación. La plataforma no gestiona la entrega ni el pago."
+                    : "El productor aceptó esta solicitud. La plataforma no gestiona la entrega ni el pago."
                   : "La solicitud fue rechazada y la cantidad reservada volvió a estar disponible."}
             </p>
           )}
@@ -189,24 +203,64 @@ export default async function OrdersPage() {
   }
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-3xl px-6 py-12">
-      <Link
-        className="font-semibold text-emerald-900 underline"
-        href="/mi-cuenta"
+    <main className="mx-auto min-h-screen w-full max-w-3xl px-4 py-8 sm:px-6 sm:py-12">
+      <nav
+        aria-label="Navegación de pedidos"
+        className="flex flex-wrap gap-x-5 gap-y-3"
       >
-        Volver a mi cuenta
-      </Link>
-      <section className="mt-6 rounded-3xl border border-emerald-950/10 bg-white p-8 shadow-sm sm:p-12">
+        <Link
+          className="inline-flex min-h-12 items-center font-semibold text-emerald-900 underline underline-offset-4"
+          href="/mi-cuenta"
+        >
+          Volver a mi cuenta
+        </Link>
+        {isBuyer && (
+          <Link
+            className="inline-flex min-h-12 items-center font-semibold text-emerald-900 underline underline-offset-4"
+            href="/catalogo"
+          >
+            Explorar catálogo
+          </Link>
+        )}
+        {isProducer && (
+          <Link
+            className="inline-flex min-h-12 items-center font-semibold text-emerald-900 underline underline-offset-4"
+            href="/mi-cuenta/productos"
+          >
+            Gestionar productos
+          </Link>
+        )}
+      </nav>
+      <section className="mt-4 rounded-3xl border border-emerald-950/10 bg-white p-5 shadow-sm sm:p-8">
         <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-800">
           Agricultor
         </p>
         <h1 className="mt-4 text-3xl font-semibold">Mis pedidos</h1>
+        <p className="mt-3 text-slate-700">
+          Consulta el estado y la respuesta a cada solicitud.
+        </p>
       </section>
       {isBuyer && (
-        <section className="mt-8 rounded-3xl border border-emerald-950/10 bg-white p-8 shadow-sm">
-          <h2 className="text-2xl font-semibold">Solicitudes que enviaste</h2>
+        <section
+          aria-labelledby="buyer-orders-title"
+          className="mt-6 rounded-3xl border border-emerald-950/10 bg-white p-5 shadow-sm sm:p-8"
+        >
+          <h2 className="text-2xl font-semibold" id="buyer-orders-title">
+            Solicitudes que enviaste
+          </h2>
           {buyerOrders.length === 0 ? (
-            <p className="mt-4 text-slate-700">Aún no has solicitado productos.</p>
+            <div className="mt-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 sm:p-5">
+              <p className="text-slate-700">
+                Aún no has solicitado productos. Explora el catálogo para
+                encontrar una oferta y enviar una solicitud.
+              </p>
+              <Link
+                className="mt-4 inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-emerald-800 px-5 py-3 text-center font-semibold text-white hover:bg-emerald-900 sm:w-auto"
+                href="/catalogo"
+              >
+                Explorar el catálogo
+              </Link>
+            </div>
           ) : (
             <ul className="mt-5 space-y-4">
               {buyerOrders.map((order) => orderCard(order, false))}
@@ -215,10 +269,26 @@ export default async function OrdersPage() {
         </section>
       )}
       {isProducer && (
-        <section className="mt-8 rounded-3xl border border-emerald-950/10 bg-white p-8 shadow-sm">
-          <h2 className="text-2xl font-semibold">Solicitudes recibidas</h2>
+        <section
+          aria-labelledby="producer-orders-title"
+          className="mt-6 rounded-3xl border border-emerald-950/10 bg-white p-5 shadow-sm sm:p-8"
+        >
+          <h2 className="text-2xl font-semibold" id="producer-orders-title">
+            Solicitudes recibidas
+          </h2>
           {producerOrders.length === 0 ? (
-            <p className="mt-4 text-slate-700">Aún no has recibido pedidos.</p>
+            <div className="mt-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 sm:p-5">
+              <p className="text-slate-700">
+                Aún no has recibido pedidos. Revisa tus productos publicados
+                para que las personas puedan encontrarlos.
+              </p>
+              <Link
+                className="mt-4 inline-flex min-h-12 w-full items-center justify-center rounded-xl border border-emerald-900 px-5 py-3 text-center font-semibold text-emerald-950 hover:bg-emerald-50 sm:w-auto"
+                href="/mi-cuenta/productos"
+              >
+                Gestionar mis productos
+              </Link>
+            </div>
           ) : (
             <ul className="mt-5 space-y-4">
               {producerOrders.map((order) => orderCard(order, true))}
