@@ -513,6 +513,26 @@ async function main(): Promise<void> {
       await publicCatalog.reload();
       await expect(publicCrop).toHaveCount(0);
       await publicCatalog.close();
+      await producerPage.goto(`${baseURL}/mi-cuenta`);
+      await producerPage.getByRole("link", { name: "Abrir mi agenda" }).click();
+      const comingTasks = producerPage.getByRole("region", { name: "Hoy y próximas labores" });
+      await expect(comingTasks.getByText("No tienes próximas labores en la agenda.")).toBeVisible();
+      await producerPage.getByRole("link", { name: "Agregar una labor" }).click();
+      const agendaForm = producerPage.getByRole("region", { name: "Agregar una labor" });
+      await agendaForm.getByLabel("Actividad", { exact: true }).selectOption("HARVEST");
+      await agendaForm.getByLabel("Fecha", { exact: true }).fill("2099-01-02");
+      await agendaForm.getByLabel("Cultivo o producto").fill("Papa para cosechar");
+      await agendaForm.getByRole("button", { name: "Agregar a mi agenda" }).click();
+      await expect(comingTasks.getByText("Papa para cosechar")).toBeVisible();
+      await agendaForm.getByLabel("Actividad", { exact: true }).selectOption("SOWING");
+      await agendaForm.getByLabel("Fecha", { exact: true }).fill("2000-01-01");
+      await agendaForm.getByLabel("Cultivo o producto").fill("Papa de registro anterior");
+      await agendaForm.getByRole("button", { name: "Agregar a mi agenda" }).click();
+      const history = comingTasks.getByText("Labores de fechas anteriores (1)", { exact: true });
+      await expect(history).toBeVisible();
+      await expect(comingTasks.getByText("Papa de registro anterior")).toBeHidden();
+      await history.click();
+      await expect(comingTasks.getByText("Papa de registro anterior")).toBeVisible();
       await producerPage.setViewportSize({ width: 1280, height: 720 });
       await producerPage.goto(`${baseURL}/mi-cuenta/pedidos`);
       const producerOrdersSection = producerPage.getByRole("region", {

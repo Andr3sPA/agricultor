@@ -4,6 +4,7 @@ import type { PrismaClient } from "@/generated/prisma/client";
 import { canManageFarmAgenda } from "./farm-agenda-access";
 import {
   getFarmActivities,
+  groupFarmActivities,
   removeFarmActivity,
 } from "./farm-agenda-service";
 import { validateFarmActivityInput } from "./farm-agenda-validation";
@@ -16,6 +17,21 @@ const validInput = {
   cropProduct: "Maíz",
   notes: "Lote norte",
 };
+
+it("uses Colombia's day for upcoming tasks and shows past tasks newest first", () => {
+  const activities = ["2026-11-18", "2026-11-19", "2026-11-20", "2026-11-21"].map(
+    (date) => ({ scheduledFor: new Date(`${date}T00:00:00.000Z`) }),
+  );
+  const result = groupFarmActivities(activities, new Date("2026-11-21T03:00:00Z"));
+
+  assert.equal(result.today, "2026-11-20");
+  assert.deepEqual(result.upcoming, activities.slice(2));
+  assert.deepEqual(result.past, [activities[1], activities[0]]);
+  assert.equal(
+    groupFarmActivities(activities, new Date("2026-11-21T05:00:00Z")).today,
+    "2026-11-21",
+  );
+});
 
 describe("farm agenda validation", () => {
   it("accepts a valid activity and normalizes optional blank fields", () => {
