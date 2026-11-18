@@ -7,9 +7,10 @@ import { authClient } from "@/lib/auth-client";
 
 type AuthFormProps = {
   mode: "sign-in" | "sign-up";
+  redirectTo?: string | null;
 };
 
-export function AuthForm({ mode }: AuthFormProps) {
+export function AuthForm({ mode, redirectTo }: AuthFormProps) {
   const router = useRouter();
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"error" | "success">("error");
@@ -50,7 +51,7 @@ export function AuthForm({ mode }: AuthFormProps) {
         return;
       }
 
-      router.push("/mi-cuenta");
+      router.push(redirectTo ?? "/mi-cuenta");
       router.refresh();
     } catch {
       setMessage(
@@ -157,7 +158,13 @@ export function AuthForm({ mode }: AuthFormProps) {
         {isSignUp ? "¿Ya tienes cuenta?" : "¿Primera vez por aquí?"}{" "}
         <Link
           className="inline-flex min-h-12 items-center font-semibold text-emerald-900 underline"
-          href={isSignUp ? "/iniciar-sesion" : "/crear-cuenta"}
+          href={
+            redirectTo
+              ? `${isSignUp ? "/iniciar-sesion" : "/crear-cuenta"}?redirectTo=${encodeURIComponent(redirectTo)}`
+              : isSignUp
+                ? "/iniciar-sesion"
+                : "/crear-cuenta"
+          }
         >
           {isSignUp ? "Inicia sesión" : "Crea tu cuenta"}
         </Link>

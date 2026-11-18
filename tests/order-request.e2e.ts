@@ -371,10 +371,16 @@ async function main(): Promise<void> {
       });
       assert.equal(signin.ok(), true, `Signin failed: ${await signin.text()}`);
 
-      const context = await browser.newContext({
-        storageState: await api.storageState(),
-      });
+      const context = await browser.newContext();
       const page = await context.newPage();
+      await page.goto(`${baseURL}/catalogo/${product.id}/pedido`);
+      await page.getByRole("link", { name: "Inicia sesión" }).click();
+      await page.getByLabel("Correo electrónico").fill(email);
+      await page.getByLabel("Contraseña").fill(newPassword);
+      await page.getByRole("button", { name: "Iniciar sesión" }).click();
+      await page.getByRole("heading", { name: product.name }).waitFor();
+      await page.getByText("Solicitud de compra", { exact: true }).waitFor();
+      await page.getByLabel("Cantidad que solicitas").waitFor();
       await page.goto(`${baseURL}/catalogo/${product.id}/pedido`);
       await page.getByRole("heading", { name: product.name }).waitFor();
 

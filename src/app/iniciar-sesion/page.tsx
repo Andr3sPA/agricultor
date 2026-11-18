@@ -1,7 +1,15 @@
 import { AuthForm } from "@/features/auth/auth-form";
+import { getOrderRequestRedirect } from "@/features/auth/order-redirect";
 import Link from "next/link";
 
-export default function SignInPage() {
+export default async function SignInPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = await searchParams;
+  const redirectTo = getOrderRequestRedirect(params.redirectTo);
+
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-xl items-center px-4 py-8 sm:px-6 sm:py-12">
       <section className="w-full rounded-3xl border border-emerald-950/10 bg-white p-6 shadow-sm sm:p-10">
@@ -18,7 +26,7 @@ export default function SignInPage() {
         <p className="mt-3 leading-7 text-slate-700">
           Ingresa con el correo y la contraseña de tu cuenta.
         </p>
-        <AuthForm mode="sign-in" />
+        <AuthForm mode="sign-in" redirectTo={redirectTo} />
       </section>
     </main>
   );

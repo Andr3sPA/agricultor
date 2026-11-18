@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getPublicProductOrderHref } from "@/features/catalog/public-products";
 import { OrderRequestForm } from "@/features/orders/order-request-form";
 import {
   PRODUCT_CATEGORIES,
@@ -58,6 +59,9 @@ export default async function RequestOrderPage({
     PRODUCT_UNITS.find(({ value }) => value === product.unit)?.label ??
     product.unit;
   const availableQuantity = product.availableQuantity.toString();
+  const signInHref = `/iniciar-sesion?redirectTo=${encodeURIComponent(
+    getPublicProductOrderHref(product.id),
+  )}`;
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-2xl px-6 py-12">
@@ -103,7 +107,7 @@ export default async function RequestOrderPage({
           <p className="mt-6 text-slate-700">
             <Link
               className="font-semibold text-emerald-900 underline"
-              href="/iniciar-sesion"
+              href={signInHref}
             >
               Inicia sesión
             </Link>{" "}
