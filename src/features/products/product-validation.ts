@@ -53,14 +53,21 @@ export function parseProductPrice(value: unknown): number | null {
 export const PRODUCT_PRICE_ERROR =
   "Escribe un precio entero mayor que cero en pesos colombianos.";
 
+export const PRODUCT_QUANTITY_ERROR =
+  "Escribe una cantidad válida, con máximo 3 decimales.";
+
+export function parseProductQuantity(value: unknown): string | null {
+  const quantity = asString(value).replace(",", ".");
+  return /^\d{1,9}(?:\.\d{1,3})?$/.test(quantity) ? quantity : null;
+}
+
 export function validateProductInput(
   input: Record<string, unknown>,
 ): ProductValidation {
   const errors: ProductFieldErrors = {};
   const name = asString(input.name);
   const category = asString(input.category);
-  const rawQuantity = asString(input.availableQuantity);
-  const quantity = rawQuantity.replace(",", ".");
+  const quantity = parseProductQuantity(input.availableQuantity);
   const unit = asString(input.unit);
   const priceCOP = parseProductPrice(input.priceCOP);
   const municipality = asString(input.municipality);
@@ -77,11 +84,8 @@ export function validateProductInput(
     errors.category = "Elige una categoría de la lista.";
   }
 
-  if (
-    !/^\d{1,9}(?:\.\d{1,3})?$/.test(quantity) ||
-    !Number.isFinite(Number(quantity))
-  ) {
-    errors.availableQuantity = "Escribe una cantidad válida, con máximo 3 decimales.";
+  if (quantity === null) {
+    errors.availableQuantity = PRODUCT_QUANTITY_ERROR;
   }
 
   if (!unitOption) {
@@ -96,7 +100,7 @@ export function validateProductInput(
     errors.municipality = "Escribe un municipio o localidad entre 2 y 100 caracteres.";
   }
 
-  if (Object.keys(errors).length > 0 || !categoryOption || !unitOption || priceCOP === null) {
+  if (Object.keys(errors).length > 0 || !categoryOption || !unitOption || priceCOP === null || quantity === null) {
     return { ok: false, errors };
   }
 

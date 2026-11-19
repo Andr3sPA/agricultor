@@ -11,7 +11,9 @@ import { prisma } from "@/lib/db";
 import { canEditProduct, canManageProducts } from "./product-access";
 import {
   parseProductPrice,
+  parseProductQuantity,
   PRODUCT_PRICE_ERROR,
+  PRODUCT_QUANTITY_ERROR,
   validateProductInput,
   type ProductField,
   type ProductFieldErrors,
@@ -52,6 +54,8 @@ function revalidatePublicProduct(productId: string) {
   revalidatePath(getPublicProductHref(productId));
   revalidatePath(getPublicProductOrderHref(productId));
 }
+
+const MAX_PRODUCT_INVENTORY = new Prisma.Decimal("999999999.999");
 
 function submittedValues(formData: FormData): ProductFormState["values"] {
   const values: Partial<Record<ProductField, string>> = {};
@@ -144,7 +148,7 @@ export async function updateProduct(
       ownerId: identity.userId,
       OR: [{ unit: result.data.unit }, { reservedQuantity: 0 }],
       reservedQuantity: {
-        lte: new Prisma.Decimal("999999999.999").minus(
+        lte: MAX_PRODUCT_INVENTORY.minus(
           result.data.availableQuantity,
         ),
       },
@@ -219,6 +223,62 @@ export async function updateProductPrice(
   revalidatePath("/mi-cuenta/favoritos");
   revalidatePublicProduct(productId);
   return { ok: true, message: "Guardamos el precio." };
+}
+
+export async function updateProductAvailability(
+  productId: string,
+  unit: string,
+  previousQuantity: string,
+  _previousState: ProductFormState,
+  formData: FormData,
+): Promise<ProductFormState> {
+  const identity = await getCurrentIdentity();
+  if (!identity || !canManageProducts(identity.roles)) {
+    return { message: "Necesitas el perfil de productor para cambiar la cantidad." };
+  }
+
+  const quantity = parseProductQuantity(formData.get("availableQuantity"));
+  if (quantity === null) {
+    return {
+      fieldErrors: { availableQuantity: PRODUCT_QUANTITY_ERROR },
+      values: submittedValues(formData),
+    };
+  }
+
+  const availableQuantity = new Prisma.Decimal(quantity);
+  const where = { id: productId, ownerId: identity.userId, unit };
+  const updated = await prisma.product.updateMany({
+    where: {
+      ...where,
+      availableQuantity: { equals: previousQuantity, not: availableQuantity },
+      reservedQuantity: { lte: MAX_PRODUCT_INVENTORY.minus(availableQuantity) },
+    },
+    data: { availableQuantity },
+  });
+  if (updated.count === 0) {
+    const current = await prisma.product.findFirst({
+      where,
+      select: { availableQuantity: true, reservedQuantity: true },
+    });
+    if (current?.availableQuantity.equals(previousQuantity) &&
+        current.reservedQuantity.plus(availableQuantity).gt(MAX_PRODUCT_INVENTORY)) {
+      return {
+        fieldErrors: { availableQuantity: "La cantidad disponible más la reservada supera el límite de inventario." },
+        values: submittedValues(formData),
+      };
+    }
+    if (!current?.availableQuantity.equals(availableQuantity)) {
+      revalidatePath("/mi-cuenta/productos");
+      return { message: "La cantidad o la unidad cambió. Revisa lo disponible antes de guardar." };
+    }
+  }
+
+  revalidatePath("/mi-cuenta");
+  revalidatePath("/mi-cuenta/productos");
+  revalidatePath(`/mi-cuenta/productos/${productId}/editar`);
+  revalidatePath("/mi-cuenta/favoritos");
+  revalidatePublicProduct(productId);
+  return { ok: true, message: "Guardamos la cantidad disponible." };
 }
 
 export async function setProductPublication(

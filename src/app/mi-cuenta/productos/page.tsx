@@ -3,7 +3,8 @@ import { redirect } from "next/navigation";
 import { ProductForm } from "@/features/products/product-form";
 import { canManageProducts } from "@/features/products/product-access";
 import { PublicationToggle } from "@/features/products/publication-toggle";
-import { QuickPriceForm } from "@/features/products/quick-price-form";
+import { updateProductAvailability, updateProductPrice } from "@/features/products/product-actions";
+import { QuickProductFieldForm } from "@/features/products/quick-product-field-form";
 import {
   getAvailabilityLabel,
   PRODUCT_CATEGORIES,
@@ -132,11 +133,20 @@ export default async function ProductsPage() {
                       <dd>{product.municipality}</dd>
                     </div>
                   </dl>
-                  <QuickPriceForm
-                    priceCOP={product.priceCOP}
+                  <QuickProductFieldForm
+                    field="priceCOP"
+                    label={`Precio en pesos por ${unit}`}
                     productId={product.id}
-                    unit={product.unit}
-                    unitLabel={unit}
+                    saveAction={updateProductPrice.bind(null, product.id, product.unit, product.priceCOP)}
+                    value={String(product.priceCOP)}
+                  />
+                  <QuickProductFieldForm
+                    field="availableQuantity"
+                    hint="Escribe cuánto puedes vender en pedidos nuevos. Si ya agotaste el producto, escribe 0."
+                    label={`Cantidad disponible en ${unit}`}
+                    productId={product.id}
+                    saveAction={updateProductAvailability.bind(null, product.id, product.unit, product.availableQuantity.toString())}
+                    value={product.availableQuantity.toString().replace(".", ",")}
                   />
                   <Link
                     className="mt-4 inline-flex rounded-xl border border-emerald-900 px-4 py-2 font-semibold text-emerald-950 hover:bg-emerald-50"

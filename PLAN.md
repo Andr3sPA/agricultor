@@ -14,7 +14,7 @@ La aplicación ya tiene cuentas y recuperación por Brevo, catálogo público, i
 
 **Razón para volver.** El productor puede actualizar lo que vende desde el celular. El comprador puede consultar una oferta útil antes de llamar o hacer un viaje.
 
-- «Mis productos» permite cambiar solo el precio desde la tarjeta de cada producto. Queda por validar esta acción en el piloto y evaluar una edición rápida de disponibilidad. Mostrar la fecha del precio requiere guardar ese dato por separado mediante una migración. Para ofertas antiguas sin historial de precio, mostrar que la fecha no está disponible.
+- En «Mis productos» el productor puede cambiar por separado el precio y la cantidad disponible desde cada tarjeta. El piloto debe validar estas acciones. Un cambio de cantidad conserva las reservas y la fecha del precio. Para ofertas antiguas sin historial de precio, el catálogo indica que la fecha no está disponible.
 - Validar pedido mínimo, unidad y presentación comercial con operaciones reales. Para un bulto de peso variable, indicar su peso acordado o cotizar en kilos. Confirmar con compradores qué datos necesitan sobre calidad y fecha disponible antes de convertirlos en campos obligatorios.
 - Explorar vigencia elegida por el productor y la opción «Consultar precio» si acuerdan el valor por llamada o mensaje. Definir con el piloto qué ocurre al vencer una oferta, cómo se confirma una cotización y cuándo se libera inventario antes de implementar esos flujos.
 - Mantener el precio manual bajo control del productor. Al confirmar un pedido, ambas partes deben ver la cantidad, unidad, precio acordado y total. Una edición posterior de la oferta solo aplica a nuevas operaciones. Si cambia antes de solicitar, el comprador revisa el nuevo dato.

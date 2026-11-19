@@ -1,46 +1,64 @@
 "use client";
 
 import { useActionState } from "react";
-import { updateProductPrice, type ProductFormState } from "./product-actions";
+import type { ProductFormState } from "./product-actions";
 
 const initialState: ProductFormState = {};
 
-export function QuickPriceForm({
+const fields = {
+  priceCOP: {
+    summary: "Cambiar precio",
+    button: "Guardar precio",
+    inputMode: "numeric",
+  },
+  availableQuantity: {
+    summary: "Cambiar cantidad disponible",
+    button: "Guardar cantidad",
+    inputMode: "decimal",
+  },
+} as const;
+
+export function QuickProductFieldForm({
+  saveAction,
+  field,
   productId,
-  priceCOP,
-  unit,
-  unitLabel,
+  value,
+  label,
+  hint,
 }: {
+  saveAction: (previous: ProductFormState, data: FormData) => Promise<ProductFormState>;
+  field: keyof typeof fields;
   productId: string;
-  priceCOP: number;
-  unit: string;
-  unitLabel: string;
+  value: string;
+  label: string;
+  hint?: string;
 }) {
-  const [state, action, pending] = useActionState(
-    updateProductPrice.bind(null, productId, unit, priceCOP),
-    initialState,
-  );
-  const inputId = `precio-${productId}`;
-  const error = state.fieldErrors?.priceCOP;
+  const [state, action, pending] = useActionState(saveAction, initialState);
+  const inputId = `${field}-${productId}`;
+  const error = state.fieldErrors?.[field];
+  const description = [hint && `${inputId}-hint`, error && `${inputId}-error`]
+    .filter(Boolean).join(" ") || undefined;
+  const config = fields[field];
 
   return (
     <details className="mt-4 rounded-xl border border-emerald-900 px-4">
       <summary className="cursor-pointer py-3 font-semibold text-emerald-950">
-        Cambiar precio
+        {config.summary}
       </summary>
       <form action={action} className="space-y-2 pb-4">
         <label className="block text-sm font-medium" htmlFor={inputId}>
-          Precio en pesos por {unitLabel}
+          {label}
         </label>
+        {hint && <p className="text-sm text-slate-700" id={`${inputId}-hint`}>{hint}</p>}
         <input
-          aria-describedby={error ? `${inputId}-error` : undefined}
+          aria-describedby={description}
           aria-invalid={Boolean(error)}
           className="min-h-11 w-full max-w-xs rounded-lg border border-slate-300 px-3"
-          defaultValue={state.values?.priceCOP ?? String(priceCOP)}
+          defaultValue={state.values?.[field] ?? value}
           id={inputId}
-          inputMode="numeric"
+          inputMode={config.inputMode}
           maxLength={25}
-          name="priceCOP"
+          name={field}
           type="text"
         />
         {error && <p className="text-sm text-rose-800" id={`${inputId}-error`} role="alert">{error}</p>}
@@ -50,7 +68,7 @@ export function QuickPriceForm({
             disabled={pending}
             type="submit"
           >
-            {pending ? "Guardando..." : "Guardar precio"}
+            {pending ? "Guardando..." : config.button}
           </button>
         </div>
         {state.message && (

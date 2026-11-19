@@ -475,7 +475,7 @@ async function main(): Promise<void> {
       const harvestMunicipality = `Municipio para papa ${suffix}`;
       const cropName = producerPage.getByLabel("Nombre del producto");
       const cropCategory = producerPage.getByLabel("Categoría", { exact: true });
-      const cropQuantity = producerPage.getByLabel("Cantidad disponible");
+      const cropQuantity = producerPage.getByLabel("Cantidad disponible", { exact: true });
       const cropUnit = producerPage.getByLabel("Unidad de medida");
       const cropPrice = producerPage.getByLabel("Precio en pesos por unidad");
       const cropMunicipality = producerPage.getByLabel("Municipio o localidad");
@@ -539,6 +539,21 @@ async function main(): Promise<void> {
       await expect(publicCrop).toContainText("10,25 Kilogramo (kg)");
       await expect(publicCrop).toContainText(/2\.500/);
       await producerPage.getByRole("link", { name: "Volver a mis productos" }).click();
+      const originalPriceDate = await publicCrop.locator("time").getAttribute("datetime");
+      await savedCrop.getByText("Cambiar cantidad disponible", { exact: true }).click();
+      const availableStock = savedCrop.getByLabel("Cantidad disponible en Kilogramo (kg)");
+      const saveStock = savedCrop.getByRole("button", { name: "Guardar cantidad" });
+      await availableStock.fill("0");
+      await saveStock.click();
+      await expect(savedCrop.getByText("Agotado", { exact: true })).toBeVisible();
+      await publicCatalog.reload();
+      await expect(publicCrop).toHaveCount(0);
+      await availableStock.fill("8,75");
+      await saveStock.click();
+      await expect(savedCrop).toContainText(/Disponible para nuevos pedidos\s*8,75 Kilogramo/);
+      await publicCatalog.reload();
+      await expect(publicCrop).toContainText("8,75 Kilogramo (kg)");
+      await expect(publicCrop.locator("time")).toHaveAttribute("datetime", originalPriceDate!);
       await savedCrop.getByRole("button", { name: "Retirar del catálogo" }).click();
       await expect(savedCrop.getByText("Privado", { exact: true })).toBeVisible();
       await publicCatalog.reload();
@@ -862,11 +877,16 @@ async function main(): Promise<void> {
       const inventoryCard = producerPage.getByRole("listitem").filter({ hasText: product.name });
       await expect(inventoryCard).toContainText(/Disponible para nuevos pedidos\s*3 Kilogramo/);
       await expect(inventoryCard).toContainText(/Reservado en pedidos pendientes\s*2 Kilogramo/);
+      await inventoryCard.getByText("Cambiar cantidad disponible", { exact: true }).click();
+      await inventoryCard.getByLabel("Cantidad disponible en Kilogramo (kg)").fill("999999999,999");
+      await inventoryCard.getByRole("button", { name: "Guardar cantidad" }).click();
+      await expect(inventoryCard.getByRole("alert")).toContainText("supera el límite de inventario");
+      await expect(inventoryCard).toContainText(/Disponible para nuevos pedidos\s*3 Kilogramo/);
       await inventoryCard.getByRole("link", { name: "Editar producto" }).click();
       await expect(producerPage.getByText("Reservado en pedidos pendientes", { exact: true }))
         .toBeVisible();
       await expect(producerPage.getByText("2 Kilogramo (kg)", { exact: true })).toBeVisible();
-      await expect(producerPage.getByLabel("Cantidad disponible")).toHaveValue("3");
+      await expect(producerPage.getByLabel("Cantidad disponible", { exact: true })).toHaveValue("3");
       await expect(inventoryUnit).toBeDisabled();
       await producerPage.goto(`${baseURL}/mi-cuenta/pedidos`);
       await expect(
