@@ -794,6 +794,15 @@ async function main(): Promise<void> {
         .getByText("Esperando respuesta")
         .waitFor();
 
+      await producerPage.goto(`${baseURL}/mi-cuenta/productos`);
+      const inventoryCard = producerPage.getByRole("listitem").filter({ hasText: product.name });
+      await expect(inventoryCard).toContainText(/Disponible para nuevos pedidos\s*3 Kilogramo/);
+      await expect(inventoryCard).toContainText(/Reservado en pedidos pendientes\s*2 Kilogramo/);
+      await inventoryCard.getByRole("link", { name: "Editar producto" }).click();
+      await expect(producerPage.getByText("Reservado en pedidos pendientes", { exact: true }))
+        .toBeVisible();
+      await expect(producerPage.getByText("2 Kilogramo (kg)", { exact: true })).toBeVisible();
+      await expect(producerPage.getByLabel("Cantidad disponible")).toHaveValue("3");
       await producerPage.goto(`${baseURL}/mi-cuenta/pedidos`);
       await expect(
         producerPage.getByText("2 Kilogramo (kg)", { exact: true }),
@@ -932,6 +941,9 @@ async function main(): Promise<void> {
       });
       assert.ok(reservedInventory.availableQuantity.equals("3"));
       assert.ok(reservedInventory.reservedQuantity.equals("0"));
+      await producerPage.goto(`${baseURL}/mi-cuenta/productos`);
+      await expect(inventoryCard).toContainText(/Disponible para nuevos pedidos\s*3 Kilogramo/);
+      await expect(inventoryCard.getByText("Reservado en pedidos pendientes")).toHaveCount(0);
 
       await page.goto(`${baseURL}/mi-cuenta/pedidos`);
       await page.getByText("El productor rechazó esta solicitud.").waitFor();

@@ -107,12 +107,21 @@ export default async function ProductsPage() {
                   </p>
                   <dl className="mt-4 grid gap-2 text-sm text-slate-700 sm:grid-cols-2">
                     <div>
-                      <dt className="font-medium">Disponible</dt>
+                      <dt className="font-medium">Disponible para nuevos pedidos</dt>
                       <dd>
                         {quantityFormatter.format(product.availableQuantity.toNumber())}{" "}
                         {unit}
                       </dd>
                     </div>
+                    {product.reservedQuantity.gt(0) && (
+                      <div>
+                        <dt className="font-medium">Reservado en pedidos pendientes</dt>
+                        <dd>
+                          {quantityFormatter.format(product.reservedQuantity.toNumber())}{" "}
+                          {unit}
+                        </dd>
+                      </div>
+                    )}
                     <div>
                       <dt className="font-medium">Precio por unidad</dt>
                       <dd>{copFormatter.format(product.priceCOP)}</dd>
