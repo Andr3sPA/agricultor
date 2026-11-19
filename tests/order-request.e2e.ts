@@ -888,7 +888,9 @@ async function main(): Promise<void> {
       await expect(producerPage.getByText("2 Kilogramo (kg)", { exact: true })).toBeVisible();
       await expect(producerPage.getByLabel("Cantidad disponible", { exact: true })).toHaveValue("3");
       await expect(inventoryUnit).toBeDisabled();
-      await producerPage.goto(`${baseURL}/mi-cuenta/pedidos`);
+      await producerPage.goto(`${baseURL}/mi-cuenta`);
+      await producerPage.getByRole("link", { name: "Responder 1 pedido" }).click();
+      await expect(producerPage).toHaveURL(`${baseURL}/mi-cuenta/pedidos#pedidos-por-responder`);
       await expect(
         producerPage.getByText("2 Kilogramo (kg)", { exact: true }),
       ).toBeVisible();
@@ -897,6 +899,7 @@ async function main(): Promise<void> {
         .getByRole("heading", { name: "Solicitudes recibidas" })
         .waitFor();
       const pendingProducerRequests = producerPage.getByRole("region", { name: "Por responder" });
+      await expect(pendingProducerRequests.getByRole("heading", { name: "Por responder" })).toBeInViewport();
       const answeredProducerRequests = producerPage.getByRole("region", { name: "Ya respondidas" });
       const acceptOrder = pendingProducerRequests.getByRole("button", { name: "Aceptar pedido" });
       await expect(pendingProducerRequests.getByText("Coordinar entrega")).toHaveCount(0);
@@ -919,6 +922,11 @@ async function main(): Promise<void> {
       const producerSummary = answeredProducerRequests.getByRole("textbox", { name: "Resumen del pedido" });
       await expect(producerSummary).toHaveValue(/Cantidad: 2 Kilogramo \(kg\)/);
       const summary = await producerSummary.inputValue();
+      await producerPage.getByRole("link", { name: "Volver a mi cuenta" }).click();
+      const receivedOrders = producerPage.getByRole("link", { name: "Ver pedidos recibidos" });
+      await expect(receivedOrders).toHaveAttribute("href", "/mi-cuenta/pedidos#pedidos-recibidos");
+      await receivedOrders.click();
+      await expect(producerPage.getByRole("heading", { name: "Solicitudes recibidas" })).toBeInViewport();
       const acceptedOrder = await database.order.findFirstOrThrow({
         where: { buyerId: buyer.id, productId: product.id },
         include: { history: true },

@@ -149,9 +149,15 @@ export default async function AccountPage({
               )}
               <Link
                 className="mt-4 inline-flex min-h-12 w-full items-center justify-center rounded-xl border border-emerald-900 px-5 py-3 text-center font-semibold text-emerald-950 hover:bg-emerald-50 sm:w-auto"
-                href="/mi-cuenta/pedidos"
+                href={dashboard.orders.PENDING > 0
+                  ? "/mi-cuenta/pedidos#pedidos-por-responder"
+                  : "/mi-cuenta/pedidos#pedidos-recibidos"}
               >
-                Gestionar mis pedidos
+                {dashboard.orders.PENDING === 1
+                  ? "Responder 1 pedido"
+                  : dashboard.orders.PENDING > 1
+                    ? `Responder ${dashboard.orders.PENDING} pedidos`
+                    : "Ver pedidos recibidos"}
               </Link>
             </section>
 

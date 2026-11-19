@@ -320,7 +320,9 @@ export default async function OrdersPage({
       {isProducer && (
         <section
           aria-labelledby="producer-orders-title"
-          className="mt-6 rounded-3xl border border-emerald-950/10 bg-white p-5 shadow-sm sm:p-8"
+          className="mt-6 scroll-mt-4 rounded-3xl border border-emerald-950/10 bg-white p-5 shadow-sm sm:p-8"
+          id="pedidos-recibidos"
+          tabIndex={-1}
         >
           <h2 className="text-2xl font-semibold" id="producer-orders-title">
             Solicitudes recibidas
@@ -340,7 +342,12 @@ export default async function OrdersPage({
             </div>
           ) : (
             <div className="mt-5 space-y-8">
-              <section aria-labelledby="pending-producer-orders-title">
+              <section
+                aria-labelledby="pending-producer-orders-title"
+                className="scroll-mt-4"
+                id="pedidos-por-responder"
+                tabIndex={-1}
+              >
                 <h3 className="text-lg font-semibold" id="pending-producer-orders-title">
                   Por responder
                 </h3>
