@@ -10,6 +10,7 @@ export type OrderFormState = {
   ok?: boolean;
   message?: string;
   fieldErrors?: Record<string, string>;
+  submittedQuantity?: string;
 };
 
 function messageFor(code: string): string {
@@ -21,7 +22,7 @@ function messageFor(code: string): string {
     case "invalid":
       return "Revisa los datos del pedido.";
     case "unavailable":
-      return "El producto ya no tiene esa cantidad disponible o no está publicado.";
+      return "No pudimos reservar esa cantidad. Prueba con una cantidad menor o vuelve al catálogo si la oferta fue retirada.";
     case "idempotency-conflict":
       return "Esta solicitud ya fue enviada con otros datos. Actualiza el formulario para intentarlo de nuevo.";
     case "not-found":
@@ -38,11 +39,12 @@ export async function requestOrderAction(
   formData: FormData,
 ): Promise<OrderFormState> {
   const identity = await getCurrentIdentity();
+  const quantity = formData.get("quantity");
   const result = await requestOrder(
     identity,
     {
       productId: formData.get("productId"),
-      quantity: formData.get("quantity"),
+      quantity,
       idempotencyKey: formData.get("idempotencyKey"),
     },
     prisma,
@@ -52,6 +54,7 @@ export async function requestOrderAction(
     return {
       message: messageFor(result.code),
       fieldErrors: result.fieldErrors,
+      submittedQuantity: typeof quantity === "string" ? quantity.slice(0, 13) : undefined,
     };
   }
 

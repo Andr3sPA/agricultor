@@ -688,7 +688,12 @@ async function main(): Promise<void> {
         .locator('input[name="idempotencyKey"]')
         .inputValue();
       assert.match(idempotencyKey, /^[A-Za-z0-9_-]{43}$/);
-      await page.getByLabel("Cantidad que solicitas").fill("2");
+      const requestedQuantity = page.getByLabel("Cantidad que solicitas");
+      await requestedQuantity.fill("6,5");
+      await page.getByRole("button", { name: "Solicitar producto" }).click();
+      await expect(page.getByText(/No pudimos reservar esa cantidad/)).toBeVisible();
+      await expect(requestedQuantity).toHaveValue("6,5");
+      await requestedQuantity.fill("2");
 
       const isServerAction = (request: Request) =>
         request.method() === "POST" && Boolean(request.headers()["next-action"]);

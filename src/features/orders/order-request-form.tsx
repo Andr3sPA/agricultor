@@ -39,8 +39,10 @@ export function OrderRequestForm({
           aria-invalid={Boolean(state.fieldErrors?.quantity)}
           autoComplete="off"
           className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 px-4 py-3"
+          defaultValue={state.submittedQuantity ?? ""}
           id="order-quantity"
           inputMode="decimal"
+          maxLength={13}
           name="quantity"
           placeholder="Ejemplo: 2,5"
           required
