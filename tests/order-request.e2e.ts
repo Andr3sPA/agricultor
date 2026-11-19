@@ -290,6 +290,9 @@ async function main(): Promise<void> {
       },
       select: { id: true, name: true },
     });
+    await database.$executeRaw`
+      UPDATE "Product" SET "priceUpdatedAt" = NULL WHERE "id" = ${product.id}
+    `;
     await database.product.createMany({
       data: Array.from({ length: 12 }, (_, index) => ({
         ...catalogProduct,
@@ -512,6 +515,7 @@ async function main(): Promise<void> {
       const publicCrop = publicCatalog.getByRole("listitem").filter({ hasText: harvestName });
       await expect(publicCrop).toContainText("12,5 Kilogramo (kg)");
       await expect(publicCrop).toContainText(/2\.000/);
+      await expect(publicCrop.locator("time")).toHaveAttribute("datetime", /Z$/);
       await publicCatalog.getByLabel("Nombre del producto").fill("pApA");
       await publicCatalog.getByLabel("Municipio").fill("");
       await publicCatalog.getByRole("button", { name: "Buscar", exact: true }).click();
@@ -663,6 +667,7 @@ async function main(): Promise<void> {
       await expect(page.getByRole("link", { name: "Volver al catálogo" }))
         .toHaveAttribute("href", catalogUrl.slice(baseURL.length));
       await page.goto(`${baseURL}/catalogo/${product.id}`);
+      await expect(page.getByText("Fecha del precio no disponible")).toBeVisible();
       await page.getByRole("button", { name: "Guardar en favoritos" }).click();
       await expect(page.getByRole("button", { name: "Quitar de favoritos" })).toBeVisible();
       await page.getByRole("link", { name: "Ver mis favoritos" }).click();

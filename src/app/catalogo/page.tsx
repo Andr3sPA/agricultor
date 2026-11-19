@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getProductPriceDates, ProductPriceDate } from "@/features/catalog/product-price-date";
 import {
   getCatalogPageHref,
   getCatalogOrderBy,
@@ -67,6 +68,7 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
       availableQuantity: product.availableQuantity.toString(),
     })),
   );
+  const priceDates = await getProductPriceDates(products);
   const identity = await getCurrentIdentity();
   const favoriteIds =
     identity?.roles.includes("BUYER") && products.length > 0
@@ -250,6 +252,7 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
                   <div>
                     <dt className="font-medium">Precio por unidad</dt>
                     <dd>{copFormatter.format(product.priceCOP)}</dd>
+                    <ProductPriceDate date={priceDates.get(product.id)} />
                   </div>
                   <div>
                     <dt className="font-medium">Municipio</dt>

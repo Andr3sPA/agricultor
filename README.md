@@ -51,13 +51,12 @@ El esquema y sus migraciones están versionados, pero no se aplican
 automáticamente. Antes de desplegar una migración, verifica que `DATABASE_URL`
 apunte al entorno previsto y que exista un respaldo adecuado.
 
-La migración `20261119000000_product_price_updated_at` se publica en dos
-pasos. Primero se aplica la migración, que registra cambios de precio o unidad
-sin rellenar fechas de ofertas antiguas. El cliente actual es compatible con
-la base antes y después de aplicarla. Después de verificar la migración en
-Neon, se puede actualizar el esquema Prisma y mostrar la fecha en el catálogo.
-Durante este intervalo, usa las migraciones versionadas para actualizar bases
-y evita `prisma db push` sobre una base que ya tenga el campo.
+El catálogo y la ficha muestran la fecha del precio en hora de Colombia
+cuando la base tiene aplicada la migración
+`20261119000000_product_price_updated_at` y existe una fecha registrada.
+Mientras falte la migración o para precios antiguos sin fecha, se muestra
+«Fecha del precio no disponible». Actualiza las bases con las migraciones
+versionadas, que instalan también el registro automático de esta fecha.
 
 ## Catálogo, pedidos e inventario
 

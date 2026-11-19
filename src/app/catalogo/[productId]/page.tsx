@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getProductPriceDates, ProductPriceDate } from "@/features/catalog/product-price-date";
 import { notFound } from "next/navigation";
 import { cache } from "react";
 import { ShareProductButton } from "@/features/catalog/share-product-button";
@@ -106,6 +107,7 @@ export default async function PublicProductPage({
     notFound();
   }
 
+  const priceDates = await getProductPriceDates([product]);
   const filters = parseCatalogFilters(await searchParams);
   const identity = await getCurrentIdentity();
   const buyerId = identity?.roles.includes("BUYER") ? identity.userId : undefined;
@@ -150,6 +152,7 @@ export default async function PublicProductPage({
           <div>
             <dt className="font-medium">Precio por unidad</dt>
             <dd>{copFormatter.format(product.priceCOP)}</dd>
+            <ProductPriceDate date={priceDates.get(product.id)} />
           </div>
           <div>
             <dt className="font-medium">Municipio</dt>

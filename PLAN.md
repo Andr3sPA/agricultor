@@ -62,7 +62,7 @@ Propuesta para el piloto: transferencia directa o contra entrega, según lo que 
 ## Orden de trabajo y criterio para avanzar
 
 1. **Validar operaciones reales.** Pedir a productores y compradores que reconstruyan una venta reciente, desde cuánto pudieron ofrecer hasta cómo confirmaron recepción y pago. Registrar palabras usadas, unidades, mínimos, cambios del precio durante el día, responsables, acuerdos y excepciones. Evitar recoger contactos privados o datos bancarios reales para la prueba.
-2. **Validar el cambio de precio.** Probar en móvil la actualización rápida, la revisión del comprador y la conservación del precio acordado en un pedido previo. La migración aditiva ya está versionada. Aplicarla y verificarla en producción antes de habilitar la lectura de la fecha en el catálogo. Acordar con el piloto las reglas de vigencia antes de introducir vencimientos.
+2. **Validar el cambio de precio.** Probar en móvil la actualización rápida, la revisión del comprador y la conservación del precio acordado en un pedido previo. El catálogo y la ficha muestran la fecha cuando está registrada. Verificar la migración en producción para habilitar el registro allí. Acordar con el piloto las reglas de vigencia antes de introducir vencimientos.
 3. **Completar una entrega.** Probar con pedido simulado y coordinación externa. Avanzar cuando comprador y productor puedan identificar quién actúa a continuación y qué hacer si no hay recepción conforme.
 4. **Avisar y generar confianza.** Agregar correos de los eventos acordados y luego calificaciones verificadas. Evaluar pagos integrados solo si el piloto muestra que el acuerdo y la confirmación externa generan trabajo o errores frecuentes.
 
