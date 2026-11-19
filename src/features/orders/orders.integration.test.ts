@@ -125,6 +125,53 @@ describe(
       }
     });
 
+    it("records the price date independently of stock and publication", async () => {
+      const product = await database.product.create({
+        data: {
+          ownerId: producer.userId,
+          name: "Precio del día",
+          category: "OTHER",
+          unit: "KG",
+          priceCOP: 1000,
+          municipality: "Local",
+          availableQuantity: "5",
+        },
+      });
+      const where = { id: product.id };
+      const readPriceDate = async () => {
+        const result = await pool.query<{ priceDate: string | null }>(
+          'SELECT "priceUpdatedAt"::text AS "priceDate" FROM "Product" WHERE id = $1',
+          [product.id],
+        );
+        return result.rows[0].priceDate;
+      };
+      assert.ok(await readPriceDate(), "A new product has a price date.");
+
+      // Reproduce a row created before the migration, with no known price date.
+      await pool.query('UPDATE "Product" SET "priceUpdatedAt" = NULL WHERE id = $1', [
+        product.id,
+      ]);
+      await database.product.update({
+        where,
+        data: { availableQuantity: "4", isPublished: true, priceCOP: 1000, unit: "KG" },
+      });
+      assert.equal(await readPriceDate(), null);
+
+      await database.product.update({ where, data: { priceCOP: 1250 } });
+      const firstPriceDate = await readPriceDate();
+      assert.ok(firstPriceDate, "Changing the price records a date.");
+      await database.product.update({ where, data: { availableQuantity: "3" } });
+      assert.equal(await readPriceDate(), firstPriceDate);
+
+      // Use a fixed prior date so the assertion does not depend on clock precision.
+      await pool.query(
+        'UPDATE "Product" SET "priceUpdatedAt" = TIMESTAMP \'2000-01-01 00:00:00\' WHERE id = $1',
+        [product.id],
+      );
+      await database.product.update({ where, data: { unit: "BULTO" } });
+      assert.ok((await readPriceDate())! > "2000-01-01 00:00:00");
+    });
+
     it("persists a request, its history, and rejected stock release", async () => {
       const staleUnit = await requestOrder(buyerOne, {
         productId: reservedProductId,
