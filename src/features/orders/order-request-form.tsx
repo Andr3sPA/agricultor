@@ -20,6 +20,7 @@ export function OrderRequestForm({
   idempotencyKey,
   initialQuantity,
   priceCOP,
+  suggestAvailableQuantity,
   unit,
 }: {
   productId: string;
@@ -28,6 +29,7 @@ export function OrderRequestForm({
   idempotencyKey: string;
   initialQuantity: string;
   priceCOP: number;
+  suggestAvailableQuantity: boolean;
   unit: string;
 }) {
   const [state, action, pending] = useActionState(
@@ -79,6 +81,16 @@ export function OrderRequestForm({
         <p className="mt-1 text-sm text-slate-600" id="order-quantity-availability">
           Disponible ahora: {availableQuantityLabel}
         </p>
+        {suggestAvailableQuantity && (
+          <button
+            className="mt-2 min-h-11 rounded-lg border border-emerald-900 px-3 py-2 text-sm font-semibold text-emerald-950 hover:bg-emerald-50"
+            disabled={pending}
+            onClick={() => setEditedQuantity(availableQuantity.replace(".", ","))}
+            type="button"
+          >
+            Usar cantidad disponible
+          </button>
+        )}
       </div>
       <div aria-live="polite" aria-atomic="true">
         {estimatedPrice !== null && (

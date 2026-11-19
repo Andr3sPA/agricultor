@@ -126,6 +126,7 @@ export default async function RequestOrderPage({
               initialQuantity={initialQuantity}
               priceCOP={product.priceCOP}
               productId={product.id}
+              suggestAvailableQuantity={Boolean(searchedQuantity && !initialQuantity)}
               unit={product.unit}
             />
           </>
