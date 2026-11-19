@@ -18,6 +18,7 @@ export function OrderRequestForm({
   availableQuantity,
   availableQuantityLabel,
   idempotencyKey,
+  initialQuantity,
   priceCOP,
   unit,
 }: {
@@ -25,6 +26,7 @@ export function OrderRequestForm({
   availableQuantity: string;
   availableQuantityLabel: string;
   idempotencyKey: string;
+  initialQuantity: string;
   priceCOP: number;
   unit: string;
 }) {
@@ -33,7 +35,7 @@ export function OrderRequestForm({
     initialState,
   );
   const [editedQuantity, setEditedQuantity] = useState<string | null>(null);
-  const quantity = editedQuantity ?? state.submittedQuantity ?? "";
+  const quantity = editedQuantity ?? state.submittedQuantity ?? initialQuantity;
   const normalizedQuantity = parseOrderQuantity(quantity);
   const estimatedPrice =
     normalizedQuantity && Number(normalizedQuantity) <= Number(availableQuantity)

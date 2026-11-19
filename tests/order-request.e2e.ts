@@ -690,8 +690,17 @@ async function main(): Promise<void> {
       await page.getByText("Solicitud de compra", { exact: true }).waitFor();
       await expect(page.getByLabel("Cantidad que solicitas"))
         .toHaveAccessibleDescription("Disponible ahora: 5 Kilogramo (kg)");
+      await expect(page.getByLabel("Cantidad que solicitas")).toHaveValue("5");
+      await expect(page.getByText(/Valor estimado\s*\$\s*5\.000 COP/)).toBeVisible();
+      await page.getByLabel("Cantidad que solicitas").fill("2,5");
+      await expect(page.getByText(/Valor estimado\s*\$\s*2\.500 COP/)).toBeVisible();
       await expect(page.getByRole("link", { name: "Volver al catálogo" }))
         .toHaveAttribute("href", catalogUrl.slice(baseURL.length));
+      await page.goto(`${baseURL}/catalogo/${product.id}/pedido?unidad=KG&cantidad=5.001`);
+      await expect(page.getByLabel("Cantidad que solicitas")).toHaveValue("");
+      await expect(page.getByText(/La cantidad que buscaste supera lo disponible/)).toBeVisible();
+      await page.goto(`${baseURL}/catalogo/${product.id}/pedido?unidad=BULTO&cantidad=2`);
+      await expect(page.getByLabel("Cantidad que solicitas")).toHaveValue("");
       await page.goto(`${baseURL}/catalogo/${product.id}`);
       await expect(page.getByText("Fecha del precio no disponible")).toBeVisible();
       await page.getByRole("button", { name: "Guardar en favoritos" }).click();

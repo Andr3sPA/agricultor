@@ -68,6 +68,11 @@ export default async function RequestOrderPage({
     product.availableQuantity.toNumber(),
   )} ${unit}`;
   const filters = parseCatalogFilters(await searchParams);
+  const searchedQuantity = filters.unit === product.unit ? filters.minimumQuantity : undefined;
+  const initialQuantity =
+    searchedQuantity && product.availableQuantity.gte(searchedQuantity)
+      ? searchedQuantity.replace(".", ",")
+      : "";
   const signInHref = `/iniciar-sesion?redirectTo=${encodeURIComponent(
     getPublicProductOrderHref(product.id, filters),
   )}`;
@@ -106,14 +111,24 @@ export default async function RequestOrderPage({
           </div>
         </dl>
         {isBuyer && !isOwner ? (
-          <OrderRequestForm
-            availableQuantity={product.availableQuantity.toString()}
-            availableQuantityLabel={availableQuantityLabel}
-            idempotencyKey={randomBytes(32).toString("base64url")}
-            priceCOP={product.priceCOP}
-            unit={product.unit}
-            productId={product.id}
-          />
+          <>
+            {searchedQuantity && (
+              <p className="mt-6 text-sm text-slate-700">
+                {initialQuantity
+                  ? "Cargamos la cantidad que buscaste. Puedes cambiarla antes de solicitar."
+                  : "La cantidad que buscaste supera lo disponible. Escribe cuánto necesitas dentro de lo que queda."}
+              </p>
+            )}
+            <OrderRequestForm
+              availableQuantity={product.availableQuantity.toString()}
+              availableQuantityLabel={availableQuantityLabel}
+              idempotencyKey={randomBytes(32).toString("base64url")}
+              initialQuantity={initialQuantity}
+              priceCOP={product.priceCOP}
+              productId={product.id}
+              unit={product.unit}
+            />
+          </>
         ) : !identity ? (
           <div className="mt-6 space-y-3">
             <p className="text-slate-700">
