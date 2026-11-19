@@ -689,7 +689,10 @@ async function main(): Promise<void> {
         .inputValue();
       assert.match(idempotencyKey, /^[A-Za-z0-9_-]{43}$/);
       const requestedQuantity = page.getByLabel("Cantidad que solicitas");
+      await requestedQuantity.fill("2,5");
+      await expect(page.getByText(/Valor estimado\s*\$\s*2\.500 COP/)).toBeVisible();
       await requestedQuantity.fill("6,5");
+      await expect(page.getByText("Valor estimado", { exact: false })).toHaveCount(0);
       await page.getByRole("button", { name: "Solicitar producto" }).click();
       await expect(page.getByText(/No pudimos reservar esa cantidad/)).toBeVisible();
       await expect(requestedQuantity).toHaveValue("6,5");

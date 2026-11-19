@@ -1,26 +1,42 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
+import {
+  calculateWeightPrice,
+  formatAgriculturalValue,
+} from "@/features/unit-converter/agricultural-units";
 import {
   requestOrderAction,
   type OrderFormState,
 } from "./order-actions";
+import { parseOrderQuantity } from "./order-validation";
 
 const initialState: OrderFormState = {};
 
 export function OrderRequestForm({
   productId,
+  availableQuantity,
   availableQuantityLabel,
   idempotencyKey,
+  priceCOP,
 }: {
   productId: string;
+  availableQuantity: string;
   availableQuantityLabel: string;
   idempotencyKey: string;
+  priceCOP: number;
 }) {
   const [state, action, pending] = useActionState(
     requestOrderAction,
     initialState,
   );
+  const [editedQuantity, setEditedQuantity] = useState<string | null>(null);
+  const quantity = editedQuantity ?? state.submittedQuantity ?? "";
+  const normalizedQuantity = parseOrderQuantity(quantity);
+  const estimatedPrice =
+    normalizedQuantity && Number(normalizedQuantity) <= Number(availableQuantity)
+      ? calculateWeightPrice(normalizedQuantity, String(priceCOP)).value
+      : null;
 
   return (
     <form action={action} className="mt-6 space-y-4">
@@ -39,14 +55,15 @@ export function OrderRequestForm({
           aria-invalid={Boolean(state.fieldErrors?.quantity)}
           autoComplete="off"
           className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 px-4 py-3"
-          defaultValue={state.submittedQuantity ?? ""}
           id="order-quantity"
           inputMode="decimal"
           maxLength={13}
           name="quantity"
+          onChange={(event) => setEditedQuantity(event.target.value)}
           placeholder="Ejemplo: 2,5"
           required
           type="text"
+          value={quantity}
         />
         {state.fieldErrors?.quantity && (
           <p className="mt-1 text-sm text-red-800" id="order-quantity-error" role="alert">
@@ -56,6 +73,14 @@ export function OrderRequestForm({
         <p className="mt-1 text-sm text-slate-600" id="order-quantity-availability">
           Disponible ahora: {availableQuantityLabel}
         </p>
+      </div>
+      <div aria-live="polite" aria-atomic="true">
+        {estimatedPrice !== null && (
+          <p className="rounded-xl bg-emerald-50 p-3 text-emerald-950">
+            Valor estimado <strong>$ {formatAgriculturalValue(estimatedPrice)} COP</strong>{" "}
+            al peso más cercano.
+          </p>
+        )}
       </div>
       {state.message && (
         <p

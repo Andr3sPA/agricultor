@@ -107,8 +107,10 @@ export default async function RequestOrderPage({
         </dl>
         {isBuyer && !isOwner ? (
           <OrderRequestForm
+            availableQuantity={product.availableQuantity.toString()}
             availableQuantityLabel={availableQuantityLabel}
             idempotencyKey={randomBytes(32).toString("base64url")}
+            priceCOP={product.priceCOP}
             productId={product.id}
           />
         ) : !identity ? (
