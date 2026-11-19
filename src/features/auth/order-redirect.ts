@@ -3,7 +3,7 @@ import {
   parseCatalogFilters,
 } from "@/features/catalog/public-products";
 
-const catalogParams = new Set(["producto", "categoria", "municipio", "orden", "pagina"]);
+const catalogParams = new Set(["producto", "categoria", "municipio", "orden", "unidad", "cantidad", "pagina"]);
 
 export function getOrderRequestRedirect(value: unknown): string | null {
   if (typeof value !== "string") {

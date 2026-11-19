@@ -1,4 +1,5 @@
 import {
+  parseProductQuantity,
   PRODUCT_CATEGORIES,
   PRODUCT_UNITS,
 } from "@/features/products/product-validation";
@@ -25,6 +26,8 @@ export type CatalogFilters = {
   category?: (typeof PRODUCT_CATEGORIES)[number]["value"];
   municipality?: string;
   sort?: CatalogSort;
+  unit?: (typeof PRODUCT_UNITS)[number]["value"];
+  minimumQuantity?: string;
   page: number;
 };
 
@@ -62,20 +65,33 @@ export function parseCatalogFilters(
       ? requestedPage
       : 1;
   const rawSort = getSingleSearchParam(searchParams, "orden");
+  const unit = PRODUCT_UNITS.find(({ value }) => value === searchParams.unidad)?.value;
+  const requestedQuantity = parseProductQuantity(searchParams.cantidad);
+  const minimumQuantity = unit && requestedQuantity && Number(requestedQuantity) > 0
+    ? requestedQuantity
+    : undefined;
   const sort =
     rawSort === "precio-asc" || rawSort === "precio-desc"
       ? rawSort
       : undefined;
 
-  return { ...(name ? { name } : {}), category, municipality, sort, page };
+  return {
+    ...(name ? { name } : {}),
+    category, municipality, sort, page,
+    ...(unit ? { unit } : {}),
+    ...(minimumQuantity ? { minimumQuantity } : {}),
+  };
 }
 
 export function getPublicProductWhere(
-  filters: Pick<CatalogFilters, "name" | "category" | "municipality">,
+  filters: Pick<CatalogFilters, "name" | "category" | "municipality" | "unit" | "minimumQuantity">,
 ) {
   return {
     isPublished: true,
-    availableQuantity: { gt: 0 },
+    availableQuantity: filters.unit && filters.minimumQuantity
+      ? { gte: filters.minimumQuantity }
+      : { gt: 0 },
+    ...(filters.unit ? { unit: filters.unit } : {}),
     ...(filters.name
       ? {
           name: {
@@ -133,6 +149,10 @@ function getCatalogQuery(
     searchParams.set("municipio", filters.municipality);
   }
   if (filters.sort) searchParams.set("orden", filters.sort);
+  if (filters.unit) {
+    searchParams.set("unidad", filters.unit);
+    if (filters.minimumQuantity) searchParams.set("cantidad", filters.minimumQuantity);
+  }
   if (page > 1) searchParams.set("pagina", String(page));
 
   const query = searchParams.toString();

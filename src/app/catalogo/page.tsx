@@ -40,8 +40,15 @@ type CatalogPageProps = {
 };
 
 export default async function CatalogPage({ searchParams }: CatalogPageProps) {
-  const filters = parseCatalogFilters(await searchParams);
-  const hasFilters = Boolean(filters.name || filters.category || filters.municipality);
+  const params = await searchParams;
+  const filters = parseCatalogFilters(params);
+  const quantityInput = typeof params.cantidad === "string" ? params.cantidad.trim().slice(0, 13) : "";
+  const quantityError = quantityInput && !filters.minimumQuantity
+    ? filters.unit
+      ? "Escribe una cantidad mayor que cero, con máximo 3 decimales."
+      : "Elige una unidad para buscar por cantidad."
+    : undefined;
+  const hasFilters = Boolean(filters.name || filters.category || filters.municipality || filters.unit);
   const filterHref = getCatalogPageHref(filters, 1);
   const where = getPublicProductWhere(filters);
   const total = await prisma.product.count({ where });
@@ -111,7 +118,7 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
       <form
         action="/catalogo"
         className="mt-6 grid gap-4 rounded-2xl border border-slate-200 bg-white p-4 sm:grid-cols-2 sm:items-end sm:p-6 lg:grid-cols-[1fr_1fr_1fr_auto]"
-        key={filterHref}
+        key={quantityError ? `${filterHref}:${quantityInput}` : filterHref}
         method="get"
       >
         <div className="sm:col-span-2 lg:col-span-4">
@@ -179,6 +186,46 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
             type="text"
           />
         </div>
+        <fieldset className="grid gap-3 rounded-lg border border-slate-200 p-3 sm:col-span-2 sm:grid-cols-2 lg:col-span-4">
+          <legend className="px-1 text-sm font-semibold">Buscar por cantidad</legend>
+          <div>
+            <label className="mb-2 block text-sm font-medium" htmlFor="cantidad">
+              Cantidad que necesitas
+            </label>
+            <input
+              aria-describedby={quantityError ? "cantidad-error" : undefined}
+              aria-invalid={Boolean(quantityError && filters.unit)}
+              className="min-h-12 w-full rounded-lg border border-slate-300 px-3"
+              defaultValue={filters.minimumQuantity?.replace(".", ",") ?? quantityInput}
+              id="cantidad"
+              inputMode="decimal"
+              maxLength={13}
+              name="cantidad"
+              placeholder="Por ejemplo, 50"
+            />
+          </div>
+          <div>
+            <label className="mb-2 block text-sm font-medium" htmlFor="unidad">
+              Unidad de venta
+            </label>
+            <select
+              aria-describedby={quantityError && !filters.unit ? "cantidad-error" : undefined}
+              aria-invalid={Boolean(quantityError && !filters.unit)}
+              className="min-h-12 w-full rounded-lg border border-slate-300 bg-white px-3"
+              defaultValue={filters.unit ?? ""}
+              id="unidad"
+              name="unidad"
+            >
+              <option value="">Todas las unidades</option>
+              {PRODUCT_UNITS.map(({ value, label }) => <option key={value} value={value}>{label}</option>)}
+            </select>
+          </div>
+          {quantityError && (
+            <p id="cantidad-error" className="text-sm text-rose-800 sm:col-span-2" role="alert">
+              {quantityError} La cantidad aún no se aplicó a los resultados.
+            </p>
+          )}
+        </fieldset>
         <button
           className="min-h-12 w-full rounded-lg bg-emerald-800 px-5 py-2 font-semibold text-white hover:bg-emerald-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-900 sm:w-auto"
           type="submit"
@@ -186,7 +233,7 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
           Buscar
         </button>
       </form>
-      {filterHref !== "/catalogo" ? (
+      {filterHref !== "/catalogo" || quantityError ? (
         <Link
           className="mt-2 inline-flex min-h-12 items-center font-semibold text-emerald-900 underline underline-offset-4"
           href="/catalogo"

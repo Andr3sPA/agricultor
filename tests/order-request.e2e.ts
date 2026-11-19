@@ -361,6 +361,16 @@ async function main(): Promise<void> {
         municipio: municipality,
       });
       await anonymousPage.goto(`${baseURL}/catalogo?${catalogQuery}`);
+      const minimumStock = anonymousPage.getByLabel("Cantidad que necesitas");
+      await minimumStock.fill("5,001");
+      await anonymousPage.getByLabel("Unidad de venta").selectOption("KG");
+      await anonymousPage.getByRole("button", { name: "Buscar", exact: true }).click();
+      await expect(anonymousPage.getByText("No encontramos productos con estos filtros.")).toBeVisible();
+      await expect(minimumStock).toHaveValue("5,001");
+      await minimumStock.fill("5");
+      await anonymousPage.getByRole("button", { name: "Buscar", exact: true }).click();
+      catalogQuery.set("unidad", "KG");
+      catalogQuery.set("cantidad", "5");
       const resultCount = anonymousPage.getByRole("status").filter({
         hasText: "13 ofertas encontradas",
       });
@@ -392,8 +402,9 @@ async function main(): Promise<void> {
       await anonymousPage.waitForURL(orderContextUrl);
       await anonymousPage.getByRole("link", { name: "Volver al catálogo" }).click();
       await anonymousPage.waitForURL(catalogUrl);
-      catalogQuery.set("orden", "precio-asc");
-      await anonymousPage.goto(`${baseURL}/catalogo?${catalogQuery}`);
+      const sortedCatalogQuery = new URLSearchParams(catalogQuery);
+      sortedCatalogQuery.set("orden", "precio-asc");
+      await anonymousPage.goto(`${baseURL}/catalogo?${sortedCatalogQuery}`);
       const resetFilters = anonymousPage.getByRole("link", {
         name: "Restablecer filtros y orden",
       });

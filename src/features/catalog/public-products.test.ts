@@ -263,6 +263,19 @@ describe("public catalog query and pagination", () => {
     });
   });
 
+  it("applies a positive stock threshold only within the selected sale unit", () => {
+    const filters = parseCatalogFilters({ unidad: "KG", cantidad: "5,125" });
+    assert.deepEqual(getPublicProductWhere(filters), {
+      isPublished: true,
+      availableQuantity: { gte: "5.125" },
+      unit: "KG",
+    });
+    assert.equal(getCatalogPageHref(filters, 2), "/catalogo?unidad=KG&cantidad=5.125&pagina=2");
+    assert.equal(parseCatalogFilters({ cantidad: "5" }).minimumQuantity, undefined);
+    assert.equal(parseCatalogFilters({ unidad: "KG", cantidad: "0" }).minimumQuantity, undefined);
+    assert.equal(parseCatalogFilters({ unidad: "KG", cantidad: "1.1234" }).minimumQuantity, undefined);
+  });
+
   it("paginates consistently and clamps pages beyond the available results", () => {
     assert.deepEqual(
       getCatalogPagination(PUBLIC_CATALOG_PAGE_SIZE * 2 + 1, 2),
