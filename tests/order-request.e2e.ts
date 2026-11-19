@@ -411,9 +411,14 @@ async function main(): Promise<void> {
         .click();
       await anonymousPage.waitForURL(catalogUrl);
       const productPath = `${baseURL}/catalogo/${product.id}`;
-      await anonymousPage.goto(`${productPath}?unidad=KG&cantidad=5.001`);
+      const insufficientQuery = new URLSearchParams(catalogQuery);
+      insufficientQuery.set("cantidad", "5.001");
+      await anonymousPage.goto(`${productPath}?${insufficientQuery}`);
       await expect(anonymousPage.getByText("Esta oferta tiene menos de la cantidad que buscaste.")).toBeVisible();
       await expect(anonymousPage.getByText(/Total estimado por/)).toHaveCount(0);
+      await anonymousPage.getByRole("link", { name: "Ver ofertas sin cantidad mínima" }).click();
+      await expect(anonymousPage).toHaveURL(`${baseURL}/catalogo?${relaxedQuery}`);
+      await expect(resultCount).toBeVisible();
       await anonymousPage.goto(`${productPath}?unidad=BULTO&cantidad=2`);
       await expect(anonymousPage.getByText(/Total estimado por/)).toHaveCount(0);
       await anonymousPage.goto(catalogUrl);

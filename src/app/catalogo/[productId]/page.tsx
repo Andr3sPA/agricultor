@@ -167,9 +167,15 @@ export default async function PublicProductPage({
           )}
         </dl>
         {searchedQuantity && !hasEnoughStock && (
-          <p className="mt-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-950">
-            Esta oferta tiene menos de la cantidad que buscaste.
-          </p>
+          <div className="mt-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-950">
+            <p>Esta oferta tiene menos de la cantidad que buscaste.</p>
+            <Link
+              className="inline-flex min-h-11 items-center font-semibold underline underline-offset-4"
+              href={getCatalogPageHref({ ...filters, minimumQuantity: undefined }, 1)}
+            >
+              Ver ofertas sin cantidad mínima
+            </Link>
+          </div>
         )}
         <ShareProductButton
           href={new URL(
