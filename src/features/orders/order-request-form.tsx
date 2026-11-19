@@ -57,8 +57,8 @@ export function OrderRequestForm({
       </div>
       {state.message && (
         <p
-          className={state.ok ? "text-emerald-900" : "text-red-800"}
-          role={state.ok ? "status" : "alert"}
+          className="text-red-800"
+          role="alert"
         >
           {state.message}
         </p>

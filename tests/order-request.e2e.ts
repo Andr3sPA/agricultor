@@ -698,10 +698,10 @@ async function main(): Promise<void> {
       assert.ok(firstRequest.postData()?.includes(idempotencyKey));
       await page
         .getByRole("status")
-        .getByText("Enviamos tu solicitud.")
+        .getByText("Tu solicitud está registrada.")
         .waitFor();
       const firstResponse = await firstRequest.response();
-      assert.equal(firstResponse?.status(), 200);
+      assert.ok(firstResponse);
 
       const firstOrder = await database.order.findFirstOrThrow({
         where: { buyerId: buyer.id, productId: product.id },
@@ -736,9 +736,13 @@ async function main(): Promise<void> {
       const replayResponse = await api.post(firstRequest.url(), {
         data: requestBody,
         headers: replayHeaders,
+        maxRedirects: 0,
       });
-      assert.equal(replayResponse?.status(), 200);
-      assert.match(await replayResponse.text(), /Enviamos tu solicitud\./);
+      const trackingHref = `/mi-cuenta/pedidos?registrada=${firstOrder.id}#solicitud-${firstOrder.id}`;
+      assert.ok([200, 303].includes(firstResponse.status()));
+      assert.equal((await firstResponse.headerValue("x-action-redirect"))?.split(";")[0], trackingHref);
+      assert.ok([200, 303].includes(replayResponse.status()));
+      assert.equal(replayResponse.headers()["x-action-redirect"]?.split(";")[0], trackingHref);
 
       assert.equal(
         await database.order.count({
@@ -759,7 +763,10 @@ async function main(): Promise<void> {
       assert.ok(replayedInventory.availableQuantity.equals("3"));
       assert.ok(replayedInventory.reservedQuantity.equals("2"));
 
-      await page.goto(`${baseURL}/mi-cuenta/pedidos`);
+      await expect(page.getByRole("button", { name: "Solicitar producto" })).toHaveCount(0);
+      await page.waitForURL(`${baseURL}${trackingHref}`);
+      await expect(page.locator(`[id="solicitud-${firstOrder.id}"]`)
+        .getByRole("heading", { name: product.name, exact: true })).toBeInViewport();
       await expect(page.getByText("2 Kilogramo (kg)", { exact: true })).toBeVisible();
       await page
         .getByText("El productor debe revisar la solicitud.")
@@ -831,7 +838,7 @@ async function main(): Promise<void> {
       await page.getByRole("button", { name: "Solicitar producto" }).click();
       await page
         .getByRole("status")
-        .getByText("Enviamos tu solicitud.")
+        .getByText("Tu solicitud está registrada.")
         .waitFor();
 
       await producerPage.reload();
@@ -917,6 +924,17 @@ async function main(): Promise<void> {
         .first()
         .getByText("Rechazado")
         .waitFor();
+
+      await page.goto(`${baseURL}/catalogo/${product.id}/pedido`);
+      await page.getByLabel("Cantidad que solicitas").fill("3");
+      await page.getByRole("button", { name: "Solicitar producto" }).click();
+      await page.waitForURL(/\/mi-cuenta\/pedidos\?registrada=[^#]+#solicitud-/);
+      await expect(page.locator(`[id="${new URL(page.url()).hash.slice(1)}"]`))
+        .toContainText("Esperando respuesta");
+      const exhaustedInventory = await database.product.findUniqueOrThrow({
+        where: { id: product.id },
+      });
+      assert.ok(exhaustedInventory.availableQuantity.equals("0"));
 
       await producerContext.close();
       await context.close();

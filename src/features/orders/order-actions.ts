@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { getCurrentIdentity } from "@/lib/auth/server";
 import { prisma } from "@/lib/db";
 import { decideOrder, requestOrder } from "./order-service";
@@ -56,10 +57,8 @@ export async function requestOrderAction(
 
   revalidatePath("/catalogo");
   revalidatePath("/mi-cuenta/pedidos");
-  return {
-    ok: true,
-    message: "Enviamos tu solicitud. La cantidad quedó reservada mientras el productor responde.",
-  };
+  const orderId = encodeURIComponent(result.orderId);
+  redirect(`/mi-cuenta/pedidos?registrada=${orderId}#solicitud-${orderId}`);
 }
 
 export async function decideOrderAction(

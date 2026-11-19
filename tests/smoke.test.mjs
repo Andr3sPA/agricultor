@@ -18,6 +18,10 @@ const orderRequestForm = await readFile(
   new URL("../src/features/orders/order-request-form.tsx", import.meta.url),
   "utf8",
 );
+const ordersPage = await readFile(
+  new URL("../src/app/mi-cuenta/pedidos/page.tsx", import.meta.url),
+  "utf8",
+);
 const orderDecisionForm = await readFile(
   new URL("../src/features/orders/order-decision-form.tsx", import.meta.url),
   "utf8",
@@ -160,7 +164,9 @@ test("order quantity validation is linked to its invalid field", () => {
 });
 
 test("action feedback distinguishes success statuses from errors", () => {
-  for (const source of [orderRequestForm, orderDecisionForm, roleForm]) {
+  assert.match(ordersPage, /role="status"/);
+  assert.match(orderRequestForm, /role="alert"/);
+  for (const source of [orderDecisionForm, roleForm]) {
     assert.match(source, /role=\{state\.ok \? "status" : "alert"\}/);
   }
 });
