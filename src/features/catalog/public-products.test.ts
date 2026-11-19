@@ -150,8 +150,21 @@ describe("public catalog projection", () => {
 });
 
 describe("public catalog query and pagination", () => {
+  it("trims a name filter and treats SQL pattern characters literally", () => {
+    const filters = parseCatalogFilters({ producto: "  Papa %_  " });
+    assert.equal(filters.name, "Papa %_");
+    assert.deepEqual(getPublicProductWhere(filters).name, {
+      contains: "Papa \\%\\_",
+      mode: "insensitive",
+    });
+    for (const producto of [" ", "x".repeat(101), "Papa\0", ["Papa", "Yuca"]]) {
+      assert.equal(parseCatalogFilters({ producto }).name, undefined);
+    }
+  });
+
   it("round-trips catalog context through a product detail URL", () => {
     const filters = {
+      name: "Yuca fresca",
       category: "TUBERS",
       municipality: "San José & La Vega",
       sort: "precio-desc",
@@ -166,7 +179,7 @@ describe("public catalog query and pagination", () => {
     assert.deepEqual(restored, filters);
     assert.equal(
       getCatalogPageHref(restored, restored.page),
-      "/catalogo?categoria=TUBERS&municipio=San+Jos%C3%A9+%26+La+Vega&orden=precio-desc&pagina=2",
+      "/catalogo?producto=Yuca+fresca&categoria=TUBERS&municipio=San+Jos%C3%A9+%26+La+Vega&orden=precio-desc&pagina=2",
     );
     assert.equal(getPublicProductHref("yuca", { page: 1 }), "/catalogo/yuca");
   });

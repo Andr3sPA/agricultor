@@ -353,6 +353,7 @@ async function main(): Promise<void> {
       const anonymousContext = await browser.newContext();
       const anonymousPage = await anonymousContext.newPage();
       const catalogQuery = new URLSearchParams({
+        producto: "e2e",
         categoria: "OTHER",
         municipio: municipality,
       });
@@ -387,6 +388,7 @@ async function main(): Promise<void> {
       await resetFilters.click();
       await anonymousPage.waitForURL(`${baseURL}/catalogo`);
       await expect(anonymousPage.getByLabel("Categoría")).toHaveValue("");
+      await expect(anonymousPage.getByLabel("Nombre del producto")).toHaveValue("");
       await expect(anonymousPage.getByLabel("Municipio")).toHaveValue("");
       await expect(anonymousPage.getByLabel("Ordenar por")).toHaveValue("");
       await expect(resetFilters).toHaveCount(0);
@@ -491,6 +493,11 @@ async function main(): Promise<void> {
       const publicCrop = publicCatalog.getByRole("listitem").filter({ hasText: harvestName });
       await expect(publicCrop).toContainText("12,5 Kilogramo (kg)");
       await expect(publicCrop).toContainText(/2\.000/);
+      await publicCatalog.getByLabel("Nombre del producto").fill("pApA");
+      await publicCatalog.getByLabel("Municipio").fill("");
+      await publicCatalog.getByRole("button", { name: "Buscar", exact: true }).click();
+      await expect(publicCatalog.getByText("1 oferta encontrada", { exact: true })).toBeVisible();
+      await expect(publicCrop).toBeVisible();
       await savedCrop.getByRole("link", { name: "Editar producto" }).click();
       await expect(
         producerPage.getByRole("heading", { name: "Editar producto" }),

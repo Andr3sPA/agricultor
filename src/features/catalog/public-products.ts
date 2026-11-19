@@ -21,6 +21,7 @@ export const PUBLIC_CATALOG_PAGE_SIZE = 12;
 export type CatalogSort = "precio-asc" | "precio-desc";
 
 export type CatalogFilters = {
+  name?: string;
   category?: (typeof PRODUCT_CATEGORIES)[number]["value"];
   municipality?: string;
   sort?: CatalogSort;
@@ -40,6 +41,11 @@ function getSingleSearchParam(
 export function parseCatalogFilters(
   searchParams: CatalogSearchParams,
 ): CatalogFilters {
+  const rawName = getSingleSearchParam(searchParams, "producto")?.trim();
+  const name =
+    rawName && rawName.length <= 100 && !rawName.includes("\0")
+      ? rawName
+      : undefined;
   const categoryValue = getSingleSearchParam(searchParams, "categoria");
   const category = PRODUCT_CATEGORIES.find(
     ({ value }) => value === categoryValue,
@@ -61,15 +67,23 @@ export function parseCatalogFilters(
       ? rawSort
       : undefined;
 
-  return { category, municipality, sort, page };
+  return { ...(name ? { name } : {}), category, municipality, sort, page };
 }
 
 export function getPublicProductWhere(
-  filters: Pick<CatalogFilters, "category" | "municipality">,
+  filters: Pick<CatalogFilters, "name" | "category" | "municipality">,
 ) {
   return {
     isPublished: true,
     availableQuantity: { gt: 0 },
+    ...(filters.name
+      ? {
+          name: {
+            contains: filters.name.replace(/[\\%_]/g, "\\$&"),
+            mode: "insensitive" as const,
+          },
+        }
+      : {}),
     ...(filters.category ? { category: filters.category } : {}),
     ...(filters.municipality
       ? {
@@ -109,10 +123,11 @@ export function getCatalogPagination(total: number, requestedPage: number) {
 }
 
 function getCatalogQuery(
-  filters: Pick<CatalogFilters, "category" | "municipality" | "sort">,
+  filters: Omit<CatalogFilters, "page">,
   page: number,
 ): string {
   const searchParams = new URLSearchParams();
+  if (filters.name) searchParams.set("producto", filters.name);
   if (filters.category) searchParams.set("categoria", filters.category);
   if (filters.municipality) {
     searchParams.set("municipio", filters.municipality);
@@ -125,7 +140,7 @@ function getCatalogQuery(
 }
 
 export function getCatalogPageHref(
-  filters: Pick<CatalogFilters, "category" | "municipality" | "sort">,
+  filters: Omit<CatalogFilters, "page">,
   page: number,
 ): string {
   return `/catalogo${getCatalogQuery(filters, page)}`;

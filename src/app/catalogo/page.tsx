@@ -40,7 +40,7 @@ type CatalogPageProps = {
 
 export default async function CatalogPage({ searchParams }: CatalogPageProps) {
   const filters = parseCatalogFilters(await searchParams);
-  const hasFilters = Boolean(filters.category || filters.municipality);
+  const hasFilters = Boolean(filters.name || filters.category || filters.municipality);
   const filterHref = getCatalogPageHref(filters, 1);
   const where = getPublicProductWhere(filters);
   const total = await prisma.product.count({ where });
@@ -104,6 +104,20 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
         key={filterHref}
         method="get"
       >
+        <div className="sm:col-span-2 lg:col-span-4">
+          <label className="mb-2 block text-sm font-medium" htmlFor="producto">
+            Nombre del producto
+          </label>
+          <input
+            className="min-h-12 w-full rounded-lg border border-slate-300 px-3"
+            defaultValue={filters.name ?? ""}
+            id="producto"
+            maxLength={100}
+            name="producto"
+            placeholder="Por ejemplo, papa"
+            type="search"
+          />
+        </div>
         <div>
           <label className="mb-2 block text-sm font-medium" htmlFor="categoria">
             Categoría
@@ -159,7 +173,7 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
           className="min-h-12 w-full rounded-lg bg-emerald-800 px-5 py-2 font-semibold text-white hover:bg-emerald-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-900 sm:w-auto"
           type="submit"
         >
-          Filtrar
+          Buscar
         </button>
       </form>
       {filterHref !== "/catalogo" ? (
