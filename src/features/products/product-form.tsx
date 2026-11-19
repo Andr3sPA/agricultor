@@ -18,9 +18,10 @@ const initialState: ProductFormState = {};
 
 type ProductFormProps = {
   product?: ProductFormValues;
+  unitLocked?: boolean;
 };
 
-export function ProductForm({ product }: ProductFormProps) {
+export function ProductForm({ product, unitLocked = false }: ProductFormProps) {
   const [state, action, pending] = useActionState(
     product ? updateProduct : createProduct,
     initialState,
@@ -113,12 +114,13 @@ export function ProductForm({ product }: ProductFormProps) {
           Unidad de medida
         </label>
         <select
-          aria-describedby={state.fieldErrors?.unit ? "unit-error" : undefined}
+          aria-describedby={unitLocked ? "unit-locked" : state.fieldErrors?.unit ? "unit-error" : undefined}
           aria-invalid={Boolean(state.fieldErrors?.unit)}
           className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3"
-          defaultValue={values?.unit ?? ""}
+          defaultValue={(unitLocked ? product?.unit : values?.unit) ?? ""}
+          disabled={unitLocked}
           id="unit"
-          key={values?.unit}
+          key={unitLocked ? product?.unit : values?.unit}
           name="unit"
           required
         >
@@ -129,6 +131,14 @@ export function ProductForm({ product }: ProductFormProps) {
             </option>
           ))}
         </select>
+        {unitLocked && (
+          <>
+            <input name="unit" type="hidden" value={product?.unit ?? ""} />
+            <p className="mt-1 text-sm text-slate-700" id="unit-locked">
+              Responde los pedidos pendientes antes de cambiar la unidad de medida.
+            </p>
+          </>
+        )}
         {state.fieldErrors?.unit && (
           <p className="mt-1 text-sm text-red-800" id="unit-error">
             {state.fieldErrors.unit}

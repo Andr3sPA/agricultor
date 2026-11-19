@@ -140,6 +140,7 @@ export async function updateProduct(
     where: {
       id: productId,
       ownerId: identity.userId,
+      OR: [{ unit: result.data.unit }, { reservedQuantity: 0 }],
       reservedQuantity: {
         lte: new Prisma.Decimal("999999999.999").minus(
           result.data.availableQuantity,
@@ -150,6 +151,20 @@ export async function updateProduct(
   });
 
   if (updated.count !== 1) {
+    const current = await prisma.product.findFirst({
+      where: { id: productId, ownerId: identity.userId },
+      select: { unit: true, reservedQuantity: true },
+    });
+    if (current?.reservedQuantity.gt(0) && current.unit !== result.data.unit) {
+      return {
+        message: "Revisa los datos del producto.",
+        fieldErrors: {
+          unit: "Responde los pedidos pendientes antes de cambiar la unidad de medida.",
+        },
+        values: submittedValues(formData),
+      };
+    }
+
     return {
       message:
         "No encontramos ese producto o la cantidad disponible más las reservas supera el inventario permitido.",

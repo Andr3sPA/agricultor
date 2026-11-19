@@ -36,6 +36,7 @@ export default async function EditProductPage({
     notFound();
   }
   const unit = PRODUCT_UNITS.find(({ value }) => value === product.unit)?.label ?? product.unit;
+  const hasReservations = product.reservedQuantity.gt(0);
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-2xl px-4 py-8 sm:px-6 sm:py-12">
@@ -50,7 +51,7 @@ export default async function EditProductPage({
           Agricultor
         </p>
         <h1 className="mt-4 text-3xl font-semibold">Editar producto</h1>
-        {product.reservedQuantity.gt(0) && (
+        {hasReservations && (
           <div className="mt-4 rounded-xl bg-amber-50 p-4 text-sm text-amber-950">
             <p className="font-medium">Reservado en pedidos pendientes</p>
             <p className="mt-1 font-semibold">
@@ -62,6 +63,7 @@ export default async function EditProductPage({
           </div>
         )}
         <ProductForm
+          unitLocked={hasReservations}
           product={{
             id: product.id,
             name: product.name,

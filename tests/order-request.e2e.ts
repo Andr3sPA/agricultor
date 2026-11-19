@@ -683,6 +683,11 @@ async function main(): Promise<void> {
       await page.goto(`${baseURL}/catalogo/${product.id}/pedido`);
       await page.getByRole("heading", { name: product.name }).waitFor();
 
+      await producerPage.goto(`${baseURL}/mi-cuenta/productos/${product.id}/editar`);
+      const inventoryUnit = producerPage.getByLabel("Unidad de medida");
+      await expect(inventoryUnit).toBeEnabled();
+      await inventoryUnit.selectOption("BULTO");
+
       const form = page.locator("form");
       const idempotencyKey = await form
         .locator('input[name="idempotencyKey"]')
@@ -723,6 +728,14 @@ async function main(): Promise<void> {
       });
       assert.ok(firstInventory.availableQuantity.equals("3"));
       assert.ok(firstInventory.reservedQuantity.equals("2"));
+      await producerPage.getByRole("button", { name: "Guardar cambios" }).click();
+      await expect(producerPage.getByText(
+        "Responde los pedidos pendientes antes de cambiar la unidad de medida.",
+        { exact: true },
+      )).toBeVisible();
+      assert.equal((await database.product.findUniqueOrThrow({
+        where: { id: product.id },
+      })).unit, "KG");
 
       const requestBody = firstRequest.postDataBuffer();
       assert.ok(requestBody);
@@ -803,6 +816,7 @@ async function main(): Promise<void> {
         .toBeVisible();
       await expect(producerPage.getByText("2 Kilogramo (kg)", { exact: true })).toBeVisible();
       await expect(producerPage.getByLabel("Cantidad disponible")).toHaveValue("3");
+      await expect(inventoryUnit).toBeDisabled();
       await producerPage.goto(`${baseURL}/mi-cuenta/pedidos`);
       await expect(
         producerPage.getByText("2 Kilogramo (kg)", { exact: true }),
