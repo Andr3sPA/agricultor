@@ -91,10 +91,15 @@ export default async function OrdersPage({
       : Promise.resolve([]),
   ]);
 
+  const pendingProducerOrders = producerOrders.filter(({ status }) => status === "PENDING");
+  const answeredProducerOrders = producerOrders.filter(({ status }) => status !== "PENDING");
+
   function orderCard(
     order: (typeof buyerOrders)[number] | (typeof producerOrders)[number],
     producerView: boolean,
   ) {
+    const ProductHeading = producerView ? "h4" : "h3";
+    const TrackingHeading = producerView ? "h5" : "h4";
     const decisionEvent =
       order.status === "PENDING"
         ? null
@@ -119,7 +124,7 @@ export default async function OrdersPage({
           </p>
         )}
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <h3 className="text-lg font-semibold">{order.productName}</h3>
+          <ProductHeading className="text-lg font-semibold">{order.productName}</ProductHeading>
           <span
             aria-label={`Estado del pedido: ${statusLabels[order.status]}`}
             className={`shrink-0 rounded-full px-3 py-1 text-sm font-semibold ${statusClasses[order.status]}`}
@@ -151,7 +156,7 @@ export default async function OrdersPage({
           </div>
         </dl>
         <section className="mt-4 rounded-xl bg-slate-50 p-4">
-          <h4 className="font-medium">Seguimiento</h4>
+          <TrackingHeading className="font-medium">Seguimiento</TrackingHeading>
           <ol
             aria-label={
               producerView
@@ -321,9 +326,32 @@ export default async function OrdersPage({
               </Link>
             </div>
           ) : (
-            <ul className="mt-5 space-y-4">
-              {producerOrders.map((order) => orderCard(order, true))}
-            </ul>
+            <div className="mt-5 space-y-8">
+              <section aria-labelledby="pending-producer-orders-title">
+                <h3 className="text-lg font-semibold" id="pending-producer-orders-title">
+                  Por responder
+                </h3>
+                {pendingProducerOrders.length > 0 ? (
+                  <ul className="mt-3 space-y-4">
+                    {pendingProducerOrders.map((order) => orderCard(order, true))}
+                  </ul>
+                ) : (
+                  <p className="mt-2 text-sm text-slate-700">
+                    No tienes solicitudes por responder.
+                  </p>
+                )}
+              </section>
+              {answeredProducerOrders.length > 0 && (
+                <section aria-labelledby="answered-producer-orders-title">
+                  <h3 className="text-lg font-semibold" id="answered-producer-orders-title">
+                    Ya respondidas
+                  </h3>
+                  <ul className="mt-3 space-y-4">
+                    {answeredProducerOrders.map((order) => orderCard(order, true))}
+                  </ul>
+                </section>
+              )}
+            </div>
           )}
         </section>
       )}

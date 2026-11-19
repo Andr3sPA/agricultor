@@ -802,17 +802,20 @@ async function main(): Promise<void> {
       await producerPage
         .getByRole("heading", { name: "Solicitudes recibidas" })
         .waitFor();
-      await producerPage
+      const pendingProducerRequests = producerPage.getByRole("region", { name: "Por responder" });
+      const answeredProducerRequests = producerPage.getByRole("region", { name: "Ya respondidas" });
+      await pendingProducerRequests
         .getByRole("button", { name: "Aceptar pedido" })
         .click();
       await producerPage
         .getByRole("list", { name: "Seguimiento de la solicitud recibida" })
         .getByText("Tu respuesta")
         .waitFor();
-      await producerPage
+      await answeredProducerRequests
         .getByRole("list", { name: "Seguimiento de la solicitud recibida" })
         .getByText("Aceptado")
         .waitFor();
+      await expect(pendingProducerRequests).toContainText("No tienes solicitudes por responder.");
       const acceptedOrder = await database.order.findFirstOrThrow({
         where: { buyerId: buyer.id, productId: product.id },
         include: { history: true },
@@ -857,6 +860,9 @@ async function main(): Promise<void> {
         .waitFor();
 
       await producerPage.reload();
+      await expect(pendingProducerRequests.getByRole("button", { name: "Rechazar pedido" }))
+        .toBeVisible();
+      await expect(answeredProducerRequests.getByText("Aceptado", { exact: true })).toBeVisible();
       let canceledRejectionMessage = "";
       producerPage.once("dialog", (dialog) => {
         assert.equal(dialog.type(), "confirm");
