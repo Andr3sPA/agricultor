@@ -902,16 +902,12 @@ async function main(): Promise<void> {
       await expect(pendingProducerRequests.getByRole("button", { name: "Rechazar pedido" }))
         .toBeVisible();
       await expect(answeredProducerRequests.getByText("Aceptado", { exact: true })).toBeVisible();
-      let canceledRejectionMessage = "";
-      producerPage.once("dialog", (dialog) => {
-        assert.equal(dialog.type(), "confirm");
-        canceledRejectionMessage = dialog.message();
-        void dialog.dismiss();
-      });
-      await producerPage
-        .getByRole("button", { name: "Rechazar pedido" })
-        .click();
-      assert.match(canceledRejectionMessage, /no podrás cambiar la decisión/);
+      const rejectOrder = pendingProducerRequests.getByRole("button", { name: "Rechazar pedido" });
+      await rejectOrder.click();
+      await expect(pendingProducerRequests.getByText(/la cantidad reservada vuelve a estar disponible/))
+        .toBeVisible();
+      await pendingProducerRequests.getByRole("button", { name: "Dejar pendiente" }).click();
+      await expect(rejectOrder).toBeFocused();
       await producerPage
         .getByRole("list", { name: "Seguimiento de la solicitud recibida" })
         .first()
@@ -935,16 +931,8 @@ async function main(): Promise<void> {
       assert.ok(reservedInventory.availableQuantity.equals("2"));
       assert.ok(reservedInventory.reservedQuantity.equals("1"));
 
-      let confirmedRejectionMessage = "";
-      producerPage.once("dialog", (dialog) => {
-        assert.equal(dialog.type(), "confirm");
-        confirmedRejectionMessage = dialog.message();
-        void dialog.accept();
-      });
-      await producerPage
-        .getByRole("button", { name: "Rechazar pedido" })
-        .click();
-      assert.match(confirmedRejectionMessage, /no podrás cambiar la decisión/);
+      await rejectOrder.click();
+      await pendingProducerRequests.getByRole("button", { name: "Confirmar rechazo" }).click();
       await producerPage
         .getByRole("list", { name: "Seguimiento de la solicitud recibida" })
         .first()
