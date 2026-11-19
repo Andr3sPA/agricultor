@@ -26,7 +26,7 @@ La aplicación ya tiene cuentas y recuperación por Brevo, catálogo público, i
 
 - Conservar el seguimiento actual y validar una secuencia corta de entrega. Propuesta para probar con ambos roles: pedido aceptado, listo para recoger o despachado y recepción confirmada. Guardar actor y hora de cada cambio. Definir quién cambia cada estado y cómo se reporta una entrega parcial, dañada o que no llegó.
 - Acordar recogida o envío, responsable, fecha o franja y costo si corresponde. Cada negocio organiza el transporte. Compartir direcciones exactas y datos de contacto solo entre las partes autorizadas.
-- Permitir continuar por WhatsApp, teléfono o una red social elegida por el negocio, con autorización para compartir el contacto. Mantener en el pedido el resumen y los estados aunque la conversación ocurra por fuera. El piloto puede usar enlaces de contacto y prescindir de integraciones de mensajería.
+- En pedidos aceptados, ambas partes pueden copiar el resumen para coordinar por WhatsApp o el canal que ya usen. El resumen contiene el producto, la cantidad y el importe registrado. Validar con el piloto si hace falta compartir enlaces de contacto con autorización.
 - Probar que cualquier actualización repetida conserva un solo evento, que el pedido queda registrado si falla una notificación y que una persona ajena al pedido no puede verlo ni modificarlo.
 
 ## 3. Notificaciones y calificaciones

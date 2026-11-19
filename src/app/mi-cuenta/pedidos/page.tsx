@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { OrderCoordinationSummary } from "@/features/orders/order-coordination-summary";
 import { OrderDecisionForm } from "@/features/orders/order-decision-form";
 import { PRODUCT_UNITS } from "@/features/products/product-validation";
 import {
@@ -106,6 +107,8 @@ export default async function OrdersPage({
         : order.history.find((event) => event.toStatus === order.status);
     const unit =
       PRODUCT_UNITS.find(({ value }) => value === order.unit)?.label ?? order.unit;
+    const quantity = `${quantityFormatter.format(order.requestedQuantity.toNumber())} ${unit}`;
+    const unitPrice = copFormatter.format(order.priceCOP);
     const estimatedTotal = calculateUnitPriceTotal(
       order.requestedQuantity.toString(),
       String(order.priceCOP),
@@ -135,14 +138,11 @@ export default async function OrdersPage({
         <dl className="mt-4 grid gap-2 text-sm text-slate-700 sm:grid-cols-2">
           <div>
             <dt className="font-medium">Cantidad</dt>
-            <dd>
-              {quantityFormatter.format(order.requestedQuantity.toNumber())}{" "}
-              {unit}
-            </dd>
+            <dd>{quantity}</dd>
           </div>
           <div>
             <dt className="font-medium">Precio por unidad al solicitar</dt>
-            <dd>{copFormatter.format(order.priceCOP)}</dd>
+            <dd>{unitPrice}</dd>
           </div>
           {estimatedTotal !== null && (
             <div>
@@ -224,12 +224,25 @@ export default async function OrdersPage({
                   : "El productor debe revisar la solicitud."
                 : order.status === "ACCEPTED"
                   ? producerView
-                    ? "Registraste la aceptación. La plataforma no gestiona la entrega ni el pago."
-                    : "El productor aceptó esta solicitud. La plataforma no gestiona la entrega ni el pago."
+                    ? "Registraste la aceptación."
+                    : "El productor aceptó esta solicitud."
                   : "La solicitud fue rechazada y la cantidad reservada volvió a estar disponible."}
             </p>
           )}
         </section>
+        {order.status === "ACCEPTED" && (
+          <OrderCoordinationSummary
+            summary={[
+              `Pedido aceptado en Agricultor · ${order.productName}`,
+              `Cantidad: ${quantity}`,
+              `Precio por unidad al solicitar: ${unitPrice} COP`,
+              ...(estimatedTotal === null
+                ? []
+                : [`Valor estimado al solicitar: $ ${formatAgriculturalValue(estimatedTotal)} COP`]),
+              "¿Acordamos si será envío o recogida, cuándo y dónde?",
+            ].join("\n")}
+          />
+        )}
         {producerView && order.status === "PENDING" && (
           <OrderDecisionForm orderId={order.id} />
         )}

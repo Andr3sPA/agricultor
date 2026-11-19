@@ -899,6 +899,7 @@ async function main(): Promise<void> {
       const pendingProducerRequests = producerPage.getByRole("region", { name: "Por responder" });
       const answeredProducerRequests = producerPage.getByRole("region", { name: "Ya respondidas" });
       const acceptOrder = pendingProducerRequests.getByRole("button", { name: "Aceptar pedido" });
+      await expect(pendingProducerRequests.getByText("Coordinar entrega")).toHaveCount(0);
       await acceptOrder.click();
       await pendingProducerRequests.getByRole("button", { name: "Dejar pendiente" }).click();
       await expect(acceptOrder).toBeFocused();
@@ -914,6 +915,10 @@ async function main(): Promise<void> {
         .getByText("Aceptado")
         .waitFor();
       await expect(pendingProducerRequests).toContainText("No tienes solicitudes por responder.");
+      await answeredProducerRequests.getByText("Coordinar entrega", { exact: true }).click();
+      const producerSummary = answeredProducerRequests.getByRole("textbox", { name: "Resumen del pedido" });
+      await expect(producerSummary).toHaveValue(/Cantidad: 2 Kilogramo \(kg\)/);
+      const summary = await producerSummary.inputValue();
       const acceptedOrder = await database.order.findFirstOrThrow({
         where: { buyerId: buyer.id, productId: product.id },
         include: { history: true },
@@ -934,6 +939,15 @@ async function main(): Promise<void> {
       await page
         .getByText("El productor aceptó esta solicitud.")
         .waitFor();
+      await page.getByText("Coordinar entrega", { exact: true }).click();
+      await expect(page.getByRole("textbox", { name: "Resumen del pedido" })).toHaveValue(summary);
+      assert.match(summary, /Precio por unidad al solicitar: \$\s*1\.250 COP/);
+      assert.match(summary, /Valor estimado al solicitar: \$\s*2\.500 COP/);
+      await context.grantPermissions(["clipboard-read", "clipboard-write"], { origin: baseURL });
+      await page.getByRole("button", { name: "Copiar resumen" }).click();
+      await expect(page.getByRole("status")).toHaveText("Resumen copiado.");
+      const copiedSummary = await page.evaluate(() => navigator.clipboard.readText());
+      assert.equal(copiedSummary.replaceAll("\r\n", "\n"), summary);
       await page
         .getByRole("list", { name: "Seguimiento de tu solicitud" })
         .getByText("Respuesta del productor")
