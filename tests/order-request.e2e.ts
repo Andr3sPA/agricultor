@@ -395,12 +395,21 @@ async function main(): Promise<void> {
       await anonymousPage.waitForURL(
         `${baseURL}/catalogo/${product.id}?${catalogQuery}`,
       );
+      await expect(anonymousPage.getByRole("article"))
+        .toContainText(/Total estimado por 5 Kilogramo \(kg\)\s*\$\s*5\.000 COP/);
       await expect(anonymousPage.getByRole("button", { name: "Guardar en favoritos" }))
         .toHaveCount(0);
       await anonymousPage
         .getByRole("link", { name: "Volver al catálogo" })
         .click();
       await anonymousPage.waitForURL(catalogUrl);
+      const productPath = `${baseURL}/catalogo/${product.id}`;
+      await anonymousPage.goto(`${productPath}?unidad=KG&cantidad=5.001`);
+      await expect(anonymousPage.getByText("Esta oferta tiene menos de la cantidad que buscaste.")).toBeVisible();
+      await expect(anonymousPage.getByText(/Total estimado por/)).toHaveCount(0);
+      await anonymousPage.goto(`${productPath}?unidad=BULTO&cantidad=2`);
+      await expect(anonymousPage.getByText(/Total estimado por/)).toHaveCount(0);
+      await anonymousPage.goto(catalogUrl);
       await productLink.waitFor();
       await anonymousPage.getByRole("link", {
         name: `Solicitar este producto: ${product.name}`,

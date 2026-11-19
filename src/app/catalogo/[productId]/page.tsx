@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getProductPriceDates, ProductPriceDate } from "@/features/catalog/product-price-date";
+import { ProductQuantityEstimate } from "@/features/catalog/product-quantity-estimate";
 import { notFound } from "next/navigation";
 import { cache } from "react";
 import { ShareProductButton } from "@/features/catalog/share-product-button";
@@ -109,6 +110,9 @@ export default async function PublicProductPage({
 
   const priceDates = await getProductPriceDates([product]);
   const filters = parseCatalogFilters(await searchParams);
+  const searchedQuantity = filters.unit === product.unit ? filters.minimumQuantity : undefined;
+  const hasEnoughStock = Boolean(searchedQuantity &&
+    Number(searchedQuantity) <= Number(product.availableQuantity));
   const identity = await getCurrentIdentity();
   const buyerId = identity?.roles.includes("BUYER") ? identity.userId : undefined;
   const favorite = buyerId
@@ -158,7 +162,15 @@ export default async function PublicProductPage({
             <dt className="font-medium">Municipio</dt>
             <dd>{product.municipality}</dd>
           </div>
+          {searchedQuantity && hasEnoughStock && (
+            <ProductQuantityEstimate quantity={searchedQuantity} unit={unit} priceCOP={product.priceCOP} />
+          )}
         </dl>
+        {searchedQuantity && !hasEnoughStock && (
+          <p className="mt-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-950">
+            Esta oferta tiene menos de la cantidad que buscaste.
+          </p>
+        )}
         <ShareProductButton
           href={new URL(
             getPublicProductHref(product.id),

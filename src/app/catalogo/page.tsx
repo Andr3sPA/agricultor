@@ -11,10 +11,7 @@ import {
   parseCatalogFilters,
 } from "@/features/catalog/public-products";
 import { FavoriteControl } from "@/features/favorites/favorite-control";
-import {
-  calculateUnitPriceTotal,
-  formatAgriculturalValue,
-} from "@/features/unit-converter/agricultural-units";
+import { ProductQuantityEstimate } from "@/features/catalog/product-quantity-estimate";
 import {
   PRODUCT_CATEGORIES,
   PRODUCT_UNITS,
@@ -269,9 +266,6 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
             const unit =
               PRODUCT_UNITS.find(({ value }) => value === product.unit)?.label ??
               product.unit;
-            const estimatedTotal = filters.minimumQuantity
-              ? calculateUnitPriceTotal(filters.minimumQuantity, String(product.priceCOP)).value
-              : null;
 
             return (
               <li
@@ -308,15 +302,12 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
                     <dd>{copFormatter.format(product.priceCOP)}</dd>
                     <ProductPriceDate date={priceDates.get(product.id)} />
                   </div>
-                  {estimatedTotal !== null && (
-                    <div className="rounded-xl bg-emerald-50 p-3 text-emerald-950">
-                      <dt className="font-medium">
-                        Total estimado por {quantityFormatter.format(Number(filters.minimumQuantity))} {unit}
-                      </dt>
-                      <dd className="mt-1 break-words text-base font-semibold">
-                        $ {formatAgriculturalValue(estimatedTotal)} COP
-                      </dd>
-                    </div>
+                  {filters.minimumQuantity && (
+                    <ProductQuantityEstimate
+                      quantity={filters.minimumQuantity}
+                      unit={unit}
+                      priceCOP={product.priceCOP}
+                    />
                   )}
                   <div>
                     <dt className="font-medium">Municipio</dt>
