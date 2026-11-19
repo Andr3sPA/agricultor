@@ -365,6 +365,7 @@ async function main(): Promise<void> {
       await anonymousPage.getByRole("link", { name: "Siguiente" }).click();
       catalogQuery.set("pagina", "2");
       const catalogUrl = `${baseURL}/catalogo?${catalogQuery}`;
+      const orderContextUrl = `${baseURL}/catalogo/${product.id}/pedido?${catalogQuery}`;
       await anonymousPage.waitForURL(catalogUrl);
       await expect(resultCount).toBeVisible();
       const productLink = anonymousPage.getByRole("link", {
@@ -380,6 +381,12 @@ async function main(): Promise<void> {
         .click();
       await anonymousPage.waitForURL(catalogUrl);
       await productLink.waitFor();
+      await anonymousPage.getByRole("link", {
+        name: `Solicitar este producto: ${product.name}`,
+      }).click();
+      await anonymousPage.waitForURL(orderContextUrl);
+      await anonymousPage.getByRole("link", { name: "Volver al catálogo" }).click();
+      await anonymousPage.waitForURL(catalogUrl);
       catalogQuery.set("orden", "precio-asc");
       await anonymousPage.goto(`${baseURL}/catalogo?${catalogQuery}`);
       const resetFilters = anonymousPage.getByRole("link", {
@@ -628,7 +635,7 @@ async function main(): Promise<void> {
         viewport: { width: 320, height: 640 },
       });
       const page = await context.newPage();
-      await page.goto(`${baseURL}/catalogo/${product.id}/pedido`);
+      await page.goto(orderContextUrl);
       const signInLink = page.getByRole("link", { name: "Inicia sesión" });
       const signInBounds = await signInLink.boundingBox();
       assert.ok(signInBounds && signInBounds.height >= 48);
@@ -636,10 +643,13 @@ async function main(): Promise<void> {
       await page.getByLabel("Correo electrónico").fill(email);
       await page.getByLabel("Contraseña").fill(newPassword);
       await page.getByRole("button", { name: "Iniciar sesión" }).click();
+      await page.waitForURL(orderContextUrl);
       await page.getByRole("heading", { name: product.name }).waitFor();
       await page.getByText("Solicitud de compra", { exact: true }).waitFor();
       await expect(page.getByLabel("Cantidad que solicitas"))
         .toHaveAccessibleDescription("Disponible ahora: 5 Kilogramo (kg)");
+      await expect(page.getByRole("link", { name: "Volver al catálogo" }))
+        .toHaveAttribute("href", catalogUrl.slice(baseURL.length));
       assert.equal(
         await page.locator("html").evaluate(
           (root) => root.scrollWidth <= root.clientWidth,

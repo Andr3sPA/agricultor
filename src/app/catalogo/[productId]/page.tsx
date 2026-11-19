@@ -156,7 +156,7 @@ export default async function PublicProductPage({
         <Link
           aria-label={`Solicitar este producto: ${product.name}`}
           className="mt-6 inline-flex min-h-12 w-full items-center justify-center rounded-lg bg-emerald-800 px-4 py-2 text-center font-semibold text-white underline-offset-4 hover:bg-emerald-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-900 sm:w-auto"
-          href={getPublicProductOrderHref(product.id)}
+          href={getPublicProductOrderHref(product.id, filters)}
         >
           Solicitar este producto
         </Link>

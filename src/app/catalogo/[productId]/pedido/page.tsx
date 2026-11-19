@@ -1,7 +1,11 @@
 import { randomBytes } from "node:crypto";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getPublicProductOrderHref } from "@/features/catalog/public-products";
+import {
+  getCatalogPageHref,
+  getPublicProductOrderHref,
+  parseCatalogFilters,
+} from "@/features/catalog/public-products";
 import { OrderRequestForm } from "@/features/orders/order-request-form";
 import {
   PRODUCT_CATEGORIES,
@@ -23,8 +27,10 @@ export const dynamic = "force-dynamic";
 
 export default async function RequestOrderPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ productId: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { productId } = await params;
   const product = await prisma.product.findFirst({
@@ -61,15 +67,16 @@ export default async function RequestOrderPage({
   const availableQuantityLabel = `${quantityFormatter.format(
     product.availableQuantity.toNumber(),
   )} ${unit}`;
+  const filters = parseCatalogFilters(await searchParams);
   const signInHref = `/iniciar-sesion?redirectTo=${encodeURIComponent(
-    getPublicProductOrderHref(product.id),
+    getPublicProductOrderHref(product.id, filters),
   )}`;
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-2xl px-4 py-8 sm:px-6 sm:py-12">
       <Link
         className="inline-flex min-h-12 items-center font-semibold text-emerald-900 underline"
-        href="/catalogo"
+        href={getCatalogPageHref(filters, filters.page)}
       >
         Volver al catálogo
       </Link>

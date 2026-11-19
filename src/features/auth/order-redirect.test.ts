@@ -18,5 +18,16 @@ describe("order request sign-in redirect", () => {
     assert.equal(getOrderRequestRedirect("/catalogo/product-1/pedido?next=/"), null);
     assert.equal(getOrderRequestRedirect("/catalogo/%2Fexample/pedido"), null);
     assert.equal(getOrderRequestRedirect("/mi-cuenta"), null);
+    assert.equal(getOrderRequestRedirect("/catalogo/p/pedido?producto=papa&producto=yuca"), null);
+    assert.equal(getOrderRequestRedirect("/catalogo/p/pedido?producto=papa#otra"), null);
+  });
+
+  it("preserves approved catalog filters through sign-in", () => {
+    assert.equal(
+      getOrderRequestRedirect(
+        "/catalogo/p/pedido?pagina=2&orden=precio-asc&municipio=La+Vega&producto=papa",
+      ),
+      "/catalogo/p/pedido?producto=papa&municipio=La+Vega&orden=precio-asc&pagina=2",
+    );
   });
 });

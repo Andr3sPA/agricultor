@@ -52,7 +52,7 @@ export function parseCatalogFilters(
   )?.value;
   const rawMunicipality = getSingleSearchParam(searchParams, "municipio")?.trim();
   const municipality =
-    rawMunicipality && rawMunicipality.length <= 100
+    rawMunicipality && rawMunicipality.length <= 100 && !rawMunicipality.includes("\0")
       ? rawMunicipality
       : undefined;
   const rawPage = getSingleSearchParam(searchParams, "pagina");
@@ -146,8 +146,12 @@ export function getCatalogPageHref(
   return `/catalogo${getCatalogQuery(filters, page)}`;
 }
 
-export function getPublicProductOrderHref(productId: string): string {
-  return `/catalogo/${encodeURIComponent(productId)}/pedido`;
+export function getPublicProductOrderHref(
+  productId: string,
+  filters?: CatalogFilters,
+): string {
+  const path = `/catalogo/${encodeURIComponent(productId)}/pedido`;
+  return filters ? `${path}${getCatalogQuery(filters, filters.page)}` : path;
 }
 
 export function getPublicProductHref(
