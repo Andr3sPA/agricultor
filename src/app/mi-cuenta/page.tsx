@@ -4,6 +4,7 @@ import { SignOutButton } from "@/features/auth/sign-out-button";
 import { getCurrentIdentity } from "@/lib/auth/server";
 import { canManageProducts } from "@/features/products/product-access";
 import { getProducerDashboardSummary } from "@/features/dashboard/producer-dashboard";
+import { countFarmActivitiesToday } from "@/features/farm-agenda/farm-agenda-service";
 import { prisma } from "@/lib/db";
 import Link from "next/link";
 
@@ -34,9 +35,12 @@ export default async function AccountPage({
   if (producerIntent && isProducer) {
     redirect("/mi-cuenta/productos");
   }
-  const dashboard = isProducer
-    ? await getProducerDashboardSummary(identity, prisma)
-    : null;
+  const [dashboard, todayCount] = isProducer
+    ? await Promise.all([
+        getProducerDashboardSummary(identity, prisma),
+        countFarmActivitiesToday(identity, prisma, new Date()),
+      ])
+    : [null, 0] as const;
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-3xl px-4 py-8 sm:px-6 sm:py-12">
@@ -159,12 +163,15 @@ export default async function AccountPage({
                 Agenda de labores
               </h2>
               <p className="mt-4 text-slate-700">
-                Organiza y consulta las actividades planificadas para tus
-                cultivos.
+                {todayCount === 0
+                  ? "No tienes labores anotadas para hoy."
+                  : todayCount === 1
+                    ? "Tienes 1 labor para hoy."
+                    : `Tienes ${todayCount} labores para hoy.`}
               </p>
               <Link
                 className="mt-4 inline-flex min-h-12 w-full items-center justify-center rounded-xl border border-emerald-900 px-5 py-3 text-center font-semibold text-emerald-950 hover:bg-emerald-50 sm:w-auto"
-                href="/mi-cuenta/agenda"
+                href="/mi-cuenta/agenda#farm-activities-title"
               >
                 Abrir mi agenda
               </Link>

@@ -15,6 +15,7 @@ import {
 } from "@playwright/test";
 import { Pool } from "pg";
 import { Prisma, PrismaClient } from "@/generated/prisma/client";
+import { getColombianAgendaDate } from "@/features/farm-agenda/farm-agenda-service";
 
 type CapturedResetEmail = {
   to: { email: string }[];
@@ -524,6 +525,16 @@ async function main(): Promise<void> {
       await agendaForm.getByLabel("Cultivo o producto").fill("Papa para cosechar");
       await agendaForm.getByRole("button", { name: "Agregar a mi agenda" }).click();
       await expect(comingTasks.getByText("Papa para cosechar")).toBeVisible();
+      await agendaForm.getByLabel("Actividad", { exact: true }).selectOption("IRRIGATION");
+      await agendaForm.getByLabel("Fecha", { exact: true }).fill(getColombianAgendaDate(new Date()));
+      await agendaForm.getByLabel("Cultivo o producto").fill("Papa para regar hoy");
+      await agendaForm.getByRole("button", { name: "Agregar a mi agenda" }).click();
+      await expect(comingTasks.getByText("Papa para regar hoy", { exact: true })).toBeVisible();
+      await producerPage.goto(`${baseURL}/mi-cuenta`);
+      await expect(producerPage.getByRole("region", { name: "Agenda de labores" }))
+        .toContainText("Tienes 1 labor para hoy.");
+      await producerPage.getByRole("link", { name: "Abrir mi agenda" }).click();
+      await expect(comingTasks.getByText("Papa para regar hoy", { exact: true })).toBeVisible();
       await agendaForm.getByLabel("Actividad", { exact: true }).selectOption("SOWING");
       await agendaForm.getByLabel("Fecha", { exact: true }).fill("2000-01-01");
       await agendaForm.getByLabel("Cultivo o producto").fill("Papa de registro anterior");

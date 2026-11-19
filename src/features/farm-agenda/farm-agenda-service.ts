@@ -14,14 +14,18 @@ const colombianDay = new Intl.DateTimeFormat("en-CA", {
   day: "2-digit",
 });
 
+export function getColombianAgendaDate(now: Date) {
+  const parts = Object.fromEntries(
+    colombianDay.formatToParts(now).map(({ type, value }) => [type, value]),
+  );
+  return `${parts.year}-${parts.month}-${parts.day}`;
+}
+
 export function groupFarmActivities<T extends { scheduledFor: Date }>(
   activities: readonly T[],
   now: Date,
 ) {
-  const parts = Object.fromEntries(
-    colombianDay.formatToParts(now).map(({ type, value }) => [type, value]),
-  );
-  const today = `${parts.year}-${parts.month}-${parts.day}`;
+  const today = getColombianAgendaDate(now);
   const upcoming: T[] = [];
   const past: T[] = [];
   for (const activity of activities) {
@@ -43,6 +47,21 @@ export async function getFarmActivities(
   return database.farmActivity.findMany({
     where: { userId: actor.userId },
     orderBy: [{ scheduledFor: "asc" }, { createdAt: "asc" }],
+  });
+}
+
+export async function countFarmActivitiesToday(
+  actor: FarmAgendaActor,
+  database: FarmAgendaDatabase,
+  now: Date,
+) {
+  if (!canManageFarmAgenda(actor.roles)) return 0;
+
+  return database.farmActivity.count({
+    where: {
+      userId: actor.userId,
+      scheduledFor: new Date(`${getColombianAgendaDate(now)}T00:00:00.000Z`),
+    },
   });
 }
 

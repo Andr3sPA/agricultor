@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import type { PrismaClient } from "@/generated/prisma/client";
 import { canManageFarmAgenda } from "./farm-agenda-access";
 import {
+  countFarmActivitiesToday,
   getFarmActivities,
   groupFarmActivities,
   removeFarmActivity,
@@ -11,6 +12,23 @@ import {
 import { validateFarmActivityInput } from "./farm-agenda-validation";
 
 type FarmAgendaDatabase = Pick<PrismaClient, "farmActivity">;
+
+it("counts only the producer's tasks for the current day in Colombia", async () => {
+  const queries: unknown[] = [];
+  const database = {
+    farmActivity: { count: async (query: unknown) => { queries.push(query); return 2; } },
+  } as unknown as FarmAgendaDatabase;
+  const now = new Date("2026-11-21T03:00:00Z");
+  assert.equal(await countFarmActivitiesToday(
+    { userId: "producer-1", roles: ["PRODUCER"] }, database, now,
+  ), 2);
+  assert.equal(await countFarmActivitiesToday(
+    { userId: "buyer-1", roles: ["BUYER"] }, database, now,
+  ), 0);
+  assert.deepEqual(queries, [{
+    where: { userId: "producer-1", scheduledFor: new Date("2026-11-20T00:00:00.000Z") },
+  }]);
+});
 
 const validInput = {
   activityType: "SOWING",
