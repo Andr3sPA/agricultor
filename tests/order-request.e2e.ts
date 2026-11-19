@@ -776,6 +776,12 @@ async function main(): Promise<void> {
       await expect(page.locator(`[id="solicitud-${firstOrder.id}"]`)
         .getByRole("heading", { name: product.name, exact: true })).toBeInViewport();
       await expect(page.getByText("2 Kilogramo (kg)", { exact: true })).toBeVisible();
+      await database.product.update({
+        where: { id: product.id },
+        data: { priceCOP: 1500 },
+      });
+      await page.reload();
+      await expect(page.getByText(/\$\s*2\.000 COP/)).toBeVisible();
       await page
         .getByText("El productor debe revisar la solicitud.")
         .waitFor();
@@ -792,6 +798,7 @@ async function main(): Promise<void> {
       await expect(
         producerPage.getByText("2 Kilogramo (kg)", { exact: true }),
       ).toBeVisible();
+      await expect(producerPage.getByText(/\$\s*2\.000 COP/)).toBeVisible();
       await producerPage
         .getByRole("heading", { name: "Solicitudes recibidas" })
         .waitFor();

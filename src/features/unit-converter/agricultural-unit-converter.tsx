@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import {
-  calculateWeightPrice,
+  calculateUnitPriceTotal,
   convertAgriculturalUnits,
   convertBagsToWeight,
   formatAgriculturalValue,
@@ -63,7 +63,7 @@ export function AgriculturalUnitConverter() {
     setConvertedValue(conversion.value);
     setPriceResult(
       category === "mass" && conversion.value !== null && price.trim()
-        ? calculateWeightPrice(conversion.value, price)
+        ? calculateUnitPriceTotal(conversion.value, price)
         : null,
     );
   }

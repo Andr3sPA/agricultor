@@ -2,6 +2,10 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { OrderDecisionForm } from "@/features/orders/order-decision-form";
 import { PRODUCT_UNITS } from "@/features/products/product-validation";
+import {
+  calculateUnitPriceTotal,
+  formatAgriculturalValue,
+} from "@/features/unit-converter/agricultural-units";
 import type { OrderStatus } from "@/generated/prisma/enums";
 import { getCurrentIdentity } from "@/lib/auth/server";
 import { prisma } from "@/lib/db";
@@ -97,6 +101,10 @@ export default async function OrdersPage({
         : order.history.find((event) => event.toStatus === order.status);
     const unit =
       PRODUCT_UNITS.find(({ value }) => value === order.unit)?.label ?? order.unit;
+    const estimatedTotal = calculateUnitPriceTotal(
+      order.requestedQuantity.toString(),
+      String(order.priceCOP),
+    ).value;
 
     return (
       <li
@@ -131,6 +139,12 @@ export default async function OrdersPage({
             <dt className="font-medium">Precio por unidad al solicitar</dt>
             <dd>{copFormatter.format(order.priceCOP)}</dd>
           </div>
+          {estimatedTotal !== null && (
+            <div>
+              <dt className="font-medium">Valor estimado al solicitar</dt>
+              <dd>$ {formatAgriculturalValue(estimatedTotal)} COP</dd>
+            </div>
+          )}
           <div>
             <dt className="font-medium">Solicitud</dt>
             <dd>{dateFormatter.format(order.createdAt)}</dd>

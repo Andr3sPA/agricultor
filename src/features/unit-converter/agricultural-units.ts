@@ -173,7 +173,7 @@ export function convertBagsToWeight(
   return convertAgriculturalUnits(kilos, "mass", "kg", toUnit);
 }
 
-export function calculateWeightPrice(quantity: string, input: string): UnitConversion {
+export function calculateUnitPriceTotal(quantity: string, input: string): UnitConversion {
   const price = input.trim();
   if (!/^(?:\d+|\d{1,3}(?:\.\d{3})+)$/.test(price)) {
     return {

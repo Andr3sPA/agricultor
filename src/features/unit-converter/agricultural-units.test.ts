@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  calculateWeightPrice,
+  calculateUnitPriceTotal,
   convertBagsToWeight,
   convertAgriculturalUnits,
   formatAgriculturalValue,
@@ -25,14 +25,14 @@ test("converts 500 g pounds exactly in either direction", () => {
 });
 
 test("calculates a COP estimate from the converted weight and rounds half up", () => {
-  assert.deepEqual(calculateWeightPrice("5", "2.000"), {
+  assert.deepEqual(calculateUnitPriceTotal("5", "2.000"), {
     value: "10000",
     error: null,
   });
-  assert.equal(calculateWeightPrice("0.5", "101").value, "51");
-  assert.equal(calculateWeightPrice("0.49", "1").value, "0");
-  assert.equal(calculateWeightPrice("5", "0").value, "0");
-  assert.equal(calculateWeightPrice("5", "2,50").value, null);
+  assert.equal(calculateUnitPriceTotal("0.5", "101").value, "51");
+  assert.equal(calculateUnitPriceTotal("0.49", "1").value, "0");
+  assert.equal(calculateUnitPriceTotal("5", "0").value, "0");
+  assert.equal(calculateUnitPriceTotal("5", "2,50").value, null);
 });
 
 test("converts arrobas of 12.5 kg across pounds, kilograms and tonnes", () => {

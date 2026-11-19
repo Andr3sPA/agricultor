@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import {
-  calculateWeightPrice,
+  calculateUnitPriceTotal,
   formatAgriculturalValue,
 } from "@/features/unit-converter/agricultural-units";
 import {
@@ -35,7 +35,7 @@ export function OrderRequestForm({
   const normalizedQuantity = parseOrderQuantity(quantity);
   const estimatedPrice =
     normalizedQuantity && Number(normalizedQuantity) <= Number(availableQuantity)
-      ? calculateWeightPrice(normalizedQuantity, String(priceCOP)).value
+      ? calculateUnitPriceTotal(normalizedQuantity, String(priceCOP)).value
       : null;
 
   return (
