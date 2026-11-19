@@ -376,6 +376,8 @@ async function main(): Promise<void> {
       await anonymousPage.waitForURL(
         `${baseURL}/catalogo/${product.id}?${catalogQuery}`,
       );
+      await expect(anonymousPage.getByRole("button", { name: "Guardar en favoritos" }))
+        .toHaveCount(0);
       await anonymousPage
         .getByRole("link", { name: "Volver al catálogo" })
         .click();
@@ -650,6 +652,16 @@ async function main(): Promise<void> {
         .toHaveAccessibleDescription("Disponible ahora: 5 Kilogramo (kg)");
       await expect(page.getByRole("link", { name: "Volver al catálogo" }))
         .toHaveAttribute("href", catalogUrl.slice(baseURL.length));
+      await page.goto(`${baseURL}/catalogo/${product.id}`);
+      await page.getByRole("button", { name: "Guardar en favoritos" }).click();
+      await expect(page.getByRole("button", { name: "Quitar de favoritos" })).toBeVisible();
+      await page.getByRole("link", { name: "Ver mis favoritos" }).click();
+      await expect(page.getByRole("heading", { name: "Mis favoritos" })).toBeVisible();
+      await page.getByRole("link", { name: product.name, exact: true }).click();
+      await page.getByRole("button", { name: "Quitar de favoritos" }).click();
+      await expect(page.getByRole("button", { name: "Guardar en favoritos" })).toBeVisible();
+      await page.getByRole("link", { name: "Ver mis favoritos" }).click();
+      await expect(page.getByText(/Aún no tienes productos favoritos disponibles/)).toBeVisible();
       assert.equal(
         await page.locator("html").evaluate(
           (root) => root.scrollWidth <= root.clientWidth,

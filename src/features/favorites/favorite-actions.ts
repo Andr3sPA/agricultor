@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getPublicProductHref } from "@/features/catalog/public-products";
 import { getCurrentIdentity } from "@/lib/auth/server";
 import { prisma } from "@/lib/db";
 import { addFavorite, removeFavorite } from "./favorite-service";
@@ -17,9 +18,10 @@ export async function toggleFavoriteAction(
 ): Promise<FavoriteFormState> {
   const identity = await getCurrentIdentity();
   const shouldRemove = formData.get("isFavorite") === "true";
+  const productId = formData.get("productId");
   const result = shouldRemove
-    ? await removeFavorite(identity, formData.get("productId"), prisma)
-    : await addFavorite(identity, formData.get("productId"), prisma);
+    ? await removeFavorite(identity, productId, prisma)
+    : await addFavorite(identity, productId, prisma);
 
   if (!result.ok) {
     const message = {
@@ -32,6 +34,7 @@ export async function toggleFavoriteAction(
   }
 
   revalidatePath("/catalogo");
+  if (typeof productId === "string") revalidatePath(getPublicProductHref(productId));
   revalidatePath("/mi-cuenta");
   revalidatePath("/mi-cuenta/favoritos");
   return {

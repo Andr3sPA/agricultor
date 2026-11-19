@@ -88,6 +88,14 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
       >
         Volver al inicio
       </Link>
+      {identity?.roles.includes("BUYER") && (
+        <Link
+          className="ml-4 inline-flex min-h-12 items-center font-semibold text-emerald-900 underline"
+          href="/mi-cuenta/favoritos"
+        >
+          Ver mis favoritos
+        </Link>
+      )}
       <section className="mt-6">
         <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-800">
           Agricultor

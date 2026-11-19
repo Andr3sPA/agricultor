@@ -11,11 +11,13 @@ import {
   getPublicProducts,
   parseCatalogFilters,
 } from "@/features/catalog/public-products";
+import { FavoriteControl } from "@/features/favorites/favorite-control";
 import {
   PRODUCT_CATEGORIES,
   PRODUCT_UNITS,
 } from "@/features/products/product-validation";
 import { prisma } from "@/lib/db";
+import { getCurrentIdentity } from "@/lib/auth/server";
 
 const metadataBase = new URL(
   process.env.VERCEL_PROJECT_PRODUCTION_URL
@@ -105,6 +107,14 @@ export default async function PublicProductPage({
   }
 
   const filters = parseCatalogFilters(await searchParams);
+  const identity = await getCurrentIdentity();
+  const buyerId = identity?.roles.includes("BUYER") ? identity.userId : undefined;
+  const favorite = buyerId
+    ? await prisma.favorite.findUnique({
+        where: { userId_productId: { userId: buyerId, productId: product.id } },
+        select: { productId: true },
+      })
+    : null;
   const category =
     PRODUCT_CATEGORIES.find(({ value }) => value === product.category)?.label ??
     product.category;
@@ -160,6 +170,17 @@ export default async function PublicProductPage({
         >
           Solicitar este producto
         </Link>
+        {buyerId && (
+          <div className="mt-5 border-t border-slate-200 pt-1">
+            <FavoriteControl isFavorite={Boolean(favorite)} productId={product.id} />
+            <Link
+              className="inline-flex min-h-12 items-center font-semibold text-emerald-900 underline"
+              href="/mi-cuenta/favoritos"
+            >
+              Ver mis favoritos
+            </Link>
+          </div>
+        )}
       </article>
     </main>
   );
