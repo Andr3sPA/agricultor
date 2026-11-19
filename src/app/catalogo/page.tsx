@@ -256,6 +256,19 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
               ? "No encontramos productos con estos filtros."
               : "No hay productos publicados y disponibles en este momento."}
           </p>
+          {filters.minimumQuantity && (
+            <>
+              <p className="mt-2 text-sm">
+                Puedes quitar la cantidad mínima para ver si hay ofertas con menos existencias.
+              </p>
+              <Link
+                className="mt-3 inline-flex min-h-11 items-center font-semibold text-emerald-900 underline underline-offset-4"
+                href={getCatalogPageHref({ ...filters, minimumQuantity: undefined }, 1)}
+              >
+                Quitar solo la cantidad mínima
+              </Link>
+            </>
+          )}
         </div>
       ) : (
         <ul className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

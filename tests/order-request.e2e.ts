@@ -369,6 +369,13 @@ async function main(): Promise<void> {
       await anonymousPage.getByRole("button", { name: "Buscar", exact: true }).click();
       await expect(anonymousPage.getByText("No encontramos productos con estos filtros.")).toBeVisible();
       await expect(minimumStock).toHaveValue("5,001");
+      await anonymousPage.getByRole("link", { name: "Quitar solo la cantidad mínima" }).click();
+      const relaxedQuery = new URLSearchParams(catalogQuery);
+      relaxedQuery.set("unidad", "KG");
+      await expect(anonymousPage).toHaveURL(`${baseURL}/catalogo?${relaxedQuery}`);
+      await expect(minimumStock).toHaveValue("");
+      await expect(anonymousPage.getByLabel("Unidad de venta")).toHaveValue("KG");
+      await expect(anonymousPage.getByRole("status").filter({ hasText: "13 ofertas encontradas" })).toBeVisible();
       await minimumStock.fill("5");
       await anonymousPage.getByRole("button", { name: "Buscar", exact: true }).click();
       catalogQuery.set("unidad", "KG");
