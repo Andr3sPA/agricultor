@@ -22,14 +22,16 @@ export function AgriculturalUnitConverter() {
   const [convertedValue, setConvertedValue] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [price, setPrice] = useState("");
+  const [priceUnitKey, setPriceUnitKey] = useState<string | null>(null);
   const [priceResult, setPriceResult] = useState<UnitConversion | null>(null);
   const selectedCategory = UNIT_CATEGORIES.find(
     (item) => item.key === category,
   )!;
   const convertingBags = fromUnit === "bulto";
+  const pricingUnit = priceUnitKey ?? toUnit;
   const priceUnit =
     selectedCategory.key === "mass"
-      ? selectedCategory.units.find(({ key }) => key === toUnit)?.priceUnit
+      ? selectedCategory.units.find(({ key }) => key === pricingUnit)?.priceUnit
       : undefined;
 
   function resetResult() {
@@ -49,6 +51,7 @@ export function AgriculturalUnitConverter() {
     setFromUnit(nextCategory.units[0].key);
     setToUnit(nextCategory.units[1].key);
     setPrice("");
+    setPriceUnitKey(null);
     resetResult();
   }
 
@@ -61,11 +64,14 @@ export function AgriculturalUnitConverter() {
     setError(invalidBagWeight ? null : conversion.error);
     setBagWeightError(invalidBagWeight ? conversion.error : null);
     setConvertedValue(conversion.value);
-    setPriceResult(
-      category === "mass" && conversion.value !== null && price.trim()
-        ? calculateUnitPriceTotal(conversion.value, price)
-        : null,
-    );
+    if (category !== "mass" || conversion.value === null || !price.trim()) {
+      setPriceResult(null);
+      return;
+    }
+    const pricedQuantity = pricingUnit === toUnit
+      ? conversion.value
+      : convertAgriculturalUnits(conversion.value, "mass", toUnit, pricingUnit).value;
+    setPriceResult(pricedQuantity === null ? null : calculateUnitPriceTotal(pricedQuantity, price));
   }
 
   const amountErrorId = "unit-converter-amount-error";
@@ -144,6 +150,7 @@ export function AgriculturalUnitConverter() {
               if (event.target.value === "bulto") {
                 setToUnit("kg");
                 setPrice("");
+                setPriceUnitKey(null);
               }
               resetResult();
             }}
@@ -170,7 +177,7 @@ export function AgriculturalUnitConverter() {
             id="unit-converter-to"
             onChange={(event) => {
               setToUnit(event.target.value);
-              setPrice("");
+              if (priceUnitKey === null) setPrice("");
               resetResult();
             }}
             value={toUnit}
@@ -214,33 +221,54 @@ export function AgriculturalUnitConverter() {
         </div>
       )}
 
-      {priceUnit && (
-        <div>
-          <label className="block font-medium" htmlFor="unit-converter-price">
-            Precio por {priceUnit} en pesos (opcional)
-          </label>
-          <p className="mt-1 text-sm text-slate-600" id="unit-converter-price-hint">
-            Escribe el precio que acordaste. Por ejemplo, 2.000.
-          </p>
-          <input
-            aria-describedby={`unit-converter-price-hint${priceResult?.error ? " unit-converter-price-error" : ""}`}
-            aria-invalid={Boolean(priceResult?.error)}
-            className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 bg-white px-3 text-slate-950 focus-visible:outline-2 focus-visible:outline-emerald-800"
-            id="unit-converter-price"
-            inputMode="numeric"
-            maxLength={18}
-            onChange={(event) => {
-              setPrice(event.target.value);
-              resetResult();
-            }}
-            type="text"
-            value={price}
-          />
-          {priceResult?.error && (
-            <p className="mt-1 text-sm text-rose-800" id="unit-converter-price-error" role="alert">
-              {priceResult.error}
+      {selectedCategory.key === "mass" && priceUnit && (
+        <div className="space-y-3">
+          <div>
+            <label className="block font-medium" htmlFor="unit-converter-price-unit">
+              Unidad del precio
+            </label>
+            <select
+              className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 bg-white px-3 text-slate-950 focus-visible:outline-2 focus-visible:outline-emerald-800"
+              id="unit-converter-price-unit"
+              onChange={(event) => {
+                setPriceUnitKey(event.target.value);
+                setPrice("");
+                resetResult();
+              }}
+              value={pricingUnit}
+            >
+              {selectedCategory.units.map((unit) => (
+                <option key={unit.key} value={unit.key}>{unit.label}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block font-medium" htmlFor="unit-converter-price">
+              Precio por {priceUnit} en pesos (opcional)
+            </label>
+            <p className="mt-1 text-sm text-slate-600" id="unit-converter-price-hint">
+              Escribe el precio que acordaste. Por ejemplo, 2.000.
             </p>
-          )}
+            <input
+              aria-describedby={`unit-converter-price-hint${priceResult?.error ? " unit-converter-price-error" : ""}`}
+              aria-invalid={Boolean(priceResult?.error)}
+              className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 bg-white px-3 text-slate-950 focus-visible:outline-2 focus-visible:outline-emerald-800"
+              id="unit-converter-price"
+              inputMode="numeric"
+              maxLength={18}
+              onChange={(event) => {
+                setPrice(event.target.value);
+                resetResult();
+              }}
+              type="text"
+              value={price}
+            />
+            {priceResult?.error && (
+              <p className="mt-1 text-sm text-rose-800" id="unit-converter-price-error" role="alert">
+                {priceResult.error}
+              </p>
+            )}
+          </div>
         </div>
       )}
 
@@ -251,6 +279,7 @@ export function AgriculturalUnitConverter() {
             setFromUnit(toUnit);
             setToUnit(fromUnit);
             setPrice("");
+            setPriceUnitKey(null);
             resetResult();
           }}
           type="button"

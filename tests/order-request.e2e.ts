@@ -423,6 +423,11 @@ async function main(): Promise<void> {
       const conversionResult = producerPage.getByRole("region", { name: "Resultado" });
       await expect(conversionResult).toContainText("10 Libras de 500 g = 5 Kilogramos (kg)");
       await expect(conversionResult).toContainText(/10\.000 COP/);
+      await producerPage.getByLabel("Unidad del precio").selectOption("lb500");
+      await producerPage.getByLabel("Precio por libra de 500 g en pesos").fill("1.700");
+      await producerPage.getByRole("button", { name: "Convertir unidades" }).click();
+      await expect(conversionResult).toContainText("10 Libras de 500 g = 5 Kilogramos (kg)");
+      await expect(conversionResult).toContainText(/17\.000 COP/);
       await producerPage.getByRole("button", { name: "Intercambiar unidades" }).click();
       await expect(producerPage.getByLabel("Precio por libra de 500 g en pesos"))
         .toHaveValue("");
@@ -445,6 +450,11 @@ async function main(): Promise<void> {
       await producerPage.getByRole("button", { name: "Convertir unidades" }).click();
       await expect(conversionResult).toContainText("3 bultos = 76,5 Kilogramos (kg)");
       await expect(conversionResult).toContainText(/153\.000 COP/);
+      await producerPage.getByLabel("Unidad del precio").selectOption("lb500");
+      await producerPage.getByLabel("Precio por libra de 500 g en pesos").fill("900");
+      await producerPage.getByRole("button", { name: "Convertir unidades" }).click();
+      await expect(conversionResult).toContainText("3 bultos = 76,5 Kilogramos (kg)");
+      await expect(conversionResult).toContainText(/137\.700 COP/);
       await producerPage.goto(`${baseURL}/mi-cuenta`);
       await producerPage.getByRole("link", { name: "Calcular costos y margen" }).click();
       await producerPage.getByLabel("Cantidad de producción").fill("2,5");
