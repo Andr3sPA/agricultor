@@ -298,6 +298,7 @@ async function main(): Promise<void> {
         ...catalogProduct,
         id: `${suffix}-${index}`,
         name: `Oferta E2E ${index}`,
+        priceCOP: index === 11 ? 1450 : catalogProduct.priceCOP,
       })),
     });
     const email = `order-e2e-buyer-${suffix}@example.test`;
@@ -361,6 +362,7 @@ async function main(): Promise<void> {
         municipio: municipality,
       });
       await anonymousPage.goto(`${baseURL}/catalogo?${catalogQuery}`);
+      await expect(anonymousPage.getByText(/Total estimado por/)).toHaveCount(0);
       const minimumStock = anonymousPage.getByLabel("Cantidad que necesitas");
       await minimumStock.fill("5,001");
       await anonymousPage.getByLabel("Unidad de venta").selectOption("KG");
@@ -375,12 +377,16 @@ async function main(): Promise<void> {
         hasText: "13 ofertas encontradas",
       });
       await expect(resultCount).toBeVisible();
+      const comparison = anonymousPage.getByRole("listitem").filter({ hasText: "Oferta E2E 11" });
+      await expect(comparison).toContainText(/Total estimado por 5 Kilogramo \(kg\)\s*\$\s*7\.250 COP/);
       await anonymousPage.getByRole("link", { name: "Siguiente" }).click();
       catalogQuery.set("pagina", "2");
       const catalogUrl = `${baseURL}/catalogo?${catalogQuery}`;
       const orderContextUrl = `${baseURL}/catalogo/${product.id}/pedido?${catalogQuery}`;
       await anonymousPage.waitForURL(catalogUrl);
       await expect(resultCount).toBeVisible();
+      await expect(anonymousPage.getByRole("listitem").filter({ hasText: product.name }))
+        .toContainText(/Total estimado por 5 Kilogramo \(kg\)\s*\$\s*5\.000 COP/);
       const productLink = anonymousPage.getByRole("link", {
         name: product.name,
         exact: true,
