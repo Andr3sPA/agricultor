@@ -109,3 +109,16 @@ usa un stub HTTP local de Brevo y no envía correos reales. `npm test` ejecuta
 pruebas HTTP de producción y necesita que se corra `npm run build` antes. El
 build requiere `AUTH_SECRET` y `DATABASE_URL`, pero no ejecuta consultas ni
 migraciones.
+
+Para poblar manualmente esa misma base local con productos visibles en el
+catálogo, ejecuta `npm run db:seed:demo` con `TEST_DATABASE_URL` configurada
+para una PostgreSQL en `localhost`, `127.0.0.1` o `::1` cuyo nombre empiece por
+`agricultor_test`. El comando no carga `.env`, no usa `DATABASE_URL` y rechaza
+conexiones remotas o bases con otro nombre. Es idempotente y solo inserta o
+actualiza sus identificadores reservados `demo-*`; no borra filas. Crea un
+productor ficticio sin credenciales y productos publicados marcados `DEMO`.
+Registra manualmente tu propia cuenta para probar como comprador; el productor
+de demostración no puede iniciar sesión ni responder pedidos. Para probar
+respuestas, registra tu propia cuenta productora y publica un producto. Este
+comando no siembra ni modifica la base del sitio desplegado; prepara únicamente
+un entorno local descartable.
