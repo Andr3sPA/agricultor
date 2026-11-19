@@ -569,7 +569,7 @@ async function main(): Promise<void> {
       await expect(producerPage.getByText("Actualizamos el producto.")).toBeVisible();
       const editedCrop = await database.product.findFirstOrThrow({
         where: { ownerId: producer.id, name: harvestName },
-        select: { availableQuantity: true, priceCOP: true },
+        select: { id: true, availableQuantity: true, priceCOP: true },
       });
       assert.ok(editedCrop.availableQuantity.equals("10.25"));
       assert.equal(editedCrop.priceCOP, 2500);
@@ -586,6 +586,21 @@ async function main(): Promise<void> {
       await expect(savedCrop.getByText("Agotado", { exact: true })).toBeVisible();
       await publicCatalog.reload();
       await expect(publicCrop).toHaveCount(0);
+      const unavailableQuery = new URLSearchParams({
+        producto: harvestName,
+        municipio: harvestMunicipality,
+        unidad: "KG",
+        cantidad: "5",
+      });
+      const unavailableOffer = `${baseURL}/catalogo/${editedCrop.id}`;
+      for (const path of ["", "/pedido"]) {
+        await publicCatalog.goto(`${unavailableOffer}${path}?${unavailableQuery}`);
+        await expect(publicCatalog.getByRole("heading", { name: "Producto no disponible" })).toBeVisible();
+        const returnLink = publicCatalog.getByRole("link", { name: "Volver al catálogo" });
+        await expect(returnLink).toHaveAttribute("href", `/catalogo?${unavailableQuery}`);
+        await returnLink.click();
+        await expect(publicCatalog).toHaveURL(`${baseURL}/catalogo?${unavailableQuery}`);
+      }
       await availableStock.fill("8,75");
       await saveStock.click();
       await expect(savedCrop).toContainText(/Disponible para nuevos pedidos\s*8,75 Kilogramo/);

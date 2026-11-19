@@ -1,4 +1,9 @@
 import Link from "next/link";
+import { Suspense } from "react";
+import { CatalogReturnLink } from "@/features/catalog/catalog-return-link";
+
+const catalogLinkClass =
+  "mt-6 inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-emerald-800 px-5 py-3 text-center font-semibold text-white hover:bg-emerald-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-900 sm:w-auto";
 
 export default function ProductNotFound() {
   return (
@@ -20,12 +25,9 @@ export default function ProductNotFound() {
           Este producto puede haberse agotado o haber sido retirado del
           catálogo.
         </p>
-        <Link
-          className="mt-6 inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-emerald-800 px-5 py-3 text-center font-semibold text-white hover:bg-emerald-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-900 sm:w-auto"
-          href="/catalogo"
-        >
-          Volver al catálogo
-        </Link>
+        <Suspense fallback={<Link className={catalogLinkClass} href="/catalogo">Volver al catálogo</Link>}>
+          <CatalogReturnLink className={catalogLinkClass} />
+        </Suspense>
       </section>
     </main>
   );
