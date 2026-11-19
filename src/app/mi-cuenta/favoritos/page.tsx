@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { FavoriteControl } from "@/features/favorites/favorite-control";
 import { listFavorites } from "@/features/favorites/favorite-service";
+import { getPublicProductHref } from "@/features/catalog/public-products";
 import {
   PRODUCT_CATEGORIES,
   PRODUCT_UNITS,
@@ -59,17 +60,20 @@ export default async function FavoritesPage() {
         </p>
         <h1 className="mt-4 text-3xl font-semibold">Mis favoritos</h1>
         <p className="mt-3 text-slate-700">
-          Esta lista es privada. Aquí aparecen tus productos publicados que
+          Esta lista es privada. Aquí aparecen las ofertas que guardaste y que
           todavía tienen cantidad disponible.
         </p>
+        <Link
+          className="mt-4 inline-flex min-h-11 items-center rounded-lg border border-emerald-900 px-4 py-2 font-semibold text-emerald-950 hover:bg-emerald-50"
+          href="/catalogo"
+        >
+          Explorar catálogo
+        </Link>
       </section>
       {products.length === 0 ? (
         <p className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 text-slate-700">
-          Aún no tienes productos favoritos disponibles. Explora el{" "}
-          <Link className="font-semibold text-emerald-900 underline" href="/catalogo">
-            catálogo
-          </Link>
-          .
+          Aún no tienes productos favoritos disponibles. Puedes guardar una
+          oferta desde el catálogo o desde su ficha.
         </p>
       ) : (
         <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -86,14 +90,7 @@ export default async function FavoritesPage() {
                 className="rounded-2xl border border-emerald-950/10 bg-white p-6 shadow-sm"
                 key={product.id}
               >
-                <h2 className="text-xl font-semibold">
-                  <Link
-                    className="underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-900"
-                    href={`/catalogo/${encodeURIComponent(product.id)}`}
-                  >
-                    {product.name}
-                  </Link>
-                </h2>
+                <h2 className="text-xl font-semibold">{product.name}</h2>
                 <dl className="mt-4 space-y-3 text-sm text-slate-700">
                   <div>
                     <dt className="font-medium">Categoría</dt>
@@ -115,6 +112,13 @@ export default async function FavoritesPage() {
                     <dd>{product.municipality}</dd>
                   </div>
                 </dl>
+                <Link
+                  aria-label={`Ver oferta de ${product.name}`}
+                  className="mt-4 inline-flex min-h-11 items-center font-semibold text-emerald-900 underline"
+                  href={getPublicProductHref(product.id)}
+                >
+                  Ver oferta
+                </Link>
                 <FavoriteControl isFavorite productId={product.id} />
               </li>
             );

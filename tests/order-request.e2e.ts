@@ -657,11 +657,14 @@ async function main(): Promise<void> {
       await expect(page.getByRole("button", { name: "Quitar de favoritos" })).toBeVisible();
       await page.getByRole("link", { name: "Ver mis favoritos" }).click();
       await expect(page.getByRole("heading", { name: "Mis favoritos" })).toBeVisible();
-      await page.getByRole("link", { name: product.name, exact: true }).click();
+      await expect(page.getByRole("link", { name: "Explorar catálogo" })).toBeVisible();
+      await page.getByRole("link", { name: `Ver oferta de ${product.name}` }).click();
       await page.getByRole("button", { name: "Quitar de favoritos" }).click();
       await expect(page.getByRole("button", { name: "Guardar en favoritos" })).toBeVisible();
       await page.getByRole("link", { name: "Ver mis favoritos" }).click();
       await expect(page.getByText(/Aún no tienes productos favoritos disponibles/)).toBeVisible();
+      await page.getByRole("link", { name: "Explorar catálogo" }).click();
+      await expect(page).toHaveURL(`${baseURL}/catalogo`);
       assert.equal(
         await page.locator("html").evaluate(
           (root) => root.scrollWidth <= root.clientWidth,
