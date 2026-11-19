@@ -839,9 +839,13 @@ async function main(): Promise<void> {
         .waitFor();
       const pendingProducerRequests = producerPage.getByRole("region", { name: "Por responder" });
       const answeredProducerRequests = producerPage.getByRole("region", { name: "Ya respondidas" });
-      await pendingProducerRequests
-        .getByRole("button", { name: "Aceptar pedido" })
-        .click();
+      const acceptOrder = pendingProducerRequests.getByRole("button", { name: "Aceptar pedido" });
+      await acceptOrder.click();
+      await pendingProducerRequests.getByRole("button", { name: "Dejar pendiente" }).click();
+      await expect(acceptOrder).toBeFocused();
+      await expect(pendingProducerRequests.getByText("Esperando respuesta")).toBeVisible();
+      await acceptOrder.click();
+      await pendingProducerRequests.getByRole("button", { name: "Confirmar aceptación" }).click();
       await producerPage
         .getByRole("list", { name: "Seguimiento de la solicitud recibida" })
         .getByText("Tu respuesta")
