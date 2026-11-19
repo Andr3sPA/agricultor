@@ -688,14 +688,26 @@ async function main(): Promise<void> {
       await expect(inventoryUnit).toBeEnabled();
       await inventoryUnit.selectOption("BULTO");
 
+      const requestedQuantity = page.getByLabel("Cantidad que solicitas");
+      await requestedQuantity.fill("2,5");
+      await expect(page.getByText(/Valor estimado\s*\$\s*2\.500 COP/)).toBeVisible();
+      await database.product.update({
+        where: { id: product.id },
+        data: { priceCOP: 1250 },
+      });
+      await page.getByRole("button", { name: "Solicitar producto" }).click();
+      await expect(page.getByText(/La oferta cambió/)).toBeVisible();
+      await expect(requestedQuantity).toHaveValue("2,5");
+      await expect(page.getByText(/Valor estimado\s*\$\s*3\.125 COP/)).toBeVisible();
+      assert.equal(await database.order.count({
+        where: { buyerId: buyer.id, productId: product.id },
+      }), 0);
+
       const form = page.locator("form");
       const idempotencyKey = await form
         .locator('input[name="idempotencyKey"]')
         .inputValue();
       assert.match(idempotencyKey, /^[A-Za-z0-9_-]{43}$/);
-      const requestedQuantity = page.getByLabel("Cantidad que solicitas");
-      await requestedQuantity.fill("2,5");
-      await expect(page.getByText(/Valor estimado\s*\$\s*2\.500 COP/)).toBeVisible();
       await requestedQuantity.fill("6,5");
       await expect(page.getByText("Valor estimado", { exact: false })).toHaveCount(0);
       await page.getByRole("button", { name: "Solicitar producto" }).click();
@@ -794,7 +806,7 @@ async function main(): Promise<void> {
         data: { priceCOP: 1500 },
       });
       await page.reload();
-      await expect(page.getByText(/\$\s*2\.000 COP/)).toBeVisible();
+      await expect(page.getByText(/\$\s*2\.500 COP/)).toBeVisible();
       await page
         .getByText("El productor debe revisar la solicitud.")
         .waitFor();
@@ -821,7 +833,7 @@ async function main(): Promise<void> {
       await expect(
         producerPage.getByText("2 Kilogramo (kg)", { exact: true }),
       ).toBeVisible();
-      await expect(producerPage.getByText(/\$\s*2\.000 COP/)).toBeVisible();
+      await expect(producerPage.getByText(/\$\s*2\.500 COP/)).toBeVisible();
       await producerPage
         .getByRole("heading", { name: "Solicitudes recibidas" })
         .waitFor();

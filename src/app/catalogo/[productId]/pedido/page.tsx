@@ -111,6 +111,7 @@ export default async function RequestOrderPage({
             availableQuantityLabel={availableQuantityLabel}
             idempotencyKey={randomBytes(32).toString("base64url")}
             priceCOP={product.priceCOP}
+            unit={product.unit}
             productId={product.id}
           />
         ) : !identity ? (

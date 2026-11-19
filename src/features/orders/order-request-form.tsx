@@ -19,12 +19,14 @@ export function OrderRequestForm({
   availableQuantityLabel,
   idempotencyKey,
   priceCOP,
+  unit,
 }: {
   productId: string;
   availableQuantity: string;
   availableQuantityLabel: string;
   idempotencyKey: string;
   priceCOP: number;
+  unit: string;
 }) {
   const [state, action, pending] = useActionState(
     requestOrderAction,
@@ -41,6 +43,8 @@ export function OrderRequestForm({
   return (
     <form action={action} className="mt-6 space-y-4">
       <input name="productId" type="hidden" value={productId} />
+      <input name="expectedUnit" type="hidden" value={unit} />
+      <input name="expectedPriceCOP" type="hidden" value={priceCOP} />
       <input name="idempotencyKey" type="hidden" value={idempotencyKey} />
       <div>
         <label className="block font-medium" htmlFor="order-quantity">

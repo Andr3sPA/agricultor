@@ -126,10 +126,26 @@ describe(
     });
 
     it("persists a request, its history, and rejected stock release", async () => {
+      const staleUnit = await requestOrder(buyerOne, {
+        productId: reservedProductId,
+        quantity: "2.5",
+        expectedUnit: "BULTO",
+        expectedPriceCOP: "1000",
+        idempotencyKey: newIdempotencyKey(),
+      }, database);
+      assert.deepEqual(staleUnit, { ok: false, code: "offer-changed" });
+      const inventoryBeforeRequest = await database.product.findUniqueOrThrow({
+        where: { id: reservedProductId },
+      });
+      assert.ok(inventoryBeforeRequest.availableQuantity.equals("5"));
+      assert.ok(inventoryBeforeRequest.reservedQuantity.equals("0"));
+
       const request = await requestOrder(
         buyerOne,
         {
           productId: reservedProductId,
+          expectedUnit: "KG",
+          expectedPriceCOP: "1000",
           quantity: "2.5",
           idempotencyKey: newIdempotencyKey(),
         },
@@ -196,6 +212,8 @@ describe(
           buyerOne,
           {
             productId: idempotentProductId,
+            expectedUnit: "KG",
+            expectedPriceCOP: "1000",
             quantity: "2",
             idempotencyKey,
           },
@@ -205,6 +223,8 @@ describe(
           buyerOne,
           {
             productId: idempotentProductId,
+            expectedUnit: "KG",
+            expectedPriceCOP: "1000",
             quantity: "2,000",
             idempotencyKey,
           },
@@ -221,6 +241,8 @@ describe(
         buyerOne,
         {
           productId: idempotentProductId,
+          expectedUnit: "KG",
+          expectedPriceCOP: "1000",
           quantity: "2.000",
           idempotencyKey,
         },
@@ -232,6 +254,8 @@ describe(
         buyerTwo,
         {
           productId: idempotentProductId,
+          expectedUnit: "KG",
+          expectedPriceCOP: "1000",
           quantity: "1",
           idempotencyKey,
         },
@@ -245,6 +269,8 @@ describe(
         buyerOne,
         {
           productId: idempotentProductId,
+          expectedUnit: "KG",
+          expectedPriceCOP: "1000",
           quantity: "2.5",
           idempotencyKey,
         },
@@ -279,6 +305,8 @@ describe(
           buyerOne,
           {
             productId: contestedProductId,
+            expectedUnit: "KG",
+            expectedPriceCOP: "1000",
             quantity: "1",
             idempotencyKey: newIdempotencyKey(),
           },
@@ -288,6 +316,8 @@ describe(
           buyerTwo,
           {
             productId: contestedProductId,
+            expectedUnit: "KG",
+            expectedPriceCOP: "1000",
             quantity: "1",
             idempotencyKey: newIdempotencyKey(),
           },

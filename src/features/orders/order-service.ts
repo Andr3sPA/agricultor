@@ -21,6 +21,7 @@ export type OrderMutationResult =
         | "unauthorized"
         | "invalid"
         | "unavailable"
+        | "offer-changed"
         | "idempotency-conflict"
         | "not-found"
         | "already-decided";
@@ -89,6 +90,8 @@ export async function requestOrder(
         id: true,
         ownerId: true,
         isPublished: true,
+        unit: true,
+        priceCOP: true,
       },
     });
 
@@ -99,12 +102,17 @@ export async function requestOrder(
     ) {
       return { ok: false, code: "unavailable" };
     }
+    if (input.expectedUnit !== product.unit || input.expectedPriceCOP !== String(product.priceCOP)) {
+      return { ok: false, code: "offer-changed" };
+    }
 
     const reserved = await transaction.product.updateMany({
       where: {
         id: product.id,
         ownerId: product.ownerId,
         isPublished: true,
+        unit: product.unit,
+        priceCOP: product.priceCOP,
         availableQuantity: { gte: quantity },
       },
       data: {
@@ -114,6 +122,13 @@ export async function requestOrder(
     });
 
     if (reserved.count !== 1) {
+      const current = await transaction.product.findFirst({
+        where: { id: product.id, isPublished: true },
+        select: { unit: true, priceCOP: true },
+      });
+      if (current && (current.unit !== product.unit || current.priceCOP !== product.priceCOP)) {
+        return { ok: false, code: "offer-changed" };
+      }
       return { ok: false, code: "unavailable" };
     }
 

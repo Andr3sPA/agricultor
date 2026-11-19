@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { getPublicProductOrderHref } from "@/features/catalog/public-products";
 import { getCurrentIdentity } from "@/lib/auth/server";
 import { prisma } from "@/lib/db";
 import { decideOrder, requestOrder } from "./order-service";
@@ -23,6 +24,8 @@ function messageFor(code: string): string {
       return "Revisa los datos del pedido.";
     case "unavailable":
       return "No pudimos reservar esa cantidad. Prueba con una cantidad menor o vuelve al catálogo si la oferta fue retirada.";
+    case "offer-changed":
+      return "La oferta cambió. Revisa el precio y la unidad antes de enviar la solicitud otra vez.";
     case "idempotency-conflict":
       return "Esta solicitud ya fue enviada con otros datos. Actualiza el formulario para intentarlo de nuevo.";
     case "not-found":
@@ -40,10 +43,13 @@ export async function requestOrderAction(
 ): Promise<OrderFormState> {
   const identity = await getCurrentIdentity();
   const quantity = formData.get("quantity");
+  const productId = formData.get("productId");
   const result = await requestOrder(
     identity,
     {
-      productId: formData.get("productId"),
+      productId,
+      expectedUnit: formData.get("expectedUnit"),
+      expectedPriceCOP: formData.get("expectedPriceCOP"),
       quantity,
       idempotencyKey: formData.get("idempotencyKey"),
     },
@@ -51,6 +57,9 @@ export async function requestOrderAction(
   );
 
   if (!result.ok) {
+    if (result.code === "offer-changed" && typeof productId === "string") {
+      revalidatePath(getPublicProductOrderHref(productId.trim()));
+    }
     return {
       message: messageFor(result.code),
       fieldErrors: result.fieldErrors,
