@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { ProductForm } from "@/features/products/product-form";
 import { canManageProducts } from "@/features/products/product-access";
 import { PublicationToggle } from "@/features/products/publication-toggle";
+import { QuickPriceForm } from "@/features/products/quick-price-form";
 import {
   getAvailabilityLabel,
   PRODUCT_CATEGORIES,
@@ -131,6 +132,12 @@ export default async function ProductsPage() {
                       <dd>{product.municipality}</dd>
                     </div>
                   </dl>
+                  <QuickPriceForm
+                    priceCOP={product.priceCOP}
+                    productId={product.id}
+                    unit={product.unit}
+                    unitLabel={unit}
+                  />
                   <Link
                     className="mt-4 inline-flex rounded-xl border border-emerald-900 px-4 py-2 font-semibold text-emerald-950 hover:bg-emerald-50"
                     href={`/mi-cuenta/productos/${encodeURIComponent(product.id)}/editar`}

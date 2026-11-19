@@ -716,10 +716,19 @@ async function main(): Promise<void> {
       const requestedQuantity = page.getByLabel("Cantidad que solicitas");
       await requestedQuantity.fill("2,5");
       await expect(page.getByText(/Valor estimado\s*\$\s*2\.500 COP/)).toBeVisible();
-      await database.product.update({
-        where: { id: product.id },
-        data: { priceCOP: 1250 },
-      });
+      const pricePage = await producerContext.newPage();
+      await pricePage.setViewportSize({ width: 320, height: 640 });
+      await pricePage.goto(`${baseURL}/mi-cuenta/productos`);
+      const priceCard = pricePage.getByRole("listitem").filter({ hasText: product.name });
+      await priceCard.getByText("Cambiar precio", { exact: true }).click();
+      const quickPrice = priceCard.getByLabel("Precio en pesos por Kilogramo (kg)");
+      await quickPrice.fill("0");
+      await priceCard.getByRole("button", { name: "Guardar precio" }).click();
+      await expect(quickPrice).toHaveAttribute("aria-invalid", "true");
+      await quickPrice.fill("1.250");
+      await priceCard.getByRole("button", { name: "Guardar precio" }).click();
+      await expect(priceCard.getByRole("status").getByText("Guardamos el precio.")).toBeVisible();
+      await expect(priceCard).toContainText(/Precio por unidad\s*\$\s*1\.250/);
       await page.getByRole("button", { name: "Solicitar producto" }).click();
       await expect(page.getByText(/La oferta cambió/)).toBeVisible();
       await expect(requestedQuantity).toHaveValue("2,5");
@@ -826,10 +835,10 @@ async function main(): Promise<void> {
       await expect(page.locator(`[id="solicitud-${firstOrder.id}"]`)
         .getByRole("heading", { name: product.name, exact: true })).toBeInViewport();
       await expect(page.getByText("2 Kilogramo (kg)", { exact: true })).toBeVisible();
-      await database.product.update({
-        where: { id: product.id },
-        data: { priceCOP: 1500 },
-      });
+      await quickPrice.fill("1500");
+      await priceCard.getByRole("button", { name: "Guardar precio" }).click();
+      await expect(priceCard).toContainText(/Precio por unidad\s*\$\s*1\.500/);
+      await pricePage.close();
       await page.reload();
       await expect(page.getByText(/\$\s*2\.500 COP/)).toBeVisible();
       await page

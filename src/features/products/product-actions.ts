@@ -10,6 +10,8 @@ import { getCurrentIdentity } from "@/lib/auth/server";
 import { prisma } from "@/lib/db";
 import { canEditProduct, canManageProducts } from "./product-access";
 import {
+  parseProductPrice,
+  PRODUCT_PRICE_ERROR,
   validateProductInput,
   type ProductField,
   type ProductFieldErrors,
@@ -177,6 +179,46 @@ export async function updateProduct(
   revalidatePath(`/mi-cuenta/productos/${productId}/editar`);
   revalidatePublicProduct(productId);
   return { ok: true, message: "Actualizamos el producto." };
+}
+
+export async function updateProductPrice(
+  productId: string,
+  unit: string,
+  previousPrice: number,
+  _previousState: ProductFormState,
+  formData: FormData,
+): Promise<ProductFormState> {
+  const identity = await getCurrentIdentity();
+  if (!identity || !canManageProducts(identity.roles)) {
+    return { message: "Necesitas el perfil de productor para cambiar el precio." };
+  }
+
+  const priceCOP = parseProductPrice(formData.get("priceCOP"));
+  if (priceCOP === null) {
+    return {
+      fieldErrors: { priceCOP: PRODUCT_PRICE_ERROR },
+      values: submittedValues(formData),
+    };
+  }
+
+  const where = { id: productId, ownerId: identity.userId, unit };
+  const updated = await prisma.product.updateMany({
+    where: { ...where, priceCOP: { equals: previousPrice, not: priceCOP } },
+    data: { priceCOP },
+  });
+  if (updated.count === 0 && !await prisma.product.findFirst({
+    where: { ...where, priceCOP },
+    select: { id: true },
+  })) {
+    revalidatePath("/mi-cuenta/productos");
+    return { message: "El producto o su precio cambió. Revisa el valor actual antes de guardar." };
+  }
+
+  revalidatePath("/mi-cuenta/productos");
+  revalidatePath(`/mi-cuenta/productos/${productId}/editar`);
+  revalidatePath("/mi-cuenta/favoritos");
+  revalidatePublicProduct(productId);
+  return { ok: true, message: "Guardamos el precio." };
 }
 
 export async function setProductPublication(

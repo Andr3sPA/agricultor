@@ -14,7 +14,7 @@ La aplicación ya tiene cuentas y recuperación por Brevo, catálogo público, i
 
 **Razón para volver.** El productor puede actualizar lo que vende desde el celular. El comprador puede consultar una oferta útil antes de llamar o hacer un viaje.
 
-- Probar una edición rápida de precio y disponibilidad en «Mis productos». Mostrar en la oferta cuándo se actualizó **el precio** y mantener separadas las actualizaciones de inventario. Para ofertas antiguas sin historial de precio, mostrar que la fecha no está disponible.
+- «Mis productos» permite cambiar solo el precio desde la tarjeta de cada producto. Queda por validar esta acción en el piloto y evaluar una edición rápida de disponibilidad. Mostrar la fecha del precio requiere guardar ese dato por separado mediante una migración. Para ofertas antiguas sin historial de precio, mostrar que la fecha no está disponible.
 - Validar pedido mínimo, unidad y presentación comercial con operaciones reales. Para un bulto de peso variable, indicar su peso acordado o cotizar en kilos. Confirmar con compradores qué datos necesitan sobre calidad y fecha disponible antes de convertirlos en campos obligatorios.
 - Explorar vigencia elegida por el productor y la opción «Consultar precio» si acuerdan el valor por llamada o mensaje. Definir con el piloto qué ocurre al vencer una oferta, cómo se confirma una cotización y cuándo se libera inventario antes de implementar esos flujos.
 - Mantener el precio manual bajo control del productor. Al confirmar un pedido, ambas partes deben ver la cantidad, unidad, precio acordado y total. Una edición posterior de la oferta solo aplica a nuevas operaciones. Si cambia antes de solicitar, el comprador revisa el nuevo dato.
@@ -62,7 +62,7 @@ Propuesta para el piloto: transferencia directa o contra entrega, según lo que 
 ## Orden de trabajo y criterio para avanzar
 
 1. **Validar operaciones reales.** Pedir a productores y compradores que reconstruyan una venta reciente, desde cuánto pudieron ofrecer hasta cómo confirmaron recepción y pago. Registrar palabras usadas, unidades, mínimos, cambios del precio durante el día, responsables, acuerdos y excepciones. Evitar recoger contactos privados o datos bancarios reales para la prueba.
-2. **Primera implementación candidata.** Actualización rápida del precio desde «Mis productos» con fecha del precio visible y protección del precio acordado en pedidos. Probar en móvil el cambio de precio, la revisión del comprador y la conservación de un pedido previo. Acordar con el piloto las reglas de vigencia antes de introducir vencimientos.
+2. **Validar el cambio de precio.** Probar en móvil la actualización rápida, la revisión del comprador y la conservación del precio acordado en un pedido previo. Coordinar la migración antes de desplegar una fecha específica del precio. Acordar con el piloto las reglas de vigencia antes de introducir vencimientos.
 3. **Completar una entrega.** Probar con pedido simulado y coordinación externa. Avanzar cuando comprador y productor puedan identificar quién actúa a continuación y qué hacer si no hay recepción conforme.
 4. **Avisar y generar confianza.** Agregar correos de los eventos acordados y luego calificaciones verificadas. Evaluar pagos integrados solo si el piloto muestra que el acuerdo y la confirmación externa generan trabajo o errores frecuentes.
 

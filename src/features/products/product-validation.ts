@@ -41,6 +41,18 @@ function asString(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
 }
 
+export function parseProductPrice(value: unknown): number | null {
+  const rawPrice = asString(value).replace(/^\$\s*/, "");
+  const digits = /^\d{1,3}(?:\.\d{3})+$/.test(rawPrice)
+    ? rawPrice.replaceAll(".", "")
+    : rawPrice;
+  const price = /^\d{1,10}$/.test(digits) ? Number(digits) : 0;
+  return price >= 1 && price <= 2_147_483_647 ? price : null;
+}
+
+export const PRODUCT_PRICE_ERROR =
+  "Escribe un precio entero mayor que cero en pesos colombianos.";
+
 export function validateProductInput(
   input: Record<string, unknown>,
 ): ProductValidation {
@@ -50,7 +62,7 @@ export function validateProductInput(
   const rawQuantity = asString(input.availableQuantity);
   const quantity = rawQuantity.replace(",", ".");
   const unit = asString(input.unit);
-  const rawPrice = asString(input.priceCOP).replace(/^\$\s*/, "");
+  const priceCOP = parseProductPrice(input.priceCOP);
   const municipality = asString(input.municipality);
   const categoryOption = PRODUCT_CATEGORIES.find(
     (option) => option.value === category,
@@ -76,19 +88,15 @@ export function validateProductInput(
     errors.unit = "Elige una unidad de la lista.";
   }
 
-  const priceDigits = /^\d{1,3}(?:\.\d{3})+$/.test(rawPrice)
-    ? rawPrice.replaceAll(".", "")
-    : rawPrice;
-  const priceCOP = /^\d{1,10}$/.test(priceDigits) ? Number(priceDigits) : Number.NaN;
-  if (!Number.isInteger(priceCOP) || priceCOP < 1 || priceCOP > 2_147_483_647) {
-    errors.priceCOP = "Escribe un precio entero mayor que cero en pesos colombianos.";
+  if (priceCOP === null) {
+    errors.priceCOP = PRODUCT_PRICE_ERROR;
   }
 
   if (municipality.length < 2 || municipality.length > 100) {
     errors.municipality = "Escribe un municipio o localidad entre 2 y 100 caracteres.";
   }
 
-  if (Object.keys(errors).length > 0 || !categoryOption || !unitOption) {
+  if (Object.keys(errors).length > 0 || !categoryOption || !unitOption || priceCOP === null) {
     return { ok: false, errors };
   }
 
