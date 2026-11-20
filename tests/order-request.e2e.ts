@@ -1167,6 +1167,11 @@ async function main(): Promise<void> {
       await statusFilter.selectOption("");
       await filterButton.click();
       await expect(page.locator(`[id="solicitud-${rejectedOrderId}"]`)).toBeVisible();
+      const buyerReference = page.getByLabel("Referencia del pedido", { exact: true });
+      await buyerReference.fill(` ${acceptedOrder.id} `);
+      await filterButton.click();
+      await expect(page.locator(`[id="solicitud-${acceptedOrder.id}"]`)).toBeVisible();
+      await expect(page.locator(`[id="solicitud-${rejectedOrderId}"]`)).toHaveCount(0);
 
       await page.goto(`${baseURL}/catalogo/${product.id}/pedido`);
       await page.getByLabel("Cantidad que solicitas").fill("3");

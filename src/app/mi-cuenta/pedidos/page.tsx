@@ -58,6 +58,9 @@ export default async function OrdersPage({
   const registeredOrder = params.registrada;
   const buyerStatus = (Object.keys(statusLabels) as OrderStatus[])
     .find((status) => status === params.estado);
+  const buyerReference = typeof params.referencia === "string"
+    ? params.referencia.trim().slice(0, 100).replaceAll("\0", "")
+    : "";
   const producerStatus = params.respuesta === "ACCEPTED" || params.respuesta === "REJECTED"
     ? params.respuesta
     : undefined;
@@ -68,7 +71,11 @@ export default async function OrdersPage({
   const [buyerOrders, producerOrders] = await Promise.all([
     isBuyer
       ? prisma.order.findMany({
-          where: { buyerId: identity.userId, ...(buyerStatus ? { status: buyerStatus } : {}) },
+          where: {
+            buyerId: identity.userId,
+            ...(buyerStatus ? { status: buyerStatus } : {}),
+            ...(buyerReference ? { id: buyerReference } : {}),
+          },
           orderBy: { createdAt: "desc" },
           include: {
             product: {
@@ -351,10 +358,23 @@ export default async function OrdersPage({
           <h2 className="text-2xl font-semibold" id="buyer-orders-title">
             Solicitudes que enviaste
           </h2>
-          {(buyerOrders.length > 0 || buyerStatus) && (
+          {(buyerOrders.length > 0 || buyerStatus || buyerReference) && (
             <form action="/mi-cuenta/pedidos" method="get" className="mt-4 flex flex-wrap items-end gap-3">
               {isProducer && producerStatus && <input type="hidden" name="respuesta" value={producerStatus} />}
               {isProducer && producerProduct && <input type="hidden" name="producto" value={producerProduct} />}
+              <div className="w-full sm:w-auto">
+                <label className="mb-2 block text-sm font-medium" htmlFor="referencia">
+                  Referencia del pedido
+                </label>
+                <input
+                  className="min-h-11 w-full rounded-lg border border-slate-300 px-3"
+                  defaultValue={buyerReference}
+                  id="referencia"
+                  maxLength={100}
+                  name="referencia"
+                  type="search"
+                />
+              </div>
               <div className="w-full sm:w-auto">
                 <label className="mb-2 block text-sm font-medium" htmlFor="estado">
                   Estado de la solicitud
@@ -376,8 +396,10 @@ export default async function OrdersPage({
               </button>
             </form>
           )}
-          {buyerOrders.length === 0 && buyerStatus ? (
-            <p className="mt-5 text-slate-700">No tienes solicitudes en este estado.</p>
+          {buyerOrders.length === 0 && (buyerStatus || buyerReference) ? (
+            <p className="mt-5 text-slate-700">
+              {buyerReference ? "No encontramos solicitudes con esa referencia y los filtros actuales." : "No tienes solicitudes en este estado."}
+            </p>
           ) : buyerOrders.length === 0 ? (
             <div className="mt-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 sm:p-5">
               <p className="text-slate-700">
@@ -454,6 +476,7 @@ export default async function OrdersPage({
                   </h3>
                   <form action="/mi-cuenta/pedidos#pedidos-respondidos" method="get" className="mt-3 flex flex-wrap items-end gap-2">
                     {buyerStatus && <input type="hidden" name="estado" value={buyerStatus} />}
+                    {buyerReference && <input type="hidden" name="referencia" value={buyerReference} />}
                     {producerStatus && <input type="hidden" name="respuesta" value={producerStatus} />}
                     <div className="w-full sm:w-auto">
                       <label className="mb-2 block text-sm font-medium" htmlFor="producto-respondido">
@@ -480,6 +503,7 @@ export default async function OrdersPage({
                     ].map(({ status, label }) => {
                       const query = new URLSearchParams();
                       if (buyerStatus) query.set("estado", buyerStatus);
+                      if (buyerReference) query.set("referencia", buyerReference);
                       if (status) query.set("respuesta", status);
                       if (producerProduct) query.set("producto", producerProduct);
                       const active = status === producerStatus;
