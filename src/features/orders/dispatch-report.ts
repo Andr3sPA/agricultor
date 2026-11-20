@@ -23,10 +23,14 @@ type DispatchOrder = {
   requestedQuantity: Prisma.Decimal;
 };
 
+export function dispatchGroupKey(productName: string, unit: string) {
+  return JSON.stringify([productName, unit]);
+}
+
 export function groupDispatchOrders(orders: readonly DispatchOrder[]) {
   const groups = new Map<string, { productName: string; unit: string; quantity: Prisma.Decimal; count: number }>();
   for (const order of orders) {
-    const key = JSON.stringify([order.productName, order.unit]);
+    const key = dispatchGroupKey(order.productName, order.unit);
     const group = groups.get(key);
     if (group) {
       group.quantity = group.quantity.plus(order.requestedQuantity);

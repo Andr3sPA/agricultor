@@ -1251,6 +1251,13 @@ async function main(): Promise<void> {
       await expect(producerPage.getByText("2,5 Bulto", { exact: true })).toBeVisible();
       await expect(producerPage.getByRole("link", { name: "Descargar estas cantidades (CSV)" }))
         .toHaveAttribute("href", `${exportPath}?formato=consolidado&desde=2026-11-19&hasta=2026-11-19`);
+      const kiloGroup = producerPage.getByText("2,625 Kilogramo (kg)", { exact: true }).locator("..");
+      await kiloGroup.getByText("Ver pedidos de este total", { exact: true }).click();
+      await expect(kiloGroup.getByRole("link", { name: /^Abrir pedido / })).toHaveCount(2);
+      await kiloGroup.getByRole("link", { name: `Abrir pedido ${formulaOrder.id}` }).click();
+      const dispatchOrder = producerPage.getByRole("region", { name: "Ya respondidas" });
+      await expect(dispatchOrder.getByText(formulaOrder.id, { exact: true })).toBeVisible();
+      await expect(dispatchOrder.getByText(previousDay.id, { exact: true })).toHaveCount(0);
       const invalidRange = await producerPage.request.get(`${baseURL}${exportPath}?desde=2026-11-20&hasta=2026-11-19`);
       assert.equal(invalidRange.status(), 400);
       const acceptedCard = page.locator(`[id="solicitud-${acceptedOrder.id}"]`);

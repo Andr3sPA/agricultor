@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getDispatchDateFilter, groupDispatchOrders } from "@/features/orders/dispatch-report";
+import { dispatchGroupKey, getDispatchDateFilter, groupDispatchOrders } from "@/features/orders/dispatch-report";
 import { PRODUCT_UNITS } from "@/features/products/product-validation";
 import { formatAgriculturalValue } from "@/features/unit-converter/agricultural-units";
 import { getCurrentIdentity } from "@/lib/auth/server";
@@ -25,9 +25,17 @@ export default async function DispatchPage({
       status: "ACCEPTED",
       ...(Object.keys(dates).length ? { decidedAt: dates } : {}),
     },
-    select: { productName: true, unit: true, requestedQuantity: true },
+    orderBy: [{ decidedAt: "desc" }, { id: "asc" }],
+    select: { id: true, productName: true, unit: true, requestedQuantity: true },
   }) : [];
   const totals = groupDispatchOrders(orders);
+  const ordersByGroup = new Map<string, typeof orders>();
+  for (const order of orders) {
+    const key = dispatchGroupKey(order.productName, order.unit);
+    const group = ordersByGroup.get(key);
+    if (group) group.push(order);
+    else ordersByGroup.set(key, [order]);
+  }
   const query = new URLSearchParams({ formato: "consolidado", desde: from, hasta: through });
 
   return (
@@ -55,12 +63,30 @@ export default async function DispatchPage({
           <p role="status">{orders.length} {orders.length === 1 ? "pedido aceptado" : "pedidos aceptados"}</p>
           <ul aria-label="Cantidades por producto y unidad" className="space-y-3">
             {totals.map(({ productName, unit, quantity, count }) => (
-              <li className="rounded-xl border border-slate-200 bg-white p-4" key={JSON.stringify([productName, unit])}>
+              <li className="rounded-xl border border-slate-200 bg-white p-4" key={dispatchGroupKey(productName, unit)}>
                 <h2 className="break-words font-semibold">{productName}</h2>
                 <p className="mt-1 text-lg font-semibold text-emerald-950">
                   {formatAgriculturalValue(quantity.toFixed())} {PRODUCT_UNITS.find(({ value }) => value === unit)?.label ?? unit}
                 </p>
                 <p className="text-sm">{count} {count === 1 ? "pedido" : "pedidos"}</p>
+                <details className="mt-2 border-t border-slate-200">
+                  <summary className="min-h-11 cursor-pointer pt-3 font-semibold text-emerald-900">
+                    Ver pedidos de este total
+                  </summary>
+                  <ul className="divide-y divide-slate-200">
+                    {ordersByGroup.get(dispatchGroupKey(productName, unit))?.map((order) => (
+                      <li className="py-2" key={order.id}>
+                        <p>Cantidad del pedido: {formatAgriculturalValue(order.requestedQuantity.toFixed())}</p>
+                        <Link
+                          className="inline-flex min-h-11 items-center break-all text-sm font-semibold text-emerald-900 underline"
+                          href={`/mi-cuenta/pedidos?${new URLSearchParams({ respuesta: "ACCEPTED", producto: order.id })}#pedidos-respondidos`}
+                        >
+                          Abrir pedido {order.id}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </details>
               </li>
             ))}
           </ul>
