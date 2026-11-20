@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { randomBytes, randomUUID } from "node:crypto";
 import { spawn, type ChildProcess } from "node:child_process";
 import { once } from "node:events";
+import { readFile } from "node:fs/promises";
 import { createServer as createHttpServer } from "node:http";
 import { createServer } from "node:net";
 import { PrismaPg } from "@prisma/adapter-pg";
@@ -1190,6 +1191,34 @@ async function main(): Promise<void> {
         where: { id: product.id },
       });
       assert.ok(exhaustedInventory.availableQuantity.equals("0"));
+      const exportPath = "/mi-cuenta/pedidos/aceptados.csv";
+      assert.equal((await page.request.get(`${baseURL}${exportPath}`)).status(), 403);
+      const exportFixture = {
+        buyerId: buyer.id,
+        producerId: producer.id,
+        productName: '=1+1;"Papa"',
+        requestedQuantity: "2.5",
+        unit: "KG",
+        priceCOP: 1200,
+        status: "ACCEPTED" as const,
+        decidedAt: new Date(),
+      };
+      const formulaOrder = await database.order.create({ data: exportFixture });
+      const otherProducerOrder = await database.order.create({
+        data: { ...exportFixture, producerId: buyer.id, buyerId: producer.id },
+      });
+      await producerPage.goto(`${baseURL}/mi-cuenta/pedidos`);
+      const downloaded = producerPage.waitForEvent("download");
+      await producerPage.getByRole("link", { name: "Descargar todos los pedidos aceptados (CSV)" }).click();
+      const download = await downloaded;
+      assert.equal(download.suggestedFilename(), "pedidos-aceptados.csv");
+      const report = await readFile(await download.path(), "utf8");
+      assert.ok(report.startsWith("\uFEFFReferencia;Producto;Cantidad;Unidad;"));
+      assert.ok(report.includes(`"${acceptedOrder.id}";"${product.name}";2;"Kilogramo (kg)";1250;2500;`));
+      assert.ok(report.includes(`"${formulaOrder.id}";"'=1+1;""Papa""";2,5;`));
+      assert.ok(!report.includes(otherProducerOrder.id));
+      assert.ok(!report.includes(rejectedOrderId));
+      assert.ok(!report.includes(new URL(page.url()).hash.slice("#solicitud-".length)));
       const acceptedCard = page.locator(`[id="solicitud-${acceptedOrder.id}"]`);
       await expect(acceptedCard.getByText("La oferta original ya no está disponible.")).toBeVisible();
       await expect(acceptedCard.getByRole("link", { name: "Volver a solicitar con el precio actual" })).toHaveCount(0);

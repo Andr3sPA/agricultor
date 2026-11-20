@@ -491,6 +491,15 @@ export default async function OrdersPage({
                   <h3 className="text-lg font-semibold" id="answered-producer-orders-title">
                     Ya respondidas
                   </h3>
+                  {answeredProducerOrders.some(({ status }) => status === "ACCEPTED") && (
+                    <a
+                      className="mt-2 inline-flex min-h-11 items-center font-semibold text-emerald-900 underline underline-offset-4"
+                      href="/mi-cuenta/pedidos/aceptados.csv"
+                      download
+                    >
+                      Descargar todos los pedidos aceptados (CSV)
+                    </a>
+                  )}
                   <form action="/mi-cuenta/pedidos#pedidos-respondidos" method="get" className="mt-3 flex flex-wrap items-end gap-2" key={producerFilters.toString()}>
                     {buyerStatus && <input type="hidden" name="estado" value={buyerStatus} />}
                     {buyerReference && <input type="hidden" name="referencia" value={buyerReference} />}

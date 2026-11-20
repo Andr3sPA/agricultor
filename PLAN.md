@@ -56,7 +56,7 @@ Propuesta para el piloto: transferencia directa o contra entrega, según lo que 
 | Conversor de peso y valor en COP | Comprobar cuánto pesa y cuánto vale una venta aunque el precio esté por libra o arroba. | Mejorar la herramienta existente con ejemplos del piloto. |
 | Calculadora de costos y margen | Revisar si una venta cubre producción, empaque o transporte. | Validar qué costos usan los participantes y aprovechar la calculadora existente. |
 | Inventario y disponibilidad | Saber qué se puede ofrecer sin prometer lo ya reservado. | Priorizar actualización rápida. Probar lotes y fechas de disponibilidad solo si una oferta por producto resulta insuficiente. |
-| Resumen descargable de ventas y entregas | Preparar despachos y revisar qué entregas o cobros faltan. | Probar primero un formato con operaciones simuladas. Construirlo si evita llevar el mismo registro a mano. |
+| Resumen descargable de ventas y entregas | Preparar despachos con las cantidades y los precios registrados. | El productor ya puede descargar sus pedidos aceptados en CSV. Validar con el piloto el formato y si hace falta registrar entregas o cobros. |
 | Repetir una compra frecuente | Ahorrar tiempo a distribuidores que vuelven a comprar al mismo productor. | Evaluar cuando haya compras repetidas. Confirmar precio y cantidad actuales cada vez. |
 
 ## Orden de trabajo y criterio para avanzar
