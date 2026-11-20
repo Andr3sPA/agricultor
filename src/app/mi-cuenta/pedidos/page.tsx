@@ -61,6 +61,9 @@ export default async function OrdersPage({
   const producerStatus = params.respuesta === "ACCEPTED" || params.respuesta === "REJECTED"
     ? params.respuesta
     : undefined;
+  const producerProduct = typeof params.producto === "string"
+    ? params.producto.trim().slice(0, 100)
+    : "";
 
   const [buyerOrders, producerOrders] = await Promise.all([
     isBuyer
@@ -104,9 +107,11 @@ export default async function OrdersPage({
 
   const pendingProducerOrders = producerOrders.filter(({ status }) => status === "PENDING");
   const answeredProducerOrders = producerOrders.filter(({ status }) => status !== "PENDING");
-  const visibleAnsweredOrders = producerStatus
-    ? answeredProducerOrders.filter(({ status }) => status === producerStatus)
-    : answeredProducerOrders;
+  const searchedProduct = producerProduct.toLocaleLowerCase("es-CO");
+  const visibleAnsweredOrders = answeredProducerOrders.filter(({ status, productName }) =>
+    (!producerStatus || status === producerStatus) &&
+    (!searchedProduct || productName.toLocaleLowerCase("es-CO").includes(searchedProduct)),
+  );
 
   function orderCard(
     order: (typeof buyerOrders)[number] | (typeof producerOrders)[number],
@@ -338,6 +343,7 @@ export default async function OrdersPage({
           {(buyerOrders.length > 0 || buyerStatus) && (
             <form action="/mi-cuenta/pedidos" method="get" className="mt-4 flex flex-wrap items-end gap-3">
               {isProducer && producerStatus && <input type="hidden" name="respuesta" value={producerStatus} />}
+              {isProducer && producerProduct && <input type="hidden" name="producto" value={producerProduct} />}
               <div className="w-full sm:w-auto">
                 <label className="mb-2 block text-sm font-medium" htmlFor="estado">
                   Estado de la solicitud
@@ -435,6 +441,26 @@ export default async function OrdersPage({
                   <h3 className="text-lg font-semibold" id="answered-producer-orders-title">
                     Ya respondidas
                   </h3>
+                  <form action="/mi-cuenta/pedidos#pedidos-respondidos" method="get" className="mt-3 flex flex-wrap items-end gap-2">
+                    {buyerStatus && <input type="hidden" name="estado" value={buyerStatus} />}
+                    {producerStatus && <input type="hidden" name="respuesta" value={producerStatus} />}
+                    <div className="w-full sm:w-auto">
+                      <label className="mb-2 block text-sm font-medium" htmlFor="producto-respondido">
+                        Nombre del producto
+                      </label>
+                      <input
+                        className="min-h-11 w-full rounded-lg border border-slate-300 px-3"
+                        defaultValue={producerProduct}
+                        id="producto-respondido"
+                        maxLength={100}
+                        name="producto"
+                        type="search"
+                      />
+                    </div>
+                    <button className="min-h-11 rounded-lg border border-emerald-900 px-3 font-semibold text-emerald-950 hover:bg-emerald-50" type="submit">
+                      Buscar en respondidas
+                    </button>
+                  </form>
                   <nav aria-label="Filtrar pedidos respondidos" className="mt-3 flex flex-wrap gap-2">
                     {[
                       { status: undefined, label: "Todas" },
@@ -444,6 +470,7 @@ export default async function OrdersPage({
                       const query = new URLSearchParams();
                       if (buyerStatus) query.set("estado", buyerStatus);
                       if (status) query.set("respuesta", status);
+                      if (producerProduct) query.set("producto", producerProduct);
                       const active = status === producerStatus;
                       return (
                         <Link
@@ -462,7 +489,11 @@ export default async function OrdersPage({
                       {visibleAnsweredOrders.map((order) => orderCard(order, true))}
                     </ul>
                   ) : (
-                    <p className="mt-3 text-sm text-slate-700">No tienes solicitudes con esta respuesta.</p>
+                    <p className="mt-3 text-sm text-slate-700">
+                      {producerProduct
+                        ? "No encontramos solicitudes respondidas con esos filtros."
+                        : "No tienes solicitudes con esta respuesta."}
+                    </p>
                   )}
                 </section>
               )}

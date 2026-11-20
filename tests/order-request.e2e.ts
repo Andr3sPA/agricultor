@@ -1115,7 +1115,16 @@ async function main(): Promise<void> {
       await answeredProducerRequests.getByRole("link", { name: "Aceptadas" }).click();
       await expect(answeredProducerRequests.getByText("Aceptado", { exact: true })).toBeVisible();
       await expect(answeredProducerRequests.getByText("Rechazado", { exact: true })).toHaveCount(0);
+      const answeredProduct = answeredProducerRequests.getByLabel("Nombre del producto");
+      const searchAnswered = answeredProducerRequests.getByRole("button", { name: "Buscar en respondidas" });
+      await answeredProduct.fill("Producto inexistente");
+      await searchAnswered.click();
+      await expect(answeredProducerRequests.getByText(/No encontramos solicitudes respondidas/)).toBeVisible();
+      await answeredProduct.fill(product.name.toUpperCase());
+      await searchAnswered.click();
+      await expect(answeredProducerRequests.getByText("Aceptado", { exact: true })).toBeVisible();
       await answeredProducerRequests.getByRole("link", { name: "Rechazadas" }).click();
+      await expect(answeredProduct).toHaveValue(product.name.toUpperCase());
       await expect(answeredProducerRequests.getByText("Rechazado", { exact: true })).toBeVisible();
       await expect(answeredProducerRequests.getByText("Aceptado", { exact: true })).toHaveCount(0);
       await answeredProducerRequests.getByRole("link", { name: "Todas" }).click();
