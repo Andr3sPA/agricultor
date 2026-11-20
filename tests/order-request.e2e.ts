@@ -1233,6 +1233,15 @@ async function main(): Promise<void> {
       assert.ok(datedReport.includes(formulaOrder.id));
       assert.ok(!datedReport.includes(previousDay.id));
       assert.ok(!datedReport.includes(followingDay.id));
+      await database.order.create({ data: { ...exportFixture, requestedQuantity: "0.125" } });
+      await database.order.create({ data: { ...exportFixture, unit: "BULTO" } });
+      const consolidatedDownload = producerPage.waitForEvent("download");
+      await producerPage.getByRole("button", { name: "Descargar cantidades para despacho (CSV)" }).click();
+      const consolidated = await consolidatedDownload;
+      assert.equal(consolidated.suggestedFilename(), "cantidades-para-despacho.csv");
+      const consolidatedReport = await readFile(await consolidated.path(), "utf8");
+      assert.ok(consolidatedReport.includes(`"'=1+1;""Papa""";2,625;"Kilogramo (kg)";2\r\n`));
+      assert.ok(consolidatedReport.includes(`"'=1+1;""Papa""";2,5;"Bulto";1\r\n`));
       const invalidRange = await producerPage.request.get(`${baseURL}${exportPath}?desde=2026-11-20&hasta=2026-11-19`);
       assert.equal(invalidRange.status(), 400);
       const acceptedCard = page.locator(`[id="solicitud-${acceptedOrder.id}"]`);

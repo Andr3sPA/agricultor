@@ -1,4 +1,5 @@
 import { PRODUCT_UNITS } from "@/features/products/product-validation";
+import type { Prisma } from "@/generated/prisma/client";
 import { calculateUnitPriceTotal } from "@/features/unit-converter/agricultural-units";
 import { getCurrentIdentity } from "@/lib/auth/server";
 import { prisma } from "@/lib/db";
@@ -34,6 +35,7 @@ export async function GET(request: Request) {
   }
 
   const params = new URL(request.url).searchParams;
+  const consolidated = params.get("formato") === "consolidado";
   const from = params.get("desde");
   const through = params.get("hasta");
   const firstDay = parseColombianDay(from);
@@ -61,7 +63,7 @@ export async function GET(request: Request) {
       decidedAt: true,
     },
   });
-  const rows = orders.map((order) => {
+  const rows = consolidated ? [] : orders.map((order) => {
     const quantity = order.requestedQuantity.toString();
     const unit = PRODUCT_UNITS.find(({ value }) => value === order.unit)?.label ?? order.unit;
     const total = calculateUnitPriceTotal(quantity, String(order.priceCOP)).value ?? "";
@@ -76,11 +78,37 @@ export async function GET(request: Request) {
     ].join(";");
   });
   const header = "Referencia;Producto;Cantidad;Unidad;Precio por unidad (COP);Total estimado (COP);Aceptado (hora de Colombia)";
-  return new Response(`\uFEFF${[header, ...rows].join("\r\n")}\r\n`, {
+  const groups = new Map<string, { productName: string; unit: string; quantity: Prisma.Decimal; count: number }>();
+  if (consolidated) {
+    for (const order of orders) {
+      const key = JSON.stringify([order.productName, order.unit]);
+      const group = groups.get(key);
+      if (group) {
+        group.quantity = group.quantity.plus(order.requestedQuantity);
+        group.count += 1;
+      } else {
+        groups.set(key, { productName: order.productName, unit: order.unit, quantity: order.requestedQuantity, count: 1 });
+      }
+    }
+  }
+  const consolidatedRows = [...groups.values()]
+    .sort((a, b) => a.productName.localeCompare(b.productName, "es-CO") || a.unit.localeCompare(b.unit))
+    .map(({ productName, unit, quantity, count }) => [
+      csvText(productName),
+      quantity.toString().replace(".", ","),
+      csvText(PRODUCT_UNITS.find(({ value }) => value === unit)?.label ?? unit),
+      count,
+    ].join(";"));
+  const content = consolidated
+    ? ["Producto;Cantidad total;Unidad;Pedidos aceptados", ...consolidatedRows]
+    : [header, ...rows];
+  return new Response(`\uFEFF${content.join("\r\n")}\r\n`, {
     headers: {
       ...privateHeaders,
       "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": 'attachment; filename="pedidos-aceptados.csv"',
+      "Content-Disposition": consolidated
+        ? 'attachment; filename="cantidades-para-despacho.csv"'
+        : 'attachment; filename="pedidos-aceptados.csv"',
     },
   });
 }

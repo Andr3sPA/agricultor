@@ -517,6 +517,14 @@ export default async function OrdersPage({
                           <button className="min-h-11 rounded-lg border border-emerald-900 px-3 font-semibold text-emerald-950 hover:bg-emerald-50" type="submit">
                             Descargar por fechas (CSV)
                           </button>
+                          <button
+                            className="min-h-11 rounded-lg border border-emerald-900 px-3 font-semibold text-emerald-950 hover:bg-emerald-50"
+                            name="formato"
+                            type="submit"
+                            value="consolidado"
+                          >
+                            Descargar cantidades para despacho (CSV)
+                          </button>
                         </div>
                       </fieldset>
                     </form>
