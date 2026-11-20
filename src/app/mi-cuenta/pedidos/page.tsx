@@ -107,11 +107,15 @@ export default async function OrdersPage({
 
   const pendingProducerOrders = producerOrders.filter(({ status }) => status === "PENDING");
   const answeredProducerOrders = producerOrders.filter(({ status }) => status !== "PENDING");
-  const searchedProduct = producerProduct.toLocaleLowerCase("es-CO");
-  const visibleAnsweredOrders = answeredProducerOrders.filter(({ status, productName }) =>
-    (!producerStatus || status === producerStatus) &&
-    (!searchedProduct || productName.toLocaleLowerCase("es-CO").includes(searchedProduct)),
-  );
+  const search = producerProduct.toLocaleLowerCase("es-CO");
+  const referenceMatch = search
+    ? answeredProducerOrders.find(({ id }) => id.toLowerCase() === search)
+    : undefined;
+  const visibleAnsweredOrders = (referenceMatch ? [referenceMatch] : answeredProducerOrders)
+    .filter(({ status, productName }) =>
+      (!producerStatus || status === producerStatus) &&
+      (referenceMatch || !search || productName.toLocaleLowerCase("es-CO").includes(search)),
+    );
 
   function orderCard(
     order: (typeof buyerOrders)[number] | (typeof producerOrders)[number],
@@ -453,7 +457,7 @@ export default async function OrdersPage({
                     {producerStatus && <input type="hidden" name="respuesta" value={producerStatus} />}
                     <div className="w-full sm:w-auto">
                       <label className="mb-2 block text-sm font-medium" htmlFor="producto-respondido">
-                        Nombre del producto
+                        Nombre del producto o referencia del pedido
                       </label>
                       <input
                         className="min-h-11 w-full rounded-lg border border-slate-300 px-3"

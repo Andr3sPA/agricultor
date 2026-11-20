@@ -1119,7 +1119,7 @@ async function main(): Promise<void> {
       await answeredProducerRequests.getByRole("link", { name: "Aceptadas" }).click();
       await expect(answeredProducerRequests.getByText("Aceptado", { exact: true })).toBeVisible();
       await expect(answeredProducerRequests.getByText("Rechazado", { exact: true })).toHaveCount(0);
-      const answeredProduct = answeredProducerRequests.getByLabel("Nombre del producto");
+      const answeredProduct = answeredProducerRequests.getByLabel("Nombre del producto o referencia del pedido");
       const searchAnswered = answeredProducerRequests.getByRole("button", { name: "Buscar en respondidas" });
       await answeredProduct.fill("Producto inexistente");
       await searchAnswered.click();
@@ -1134,6 +1134,10 @@ async function main(): Promise<void> {
       await answeredProducerRequests.getByRole("link", { name: "Todas" }).click();
       await expect(answeredProducerRequests.getByText("Aceptado", { exact: true })).toBeVisible();
       await expect(answeredProducerRequests.getByText("Rechazado", { exact: true })).toBeVisible();
+      await answeredProduct.fill(` ${acceptedOrder.id} `);
+      await searchAnswered.click();
+      await expect(answeredProducerRequests.getByText(acceptedOrder.id, { exact: true })).toBeVisible();
+      await expect(answeredProducerRequests.getByText(rejectedOrderId, { exact: true })).toHaveCount(0);
       await producerPage.goto(`${baseURL}/mi-cuenta/productos`);
       await expect(inventoryCard).toContainText(/Disponible para nuevos pedidos\s*3 Kilogramo/);
       await expect(inventoryCard.getByText("Reservado en pedidos pendientes")).toHaveCount(0);
