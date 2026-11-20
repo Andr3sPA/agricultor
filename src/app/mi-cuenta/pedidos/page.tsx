@@ -127,6 +127,7 @@ export default async function OrdersPage({
       PRODUCT_UNITS.find(({ value }) => value === order.unit)?.label ?? order.unit;
     const quantity = `${quantityFormatter.format(order.requestedQuantity.toNumber())} ${unit}`;
     const unitPrice = copFormatter.format(order.priceCOP);
+    const requestedAt = dateFormatter.format(order.createdAt);
     const estimatedTotal = calculateUnitPriceTotal(
       order.requestedQuantity.toString(),
       String(order.priceCOP),
@@ -173,7 +174,11 @@ export default async function OrdersPage({
           )}
           <div>
             <dt className="font-medium">Solicitud</dt>
-            <dd>{dateFormatter.format(order.createdAt)}</dd>
+            <dd>{requestedAt}</dd>
+          </div>
+          <div>
+            <dt className="font-medium">Referencia del pedido</dt>
+            <dd className="break-all font-mono">{order.id}</dd>
           </div>
         </dl>
         <section className="mt-4 rounded-xl bg-slate-50 p-4">
@@ -197,7 +202,7 @@ export default async function OrdersPage({
                 Solicitud enviada
               </p>
               <time dateTime={order.createdAt.toISOString()}>
-                {dateFormatter.format(order.createdAt)}
+                {requestedAt}
               </time>
             </li>
             <li aria-current={order.status === "PENDING" ? "step" : undefined}>
@@ -255,6 +260,8 @@ export default async function OrdersPage({
           <OrderCoordinationSummary
             summary={[
               `Pedido aceptado en Agricultor · ${order.productName}`,
+              `Referencia: ${order.id}`,
+              `Solicitud: ${requestedAt} (hora de Colombia)`,
               `Cantidad: ${quantity}`,
               `Precio por unidad al solicitar: ${unitPrice} COP`,
               ...(estimatedTotal === null

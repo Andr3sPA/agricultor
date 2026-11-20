@@ -1001,6 +1001,8 @@ async function main(): Promise<void> {
       });
       assert.equal(acceptedOrder.status, "ACCEPTED");
       assert.equal(acceptedOrder.history.length, 2);
+      await expect(answeredProducerRequests.getByText(acceptedOrder.id, { exact: true })).toBeVisible();
+      assert.ok(summary.includes(`Referencia: ${acceptedOrder.id}\n`));
       const acceptance = acceptedOrder.history.find(
         (event) => event.toStatus === "ACCEPTED",
       );
@@ -1010,12 +1012,14 @@ async function main(): Promise<void> {
         timeStyle: "short",
         timeZone: "America/Bogota",
       });
+      assert.ok(summary.includes(`Solicitud: ${colombianTime.format(acceptedOrder.createdAt)} (hora de Colombia)`));
 
       await page.goto(`${baseURL}/mi-cuenta/pedidos`);
       await page
         .getByText("El productor aceptó esta solicitud.")
         .waitFor();
       await page.getByText("Coordinar entrega", { exact: true }).click();
+      await expect(page.getByText(acceptedOrder.id, { exact: true })).toBeVisible();
       await expect(page.getByRole("textbox", { name: "Resumen del pedido" })).toHaveValue(summary);
       assert.match(summary, /Precio por unidad al solicitar: \$\s*1\.250 COP/);
       assert.match(summary, /Valor estimado al solicitar: \$\s*2\.500 COP/);
