@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getPublicProductOrderHref } from "@/features/catalog/public-products";
+import { getCatalogPageHref, getPublicProductOrderHref } from "@/features/catalog/public-products";
 import { OrderCoordinationSummary } from "@/features/orders/order-coordination-summary";
 import { OrderDecisionForm } from "@/features/orders/order-decision-form";
 import { PRODUCT_UNITS } from "@/features/products/product-validation";
@@ -253,13 +253,27 @@ export default async function OrdersPage({
         {producerView && order.status === "PENDING" && (
           <OrderDecisionForm orderId={order.id} />
         )}
-        {currentOffer?.isPublished && currentOffer.availableQuantity.gt(0) && (
-          <Link
-            className="mt-4 inline-flex min-h-11 items-center rounded-xl border border-emerald-900 px-4 py-2 font-semibold text-emerald-950 hover:bg-emerald-50"
-            href={getPublicProductOrderHref(currentOffer.id)}
-          >
-            Volver a solicitar con el precio actual
-          </Link>
+        {!producerView && order.status === "ACCEPTED" && (
+          <div className="mt-4">
+            {currentOffer?.isPublished && currentOffer.availableQuantity.gt(0) ? (
+              <Link
+                className="inline-flex min-h-11 items-center rounded-xl border border-emerald-900 px-4 py-2 font-semibold text-emerald-950 hover:bg-emerald-50"
+                href={getPublicProductOrderHref(currentOffer.id)}
+              >
+                Volver a solicitar con el precio actual
+              </Link>
+            ) : (
+              <>
+                <p className="text-sm text-slate-700">La oferta original ya no está disponible.</p>
+                <Link
+                  className="inline-flex min-h-11 items-center font-semibold text-emerald-900 underline underline-offset-4"
+                  href={getCatalogPageHref({ name: order.productName }, 1)}
+                >
+                  Buscar el producto en el catálogo
+                </Link>
+              </>
+            )}
+          </div>
         )}
       </li>
     );

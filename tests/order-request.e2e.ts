@@ -1139,6 +1139,12 @@ async function main(): Promise<void> {
         where: { id: product.id },
       });
       assert.ok(exhaustedInventory.availableQuantity.equals("0"));
+      const acceptedCard = page.locator(`[id="solicitud-${acceptedOrder.id}"]`);
+      await expect(acceptedCard.getByText("La oferta original ya no está disponible.")).toBeVisible();
+      await expect(acceptedCard.getByRole("link", { name: "Volver a solicitar con el precio actual" })).toHaveCount(0);
+      await acceptedCard.getByRole("link", { name: "Buscar el producto en el catálogo" }).click();
+      await expect(page.getByLabel("Nombre del producto")).toHaveValue(product.name);
+      await expect(page.getByText("No encontramos productos con estos filtros.")).toBeVisible();
 
       await producerContext.close();
       await context.close();
