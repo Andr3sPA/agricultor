@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getPublicProductOrderHref } from "@/features/catalog/public-products";
 import { OrderCoordinationSummary } from "@/features/orders/order-coordination-summary";
 import { OrderDecisionForm } from "@/features/orders/order-decision-form";
 import { PRODUCT_UNITS } from "@/features/products/product-validation";
@@ -61,6 +62,9 @@ export default async function OrdersPage({
           where: { buyerId: identity.userId },
           orderBy: { createdAt: "desc" },
           include: {
+            product: {
+              select: { id: true, isPublished: true, availableQuantity: true },
+            },
             history: {
               orderBy: { createdAt: "asc" },
               select: {
@@ -113,6 +117,9 @@ export default async function OrdersPage({
       order.requestedQuantity.toString(),
       String(order.priceCOP),
     ).value;
+    const currentOffer = !producerView && order.status === "ACCEPTED" && "product" in order
+      ? order.product
+      : null;
 
     return (
       <li
@@ -245,6 +252,14 @@ export default async function OrdersPage({
         )}
         {producerView && order.status === "PENDING" && (
           <OrderDecisionForm orderId={order.id} />
+        )}
+        {currentOffer?.isPublished && currentOffer.availableQuantity.gt(0) && (
+          <Link
+            className="mt-4 inline-flex min-h-11 items-center rounded-xl border border-emerald-900 px-4 py-2 font-semibold text-emerald-950 hover:bg-emerald-50"
+            href={getPublicProductOrderHref(currentOffer.id)}
+          >
+            Volver a solicitar con el precio actual
+          </Link>
         )}
       </li>
     );

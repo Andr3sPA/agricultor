@@ -1039,7 +1039,11 @@ async function main(): Promise<void> {
         colombianTime.format(acceptance.createdAt),
       ]);
 
-      await page.goto(`${baseURL}/catalogo/${product.id}/pedido`);
+      await expect(producerPage.getByRole("link", { name: "Volver a solicitar con el precio actual" })).toHaveCount(0);
+      await page.getByRole("link", { name: "Volver a solicitar con el precio actual" }).click();
+      await expect(page).toHaveURL(`${baseURL}/catalogo/${product.id}/pedido`);
+      await expect(page.getByLabel("Cantidad que solicitas")).toHaveValue("");
+      await expect(page.getByText(/\$\s*1\.500/)).toBeVisible();
       await page.getByLabel("Cantidad que solicitas").fill("1");
       await page.getByRole("button", { name: "Solicitar producto" }).click();
       await page
