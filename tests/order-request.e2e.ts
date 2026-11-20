@@ -1112,6 +1112,15 @@ async function main(): Promise<void> {
       });
       assert.ok(reservedInventory.availableQuantity.equals("3"));
       assert.ok(reservedInventory.reservedQuantity.equals("0"));
+      await answeredProducerRequests.getByRole("link", { name: "Aceptadas" }).click();
+      await expect(answeredProducerRequests.getByText("Aceptado", { exact: true })).toBeVisible();
+      await expect(answeredProducerRequests.getByText("Rechazado", { exact: true })).toHaveCount(0);
+      await answeredProducerRequests.getByRole("link", { name: "Rechazadas" }).click();
+      await expect(answeredProducerRequests.getByText("Rechazado", { exact: true })).toBeVisible();
+      await expect(answeredProducerRequests.getByText("Aceptado", { exact: true })).toHaveCount(0);
+      await answeredProducerRequests.getByRole("link", { name: "Todas" }).click();
+      await expect(answeredProducerRequests.getByText("Aceptado", { exact: true })).toBeVisible();
+      await expect(answeredProducerRequests.getByText("Rechazado", { exact: true })).toBeVisible();
       await producerPage.goto(`${baseURL}/mi-cuenta/productos`);
       await expect(inventoryCard).toContainText(/Disponible para nuevos pedidos\s*3 Kilogramo/);
       await expect(inventoryCard.getByText("Reservado en pedidos pendientes")).toHaveCount(0);

@@ -58,6 +58,9 @@ export default async function OrdersPage({
   const registeredOrder = params.registrada;
   const buyerStatus = (Object.keys(statusLabels) as OrderStatus[])
     .find((status) => status === params.estado);
+  const producerStatus = params.respuesta === "ACCEPTED" || params.respuesta === "REJECTED"
+    ? params.respuesta
+    : undefined;
 
   const [buyerOrders, producerOrders] = await Promise.all([
     isBuyer
@@ -101,6 +104,9 @@ export default async function OrdersPage({
 
   const pendingProducerOrders = producerOrders.filter(({ status }) => status === "PENDING");
   const answeredProducerOrders = producerOrders.filter(({ status }) => status !== "PENDING");
+  const visibleAnsweredOrders = producerStatus
+    ? answeredProducerOrders.filter(({ status }) => status === producerStatus)
+    : answeredProducerOrders;
 
   function orderCard(
     order: (typeof buyerOrders)[number] | (typeof producerOrders)[number],
@@ -331,6 +337,7 @@ export default async function OrdersPage({
           </h2>
           {(buyerOrders.length > 0 || buyerStatus) && (
             <form action="/mi-cuenta/pedidos" method="get" className="mt-4 flex flex-wrap items-end gap-3">
+              {isProducer && producerStatus && <input type="hidden" name="respuesta" value={producerStatus} />}
               <div className="w-full sm:w-auto">
                 <label className="mb-2 block text-sm font-medium" htmlFor="estado">
                   Estado de la solicitud
@@ -419,13 +426,44 @@ export default async function OrdersPage({
                 )}
               </section>
               {answeredProducerOrders.length > 0 && (
-                <section aria-labelledby="answered-producer-orders-title">
+                <section
+                  aria-labelledby="answered-producer-orders-title"
+                  className="scroll-mt-4"
+                  id="pedidos-respondidos"
+                  tabIndex={-1}
+                >
                   <h3 className="text-lg font-semibold" id="answered-producer-orders-title">
                     Ya respondidas
                   </h3>
-                  <ul className="mt-3 space-y-4">
-                    {answeredProducerOrders.map((order) => orderCard(order, true))}
-                  </ul>
+                  <nav aria-label="Filtrar pedidos respondidos" className="mt-3 flex flex-wrap gap-2">
+                    {[
+                      { status: undefined, label: "Todas" },
+                      { status: "ACCEPTED", label: "Aceptadas" },
+                      { status: "REJECTED", label: "Rechazadas" },
+                    ].map(({ status, label }) => {
+                      const query = new URLSearchParams();
+                      if (buyerStatus) query.set("estado", buyerStatus);
+                      if (status) query.set("respuesta", status);
+                      const active = status === producerStatus;
+                      return (
+                        <Link
+                          aria-current={active ? "true" : undefined}
+                          className={`inline-flex min-h-11 items-center rounded-lg border border-emerald-900 px-3 font-semibold ${active ? "bg-emerald-800 text-white" : "text-emerald-950 hover:bg-emerald-50"}`}
+                          href={`/mi-cuenta/pedidos${query.size ? `?${query}` : ""}#pedidos-respondidos`}
+                          key={label}
+                        >
+                          {label}
+                        </Link>
+                      );
+                    })}
+                  </nav>
+                  {visibleAnsweredOrders.length > 0 ? (
+                    <ul className="mt-3 space-y-4">
+                      {visibleAnsweredOrders.map((order) => orderCard(order, true))}
+                    </ul>
+                  ) : (
+                    <p className="mt-3 text-sm text-slate-700">No tienes solicitudes con esta respuesta.</p>
+                  )}
                 </section>
               )}
             </div>
