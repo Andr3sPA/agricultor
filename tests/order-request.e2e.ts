@@ -1138,6 +1138,10 @@ async function main(): Promise<void> {
       await searchAnswered.click();
       await expect(answeredProducerRequests.getByText(acceptedOrder.id, { exact: true })).toBeVisible();
       await expect(answeredProducerRequests.getByText(rejectedOrderId, { exact: true })).toHaveCount(0);
+      await answeredProducerRequests.getByRole("link", { name: "Limpiar filtros de respondidas" }).click();
+      await expect(producerPage).toHaveURL(`${baseURL}/mi-cuenta/pedidos#pedidos-respondidos`);
+      await expect(answeredProduct).toHaveValue("");
+      await expect(answeredProducerRequests.getByText(rejectedOrderId, { exact: true })).toBeVisible();
       await producerPage.goto(`${baseURL}/mi-cuenta/productos`);
       await expect(inventoryCard).toContainText(/Disponible para nuevos pedidos\s*3 Kilogramo/);
       await expect(inventoryCard.getByText("Reservado en pedidos pendientes")).toHaveCount(0);
@@ -1161,6 +1165,9 @@ async function main(): Promise<void> {
       await filterButton.click();
       await expect(page.locator(`[id="solicitud-${acceptedOrder.id}"]`)).toBeVisible();
       await expect(page.locator(`[id="solicitud-${rejectedOrderId}"]`)).toHaveCount(0);
+      await page.getByRole("link", { name: "Limpiar filtros de enviadas" }).click();
+      await expect(page).toHaveURL(`${baseURL}/mi-cuenta/pedidos#solicitudes-enviadas`);
+      await expect(page.locator(`[id="solicitud-${rejectedOrderId}"]`)).toBeVisible();
       await statusFilter.selectOption("PENDING");
       await filterButton.click();
       await expect(page.getByText("No tienes solicitudes en este estado.")).toBeVisible();

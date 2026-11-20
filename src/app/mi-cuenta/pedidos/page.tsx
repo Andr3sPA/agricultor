@@ -67,6 +67,16 @@ export default async function OrdersPage({
   const producerProduct = typeof params.producto === "string"
     ? params.producto.trim().slice(0, 100)
     : "";
+  const buyerFilters = new URLSearchParams({
+    ...(isBuyer && buyerStatus ? { estado: buyerStatus } : {}),
+    ...(isBuyer && buyerReference ? { referencia: buyerReference } : {}),
+  });
+  const producerFilters = new URLSearchParams({
+    ...(isProducer && producerStatus ? { respuesta: producerStatus } : {}),
+    ...(isProducer && producerProduct ? { producto: producerProduct } : {}),
+  });
+  const resetBuyerHref = `/mi-cuenta/pedidos${producerFilters.size ? `?${producerFilters}` : ""}#solicitudes-enviadas`;
+  const resetProducerHref = `/mi-cuenta/pedidos${buyerFilters.size ? `?${buyerFilters}` : ""}#pedidos-respondidos`;
 
   const [buyerOrders, producerOrders] = await Promise.all([
     isBuyer
@@ -353,13 +363,15 @@ export default async function OrdersPage({
       {isBuyer && (
         <section
           aria-labelledby="buyer-orders-title"
-          className="mt-6 rounded-3xl border border-emerald-950/10 bg-white p-5 shadow-sm sm:p-8"
+          className="mt-6 scroll-mt-4 rounded-3xl border border-emerald-950/10 bg-white p-5 shadow-sm sm:p-8"
+          id="solicitudes-enviadas"
+          tabIndex={-1}
         >
           <h2 className="text-2xl font-semibold" id="buyer-orders-title">
             Solicitudes que enviaste
           </h2>
           {(buyerOrders.length > 0 || buyerStatus || buyerReference) && (
-            <form action="/mi-cuenta/pedidos" method="get" className="mt-4 flex flex-wrap items-end gap-3">
+            <form action="/mi-cuenta/pedidos#solicitudes-enviadas" method="get" className="mt-4 flex flex-wrap items-end gap-3" key={buyerFilters.toString()}>
               {isProducer && producerStatus && <input type="hidden" name="respuesta" value={producerStatus} />}
               {isProducer && producerProduct && <input type="hidden" name="producto" value={producerProduct} />}
               <div className="w-full sm:w-auto">
@@ -394,6 +406,11 @@ export default async function OrdersPage({
               <button className="min-h-11 rounded-lg border border-emerald-900 px-4 font-semibold text-emerald-950 hover:bg-emerald-50" type="submit">
                 Filtrar solicitudes
               </button>
+              {buyerFilters.size > 0 && (
+                <Link className="inline-flex min-h-11 items-center font-semibold text-emerald-900 underline" href={resetBuyerHref}>
+                  Limpiar filtros de enviadas
+                </Link>
+              )}
             </form>
           )}
           {buyerOrders.length === 0 && (buyerStatus || buyerReference) ? (
@@ -474,7 +491,7 @@ export default async function OrdersPage({
                   <h3 className="text-lg font-semibold" id="answered-producer-orders-title">
                     Ya respondidas
                   </h3>
-                  <form action="/mi-cuenta/pedidos#pedidos-respondidos" method="get" className="mt-3 flex flex-wrap items-end gap-2">
+                  <form action="/mi-cuenta/pedidos#pedidos-respondidos" method="get" className="mt-3 flex flex-wrap items-end gap-2" key={producerFilters.toString()}>
                     {buyerStatus && <input type="hidden" name="estado" value={buyerStatus} />}
                     {buyerReference && <input type="hidden" name="referencia" value={buyerReference} />}
                     {producerStatus && <input type="hidden" name="respuesta" value={producerStatus} />}
@@ -494,6 +511,11 @@ export default async function OrdersPage({
                     <button className="min-h-11 rounded-lg border border-emerald-900 px-3 font-semibold text-emerald-950 hover:bg-emerald-50" type="submit">
                       Buscar en respondidas
                     </button>
+                    {producerFilters.size > 0 && (
+                      <Link className="inline-flex min-h-11 items-center font-semibold text-emerald-900 underline" href={resetProducerHref}>
+                        Limpiar filtros de respondidas
+                      </Link>
+                    )}
                   </form>
                   <nav aria-label="Filtrar pedidos respondidos" className="mt-3 flex flex-wrap gap-2">
                     {[
@@ -501,9 +523,7 @@ export default async function OrdersPage({
                       { status: "ACCEPTED", label: "Aceptadas" },
                       { status: "REJECTED", label: "Rechazadas" },
                     ].map(({ status, label }) => {
-                      const query = new URLSearchParams();
-                      if (buyerStatus) query.set("estado", buyerStatus);
-                      if (buyerReference) query.set("referencia", buyerReference);
+                      const query = new URLSearchParams(buyerFilters);
                       if (status) query.set("respuesta", status);
                       if (producerProduct) query.set("producto", producerProduct);
                       const active = status === producerStatus;
