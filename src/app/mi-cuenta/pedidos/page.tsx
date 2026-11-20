@@ -500,6 +500,27 @@ export default async function OrdersPage({
                       Descargar todos los pedidos aceptados (CSV)
                     </a>
                   )}
+                  {answeredProducerOrders.some(({ status }) => status === "ACCEPTED") && (
+                    <form action="/mi-cuenta/pedidos/aceptados.csv" method="get" className="mt-2 rounded-lg border border-slate-200 p-3">
+                      <fieldset>
+                        <legend className="font-medium">Descargar por fecha de aceptación</legend>
+                        <p className="mt-1 text-sm text-slate-700">Hora de Colombia. Puedes indicar una fecha inicial, final o ambas.</p>
+                        <div className="mt-3 flex flex-wrap items-end gap-3">
+                          <label className="block text-sm font-medium">
+                            Desde
+                            <input className="mt-1 block min-h-11 rounded-lg border border-slate-300 px-3" name="desde" type="date" />
+                          </label>
+                          <label className="block text-sm font-medium">
+                            Hasta
+                            <input className="mt-1 block min-h-11 rounded-lg border border-slate-300 px-3" name="hasta" type="date" />
+                          </label>
+                          <button className="min-h-11 rounded-lg border border-emerald-900 px-3 font-semibold text-emerald-950 hover:bg-emerald-50" type="submit">
+                            Descargar por fechas (CSV)
+                          </button>
+                        </div>
+                      </fieldset>
+                    </form>
+                  )}
                   <form action="/mi-cuenta/pedidos#pedidos-respondidos" method="get" className="mt-3 flex flex-wrap items-end gap-2" key={producerFilters.toString()}>
                     {buyerStatus && <input type="hidden" name="estado" value={buyerStatus} />}
                     {buyerReference && <input type="hidden" name="referencia" value={buyerReference} />}

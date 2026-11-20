@@ -1201,9 +1201,15 @@ async function main(): Promise<void> {
         unit: "KG",
         priceCOP: 1200,
         status: "ACCEPTED" as const,
-        decidedAt: new Date(),
+        decidedAt: new Date("2026-11-19T05:00:00Z"),
       };
       const formulaOrder = await database.order.create({ data: exportFixture });
+      const previousDay = await database.order.create({
+        data: { ...exportFixture, decidedAt: new Date("2026-11-19T04:59:59.999Z") },
+      });
+      const followingDay = await database.order.create({
+        data: { ...exportFixture, decidedAt: new Date("2026-11-20T05:00:00Z") },
+      });
       const otherProducerOrder = await database.order.create({
         data: { ...exportFixture, producerId: buyer.id, buyerId: producer.id },
       });
@@ -1219,6 +1225,16 @@ async function main(): Promise<void> {
       assert.ok(!report.includes(otherProducerOrder.id));
       assert.ok(!report.includes(rejectedOrderId));
       assert.ok(!report.includes(new URL(page.url()).hash.slice("#solicitud-".length)));
+      await producerPage.getByLabel("Desde", { exact: true }).fill("2026-11-19");
+      await producerPage.getByLabel("Hasta", { exact: true }).fill("2026-11-19");
+      const datedDownload = producerPage.waitForEvent("download");
+      await producerPage.getByRole("button", { name: "Descargar por fechas (CSV)" }).click();
+      const datedReport = await readFile(await (await datedDownload).path(), "utf8");
+      assert.ok(datedReport.includes(formulaOrder.id));
+      assert.ok(!datedReport.includes(previousDay.id));
+      assert.ok(!datedReport.includes(followingDay.id));
+      const invalidRange = await producerPage.request.get(`${baseURL}${exportPath}?desde=2026-11-20&hasta=2026-11-19`);
+      assert.equal(invalidRange.status(), 400);
       const acceptedCard = page.locator(`[id="solicitud-${acceptedOrder.id}"]`);
       await expect(acceptedCard.getByText("La oferta original ya no está disponible.")).toBeVisible();
       await expect(acceptedCard.getByRole("link", { name: "Volver a solicitar con el precio actual" })).toHaveCount(0);
