@@ -1,0 +1,74 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getDispatchDateFilter, groupDispatchOrders } from "@/features/orders/dispatch-report";
+import { PRODUCT_UNITS } from "@/features/products/product-validation";
+import { formatAgriculturalValue } from "@/features/unit-converter/agricultural-units";
+import { getCurrentIdentity } from "@/lib/auth/server";
+import { prisma } from "@/lib/db";
+
+export default async function DispatchPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const identity = await getCurrentIdentity();
+  if (!identity) redirect("/iniciar-sesion");
+  if (!identity.roles.includes("PRODUCER")) redirect("/mi-cuenta/pedidos");
+
+  const params = await searchParams;
+  const from = typeof params.desde === "string" ? params.desde : "";
+  const through = typeof params.hasta === "string" ? params.hasta : "";
+  const dates = getDispatchDateFilter(from, through);
+  const orders = dates ? await prisma.order.findMany({
+    where: {
+      producerId: identity.userId,
+      status: "ACCEPTED",
+      ...(Object.keys(dates).length ? { decidedAt: dates } : {}),
+    },
+    select: { productName: true, unit: true, requestedQuantity: true },
+  }) : [];
+  const totals = groupDispatchOrders(orders);
+  const query = new URLSearchParams({ formato: "consolidado", desde: from, hasta: through });
+
+  return (
+    <main className="mx-auto min-h-screen max-w-3xl space-y-5 px-4 py-8 sm:px-6">
+      <Link className="inline-flex min-h-11 items-center font-semibold text-emerald-900 underline" href="/mi-cuenta/pedidos#pedidos-respondidos">
+        Volver a pedidos
+      </Link>
+      <h1 className="text-3xl font-semibold">Cantidades para despacho</h1>
+      <p>Consulta cuánto reunir de cada producto según los pedidos aceptados. Elige fechas de aceptación en hora de Colombia.</p>
+      <form className="flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-white p-4" method="get">
+        <label className="text-sm font-medium">Desde
+          <input className="mt-1 block min-h-11 rounded-lg border border-slate-300 px-3" defaultValue={from} name="desde" type="date" />
+        </label>
+        <label className="text-sm font-medium">Hasta
+          <input className="mt-1 block min-h-11 rounded-lg border border-slate-300 px-3" defaultValue={through} name="hasta" type="date" />
+        </label>
+        <button className="min-h-11 rounded-lg bg-emerald-800 px-4 font-semibold text-white" type="submit">Consultar</button>
+      </form>
+      {!dates ? (
+        <p className="text-rose-800" role="alert">Revisa las fechas. «Desde» debe ser anterior o igual a «Hasta».</p>
+      ) : totals.length === 0 ? (
+        <p>No hay pedidos aceptados para estas fechas.</p>
+      ) : (
+        <>
+          <p role="status">{orders.length} {orders.length === 1 ? "pedido aceptado" : "pedidos aceptados"}</p>
+          <ul aria-label="Cantidades por producto y unidad" className="space-y-3">
+            {totals.map(({ productName, unit, quantity, count }) => (
+              <li className="rounded-xl border border-slate-200 bg-white p-4" key={JSON.stringify([productName, unit])}>
+                <h2 className="break-words font-semibold">{productName}</h2>
+                <p className="mt-1 text-lg font-semibold text-emerald-950">
+                  {formatAgriculturalValue(quantity.toFixed())} {PRODUCT_UNITS.find(({ value }) => value === unit)?.label ?? unit}
+                </p>
+                <p className="text-sm">{count} {count === 1 ? "pedido" : "pedidos"}</p>
+              </li>
+            ))}
+          </ul>
+          <a className="inline-flex min-h-11 items-center font-semibold text-emerald-900 underline" download href={`/mi-cuenta/pedidos/aceptados.csv?${query}`}>
+            Descargar estas cantidades (CSV)
+          </a>
+        </>
+      )}
+    </main>
+  );
+}

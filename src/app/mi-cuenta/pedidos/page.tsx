@@ -491,6 +491,9 @@ export default async function OrdersPage({
                   <h3 className="text-lg font-semibold" id="answered-producer-orders-title">
                     Ya respondidas
                   </h3>
+                  <Link className="mt-2 flex min-h-11 w-fit items-center font-semibold text-emerald-900 underline" href="/mi-cuenta/pedidos/despacho">
+                    Ver cantidades para despacho
+                  </Link>
                   {answeredProducerOrders.some(({ status }) => status === "ACCEPTED") && (
                     <a
                       className="mt-2 inline-flex min-h-11 items-center font-semibold text-emerald-900 underline underline-offset-4"

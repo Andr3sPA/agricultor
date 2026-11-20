@@ -1,5 +1,5 @@
 import { PRODUCT_UNITS } from "@/features/products/product-validation";
-import type { Prisma } from "@/generated/prisma/client";
+import { getDispatchDateFilter, groupDispatchOrders } from "@/features/orders/dispatch-report";
 import { calculateUnitPriceTotal } from "@/features/unit-converter/agricultural-units";
 import { getCurrentIdentity } from "@/lib/auth/server";
 import { prisma } from "@/lib/db";
@@ -17,14 +17,6 @@ function csvText(text: string) {
   return `"${safe.replaceAll('"', '""')}"`;
 }
 
-function parseColombianDay(value: string | null) {
-  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
-  const utcMidnight = new Date(`${value}T00:00:00.000Z`);
-  if (!Number.isFinite(utcMidnight.getTime()) || utcMidnight.toISOString().slice(0, 10) !== value) return null;
-  // Bogotá uses UTC−05:00 year-round for the dates of these orders.
-  return new Date(utcMidnight.getTime() + 5 * 60 * 60 * 1000);
-}
-
 export async function GET(request: Request) {
   const identity = await getCurrentIdentity();
   if (!identity) {
@@ -36,22 +28,18 @@ export async function GET(request: Request) {
 
   const params = new URL(request.url).searchParams;
   const consolidated = params.get("formato") === "consolidado";
-  const from = params.get("desde");
-  const through = params.get("hasta");
-  const firstDay = parseColombianDay(from);
-  const lastDay = parseColombianDay(through);
-  if ((from && !firstDay) || (through && !lastDay) || (firstDay && lastDay && firstDay > lastDay)) {
+  const dates = getDispatchDateFilter(params.get("desde") ?? "", params.get("hasta") ?? "");
+  if (!dates) {
     return new Response("Revisa las fechas. «Desde» debe ser anterior o igual a «Hasta».", {
       status: 400,
       headers: { ...privateHeaders, "Content-Type": "text/plain; charset=utf-8" },
     });
   }
-  const nextDay = lastDay ? new Date(lastDay.getTime() + 86_400_000) : undefined;
   const orders = await prisma.order.findMany({
     where: {
       producerId: identity.userId,
       status: "ACCEPTED",
-      ...(firstDay || nextDay ? { decidedAt: { gte: firstDay ?? undefined, lt: nextDay } } : {}),
+      ...(Object.keys(dates).length ? { decidedAt: dates } : {}),
     },
     orderBy: [{ decidedAt: "desc" }, { id: "asc" }],
     select: {
@@ -78,21 +66,7 @@ export async function GET(request: Request) {
     ].join(";");
   });
   const header = "Referencia;Producto;Cantidad;Unidad;Precio por unidad (COP);Total estimado (COP);Aceptado (hora de Colombia)";
-  const groups = new Map<string, { productName: string; unit: string; quantity: Prisma.Decimal; count: number }>();
-  if (consolidated) {
-    for (const order of orders) {
-      const key = JSON.stringify([order.productName, order.unit]);
-      const group = groups.get(key);
-      if (group) {
-        group.quantity = group.quantity.plus(order.requestedQuantity);
-        group.count += 1;
-      } else {
-        groups.set(key, { productName: order.productName, unit: order.unit, quantity: order.requestedQuantity, count: 1 });
-      }
-    }
-  }
-  const consolidatedRows = [...groups.values()]
-    .sort((a, b) => a.productName.localeCompare(b.productName, "es-CO") || a.unit.localeCompare(b.unit))
+  const consolidatedRows = (consolidated ? groupDispatchOrders(orders) : [])
     .map(({ productName, unit, quantity, count }) => [
       csvText(productName),
       quantity.toString().replace(".", ","),

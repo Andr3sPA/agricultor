@@ -1242,6 +1242,15 @@ async function main(): Promise<void> {
       const consolidatedReport = await readFile(await consolidated.path(), "utf8");
       assert.ok(consolidatedReport.includes(`"'=1+1;""Papa""";2,625;"Kilogramo (kg)";2\r\n`));
       assert.ok(consolidatedReport.includes(`"'=1+1;""Papa""";2,5;"Bulto";1\r\n`));
+      await producerPage.getByRole("link", { name: "Ver cantidades para despacho" }).click();
+      await expect(producerPage.getByRole("heading", { name: "Cantidades para despacho" })).toBeVisible();
+      await producerPage.getByLabel("Desde", { exact: true }).fill("2026-11-19");
+      await producerPage.getByLabel("Hasta", { exact: true }).fill("2026-11-19");
+      await producerPage.getByRole("button", { name: "Consultar", exact: true }).click();
+      await expect(producerPage.getByText("2,625 Kilogramo (kg)", { exact: true })).toBeVisible();
+      await expect(producerPage.getByText("2,5 Bulto", { exact: true })).toBeVisible();
+      await expect(producerPage.getByRole("link", { name: "Descargar estas cantidades (CSV)" }))
+        .toHaveAttribute("href", `${exportPath}?formato=consolidado&desde=2026-11-19&hasta=2026-11-19`);
       const invalidRange = await producerPage.request.get(`${baseURL}${exportPath}?desde=2026-11-20&hasta=2026-11-19`);
       assert.equal(invalidRange.status(), 400);
       const acceptedCard = page.locator(`[id="solicitud-${acceptedOrder.id}"]`);
