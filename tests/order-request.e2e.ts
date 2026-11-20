@@ -1254,6 +1254,9 @@ async function main(): Promise<void> {
       const kiloGroup = producerPage.getByText("2,625 Kilogramo (kg)", { exact: true }).locator("..");
       await kiloGroup.getByText("Ver pedidos de este total", { exact: true }).click();
       await expect(kiloGroup.getByRole("link", { name: /^Abrir pedido / })).toHaveCount(2);
+      await expect(kiloGroup.getByText("Valor estimado: $ 3.000 COP", { exact: true })).toBeVisible();
+      await expect(kiloGroup.getByText("Valor estimado: $ 150 COP", { exact: true })).toBeVisible();
+      await expect(producerPage.getByRole("heading", { name: "Valor estimado de los pedidos aceptados" })).toBeVisible();
       await kiloGroup.getByRole("link", { name: `Abrir pedido ${formulaOrder.id}` }).click();
       const dispatchOrder = producerPage.getByRole("region", { name: "Ya respondidas" });
       await expect(dispatchOrder.getByText(formulaOrder.id, { exact: true })).toBeVisible();
