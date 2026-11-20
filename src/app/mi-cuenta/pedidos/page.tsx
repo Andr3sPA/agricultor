@@ -54,12 +54,15 @@ export default async function OrdersPage({
   if (!isBuyer && !isProducer) {
     redirect("/mi-cuenta");
   }
-  const registeredOrder = (await searchParams).registrada;
+  const params = await searchParams;
+  const registeredOrder = params.registrada;
+  const buyerStatus = (Object.keys(statusLabels) as OrderStatus[])
+    .find((status) => status === params.estado);
 
   const [buyerOrders, producerOrders] = await Promise.all([
     isBuyer
       ? prisma.order.findMany({
-          where: { buyerId: identity.userId },
+          where: { buyerId: identity.userId, ...(buyerStatus ? { status: buyerStatus } : {}) },
           orderBy: { createdAt: "desc" },
           include: {
             product: {
@@ -326,7 +329,32 @@ export default async function OrdersPage({
           <h2 className="text-2xl font-semibold" id="buyer-orders-title">
             Solicitudes que enviaste
           </h2>
-          {buyerOrders.length === 0 ? (
+          {(buyerOrders.length > 0 || buyerStatus) && (
+            <form action="/mi-cuenta/pedidos" method="get" className="mt-4 flex flex-wrap items-end gap-3">
+              <div className="w-full sm:w-auto">
+                <label className="mb-2 block text-sm font-medium" htmlFor="estado">
+                  Estado de la solicitud
+                </label>
+                <select
+                  className="min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3"
+                  defaultValue={buyerStatus ?? ""}
+                  id="estado"
+                  name="estado"
+                >
+                  <option value="">Todos los estados</option>
+                  {(Object.keys(statusLabels) as OrderStatus[]).map((status) => (
+                    <option key={status} value={status}>{statusLabels[status]}</option>
+                  ))}
+                </select>
+              </div>
+              <button className="min-h-11 rounded-lg border border-emerald-900 px-4 font-semibold text-emerald-950 hover:bg-emerald-50" type="submit">
+                Filtrar solicitudes
+              </button>
+            </form>
+          )}
+          {buyerOrders.length === 0 && buyerStatus ? (
+            <p className="mt-5 text-slate-700">No tienes solicitudes en este estado.</p>
+          ) : buyerOrders.length === 0 ? (
             <div className="mt-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 sm:p-5">
               <p className="text-slate-700">
                 Aún no has solicitado productos. Explora el catálogo para

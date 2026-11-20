@@ -1129,6 +1129,19 @@ async function main(): Promise<void> {
         .getByText("Rechazado")
         .waitFor();
 
+      const statusFilter = page.getByLabel("Estado de la solicitud");
+      const filterButton = page.getByRole("button", { name: "Filtrar solicitudes" });
+      await statusFilter.selectOption("ACCEPTED");
+      await filterButton.click();
+      await expect(page.locator(`[id="solicitud-${acceptedOrder.id}"]`)).toBeVisible();
+      await expect(page.locator(`[id="solicitud-${rejectedOrderId}"]`)).toHaveCount(0);
+      await statusFilter.selectOption("PENDING");
+      await filterButton.click();
+      await expect(page.getByText("No tienes solicitudes en este estado.")).toBeVisible();
+      await statusFilter.selectOption("");
+      await filterButton.click();
+      await expect(page.locator(`[id="solicitud-${rejectedOrderId}"]`)).toBeVisible();
+
       await page.goto(`${baseURL}/catalogo/${product.id}/pedido`);
       await page.getByLabel("Cantidad que solicitas").fill("3");
       await page.getByRole("button", { name: "Solicitar producto" }).click();
