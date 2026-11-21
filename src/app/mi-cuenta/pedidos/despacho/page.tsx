@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getColombianAgendaDate } from "@/features/farm-agenda/farm-agenda-service";
 import { dispatchGroupKey, getDispatchDateFilter, groupDispatchOrders } from "@/features/orders/dispatch-report";
 import { PrintDispatchButton } from "@/features/orders/print-dispatch-button";
 import { PRODUCT_UNITS } from "@/features/products/product-validation";
@@ -41,6 +42,14 @@ export default async function DispatchPage({
     else ordersByGroup.set(key, [{ order, value }]);
   }
   const query = new URLSearchParams({ formato: "consolidado", desde: from, hasta: through });
+  const today = getColombianAgendaDate(new Date());
+  const weekStart = new Date(`${today}T00:00:00Z`);
+  weekStart.setUTCDate(weekStart.getUTCDate() - 6);
+  const datePresets = [
+    { label: "Hoy", from: today, through: today },
+    { label: "Últimos 7 días", from: weekStart.toISOString().slice(0, 10), through: today },
+    { label: "Todas las fechas", from: "", through: "" },
+  ];
 
   return (
     <main className="mx-auto min-h-screen max-w-3xl space-y-5 px-4 py-8 sm:px-6 print:min-h-0 print:max-w-none print:p-0 print:text-black">
@@ -49,7 +58,23 @@ export default async function DispatchPage({
       </Link>
       <h1 className="text-3xl font-semibold">Cantidades para despacho</h1>
       <p className="print:hidden">Consulta cuánto reunir de cada producto según los pedidos aceptados. Elige fechas de aceptación en hora de Colombia.</p>
-      <form className="flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-white p-4 print:hidden" method="get">
+      <nav aria-label="Períodos de despacho" className="flex flex-wrap gap-2 print:hidden">
+        {datePresets.map((preset) => {
+          const active = preset.from === from && preset.through === through;
+          const search = new URLSearchParams({ desde: preset.from, hasta: preset.through });
+          return (
+            <Link
+              aria-current={active ? "true" : undefined}
+              className={`inline-flex min-h-11 items-center rounded-lg border border-emerald-900 px-3 font-semibold ${active ? "bg-emerald-800 text-white" : "text-emerald-950 hover:bg-emerald-50"}`}
+              href={preset.from ? `/mi-cuenta/pedidos/despacho?${search}` : "/mi-cuenta/pedidos/despacho"}
+              key={preset.label}
+            >
+              {preset.label}
+            </Link>
+          );
+        })}
+      </nav>
+      <form className="flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-white p-4 print:hidden" key={query.toString()} method="get">
         <label className="text-sm font-medium">Desde
           <input className="mt-1 block min-h-11 rounded-lg border border-slate-300 px-3" defaultValue={from} name="desde" type="date" />
         </label>

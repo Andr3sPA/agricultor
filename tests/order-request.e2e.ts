@@ -1244,6 +1244,16 @@ async function main(): Promise<void> {
       assert.ok(consolidatedReport.includes(`"'=1+1;""Papa""";2,5;"Bulto";1\r\n`));
       await producerPage.getByRole("link", { name: "Ver cantidades para despacho" }).click();
       await expect(producerPage.getByRole("heading", { name: "Cantidades para despacho" })).toBeVisible();
+      const dispatchToday = getColombianAgendaDate(new Date());
+      await producerPage.getByRole("link", { name: "Hoy", exact: true }).click();
+      await expect(producerPage.getByLabel("Desde", { exact: true })).toHaveValue(dispatchToday);
+      await expect(producerPage.getByLabel("Hasta", { exact: true })).toHaveValue(dispatchToday);
+      await producerPage.getByRole("link", { name: "Últimos 7 días" }).click();
+      const dispatchStart = new Date(`${dispatchToday}T00:00:00Z`);
+      dispatchStart.setUTCDate(dispatchStart.getUTCDate() - 6);
+      await expect(producerPage.getByLabel("Desde", { exact: true })).toHaveValue(dispatchStart.toISOString().slice(0, 10));
+      await producerPage.getByRole("link", { name: "Todas las fechas", exact: true }).click();
+      await expect(producerPage.getByLabel("Desde", { exact: true })).toHaveValue("");
       await producerPage.getByLabel("Desde", { exact: true }).fill("2026-11-19");
       await producerPage.getByLabel("Hasta", { exact: true }).fill("2026-11-19");
       await producerPage.getByRole("button", { name: "Consultar", exact: true }).click();
