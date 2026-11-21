@@ -20,6 +20,7 @@ import {
 } from "@/features/products/product-validation";
 import { prisma } from "@/lib/db";
 import { getCurrentIdentity } from "@/lib/auth/server";
+import { getSellerProfileHref, isSellerProfileAvailable } from "@/features/sellers/seller-profile";
 
 const metadataBase = new URL(
   process.env.VERCEL_PROJECT_PRODUCTION_URL
@@ -49,6 +50,7 @@ const getPublicProduct = cache(async (productId: string) => {
     },
     select: {
       id: true,
+      ownerId: true,
       name: true,
       category: true,
       availableQuantity: true,
@@ -62,15 +64,14 @@ const getPublicProduct = cache(async (productId: string) => {
     return null;
   }
 
-  return (
-    getPublicProducts([
+  const publicProduct = getPublicProducts([
       {
         ...product,
         availableQuantity: product.availableQuantity.toString(),
         isPublished: true,
       },
-    ])[0] ?? null
-  );
+    ])[0];
+  return publicProduct ? { ...publicProduct, ownerId: product.ownerId } : null;
 });
 
 type PublicProductPageProps = {
@@ -109,6 +110,10 @@ export default async function PublicProductPage({
   }
 
   const priceDates = await getProductPriceDates([product]);
+  const seller = await isSellerProfileAvailable() ? await prisma.sellerProfile.findFirst({
+    where: { ownerId: product.ownerId, published: true, owner: { userRoles: { some: { role: "PRODUCER" } } } },
+    select: { id: true, name: true },
+  }) : null;
   const filters = parseCatalogFilters(await searchParams);
   const searchedQuantity = filters.unit === product.unit ? filters.minimumQuantity : undefined;
   const hasEnoughStock = Boolean(searchedQuantity &&
@@ -141,6 +146,11 @@ export default async function PublicProductPage({
           Producto publicado
         </p>
         <h1 className="mt-4 text-3xl font-semibold">{product.name}</h1>
+        {seller && (
+          <Link className="mt-2 inline-flex min-h-11 items-center break-words font-semibold text-emerald-900 underline" href={getSellerProfileHref(seller.id)}>
+            Ver perfil de {seller.name}
+          </Link>
+        )}
         <dl className="mt-6 grid gap-4 text-slate-700 sm:grid-cols-2">
           <div>
             <dt className="font-medium">Categoría</dt>

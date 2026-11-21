@@ -31,6 +31,8 @@ La aplicación ya tiene cuentas y recuperación por Brevo, catálogo público, i
 
 ## 3. Notificaciones y calificaciones
 
+- El distribuidor puede publicar su perfil comercial con descripción, municipio y ofertas disponibles. El contacto de coordinación permanece en el pedido.
+
 **Razón para volver.** El productor se entera a tiempo de una solicitud y quien compra puede evaluar negocios que sí completan entregas.
 
 - Empezar con correo para el productor cuando recibe una solicitud y para el comprador cuando hay una respuesta. Considerar despacho o cambios de entrega solo si los participantes los necesitan. El correo debe llevar al pedido y omitir dirección, datos bancarios y detalles sensibles.

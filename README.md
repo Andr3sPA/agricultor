@@ -60,6 +60,9 @@ versionadas, que instalan también el registro automático de esta fecha.
 
 ## Catálogo, pedidos e inventario
 
+El perfil comercial público requiere la migración
+`20261120030000_seller_profile`. Cada vendedor decide si lo publica.
+
 La opción de compartir WhatsApp en pedidos aceptados requiere aplicar en Neon
 la migración `20261120000000_order_seller_contact`. Hasta entonces, sigue
 disponible el resumen para copiar y coordinar la entrega.

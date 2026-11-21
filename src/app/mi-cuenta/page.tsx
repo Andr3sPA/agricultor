@@ -6,6 +6,7 @@ import { canManageProducts } from "@/features/products/product-access";
 import { getProducerDashboardSummary } from "@/features/dashboard/producer-dashboard";
 import { countFarmActivitiesToday } from "@/features/farm-agenda/farm-agenda-service";
 import { prisma } from "@/lib/db";
+import { isSellerProfileAvailable } from "@/features/sellers/seller-profile";
 import Link from "next/link";
 
 const roleLabels = {
@@ -35,12 +36,13 @@ export default async function AccountPage({
   if (producerIntent && isProducer) {
     redirect("/mi-cuenta/productos");
   }
-  const [dashboard, todayCount] = isProducer
+  const [dashboard, todayCount, sellerProfileAvailable] = isProducer
     ? await Promise.all([
         getProducerDashboardSummary(identity, prisma),
         countFarmActivitiesToday(identity, prisma, new Date()),
+        isSellerProfileAvailable(),
       ])
-    : [null, 0] as const;
+    : [null, 0, false] as const;
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-3xl px-4 py-8 sm:px-6 sm:py-12">
@@ -61,6 +63,11 @@ export default async function AccountPage({
           <p className="mt-3 text-slate-700">
             Revisa el estado de tus productos y pedidos.
           </p>
+          {sellerProfileAvailable && (
+            <Link className="mt-2 inline-flex min-h-11 items-center font-semibold text-emerald-900 underline" href="/mi-cuenta/perfil-vendedor">
+              Editar perfil de vendedor
+            </Link>
+          )}
 
           <div className="mt-6 grid gap-5 sm:grid-cols-2">
             <section

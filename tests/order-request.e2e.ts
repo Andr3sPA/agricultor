@@ -509,6 +509,14 @@ async function main(): Promise<void> {
       await producerPage.getByLabel("Precio de venta por unidad").fill("$2.000");
       await expect(costResult).toContainText(/Ingreso esperado\s*\$\s*5\.000/);
       await expect(costResult).toContainText(/Ganancia o pérdida\s*\$\s*3\.749,5/);
+      await producerPage.goto(`${baseURL}/mi-cuenta`);
+      await producerPage.getByRole("link", { name: "Editar perfil de vendedor" }).click();
+      await producerPage.getByLabel("Nombre comercial").fill("Distribución de prueba");
+      await producerPage.getByLabel("Municipio", { exact: true }).fill("La Vega");
+      await producerPage.getByLabel("Descripción").fill("Distribuimos papa y hortalizas.");
+      await producerPage.getByRole("checkbox", { name: "Mostrar mi perfil en el catálogo" }).check();
+      await producerPage.getByRole("button", { name: "Guardar perfil" }).click();
+      await expect(producerPage.getByText("Tu perfil está publicado.")).toBeVisible();
       await producerPage.goto(`${baseURL}/mi-cuenta/productos`);
       const harvestName = `Papa E2E ${suffix}`;
       const harvestMunicipality = `Municipio para papa ${suffix}`;
@@ -555,6 +563,13 @@ async function main(): Promise<void> {
       await expect(publicCrop).toContainText("12,5 Kilogramo (kg)");
       await expect(publicCrop).toContainText(/2\.000/);
       await expect(publicCrop.locator("time")).toHaveAttribute("datetime", /Z$/);
+      await publicCrop.getByRole("link", { name: harvestName, exact: true }).click();
+      await publicCatalog.getByRole("link", { name: "Ver perfil de Distribución de prueba" }).click();
+      await expect(publicCatalog.getByRole("heading", { name: "Distribución de prueba" })).toBeVisible();
+      await expect(publicCatalog.getByText("Distribuimos papa y hortalizas.")).toBeVisible();
+      await expect(publicCatalog.getByRole("link", { name: harvestName })).toBeVisible();
+      const publicProfileUrl = publicCatalog.url();
+      await publicCatalog.goto(harvestCatalogUrl);
       await publicCatalog.getByLabel("Nombre del producto").fill("pApA");
       await publicCatalog.getByLabel("Municipio").fill("");
       await publicCatalog.getByRole("button", { name: "Buscar", exact: true }).click();
@@ -1338,6 +1353,12 @@ async function main(): Promise<void> {
       await expect(page.getByLabel("Nombre del producto")).toHaveValue(product.name);
       await expect(page.getByText("No encontramos productos con estos filtros.")).toBeVisible();
 
+      await producerPage.goto(`${baseURL}/mi-cuenta/perfil-vendedor`);
+      await producerPage.getByRole("checkbox", { name: "Mostrar mi perfil en el catálogo" }).uncheck();
+      await producerPage.getByRole("button", { name: "Guardar perfil" }).click();
+      await expect(producerPage.getByText("Guardamos tu perfil como privado.")).toBeVisible();
+      const hiddenProfile = await producerPage.request.get(publicProfileUrl);
+      assert.equal(hiddenProfile.status(), 404);
       await producerContext.close();
       await context.close();
     } finally {
