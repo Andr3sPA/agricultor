@@ -41,7 +41,7 @@ La aplicación ya tiene cuentas y recuperación por Brevo, catálogo público, i
 
 ## 4. Formas de pago
 
-En pedidos con entrega confirmada y WhatsApp del vendedor, ya se pueden registrar instrucciones de transferencia, contra entrega o enlace externo de Wompi. Queda pendiente registrar la confirmación del abono por el vendedor y evaluar la verificación automática. Un cambio en la entrega retira las instrucciones anteriores.
+En pedidos con entrega confirmada y WhatsApp del vendedor, ya se pueden registrar instrucciones de transferencia, contra entrega o enlace externo de Wompi. El vendedor puede confirmar el abono completo después de revisarlo y el comprador ve el importe y la fecha. Quedan pendientes la verificación automática y el manejo de ajustes o pagos parciales. Un cambio previo en la entrega retira las instrucciones anteriores.
 
 **Razón para volver.** Las partes conservan un resumen de cuánto se debe, a quién y en qué momento se acordó pagar.
 

@@ -18,3 +18,17 @@ export async function isExternalPaymentAvailable() {
   `;
   return schema.available;
 }
+
+export async function isPaymentReceiptAvailable() {
+  const [schema] = await prisma.$queryRaw<{ available: boolean }[]>`
+    SELECT to_regclass('"OrderPaymentReceipt"') IS NOT NULL AS available
+  `;
+  return schema.available;
+}
+
+export async function hasPaymentReceipt(orderId: string) {
+  return await isPaymentReceiptAvailable() && Boolean(await prisma.orderPaymentReceipt.findUnique({
+    where: { orderId },
+    select: { orderId: true },
+  }));
+}

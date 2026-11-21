@@ -157,11 +157,20 @@ model Order {
   sellerContact      OrderSellerContact?
   deliveryDetails    OrderDeliveryDetails?
   receipt            OrderReceipt?
+  paymentReceipt     OrderPaymentReceipt?
 
   @@index([buyerId, createdAt])
   @@index([producerId, status, createdAt])
   @@index([productId])
   @@unique([buyerId, idempotencyKey])
+}
+
+model OrderPaymentReceipt {
+  orderId     String   @id
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  method      String   @db.VarChar(16)
+  amountCOP   BigInt
+  confirmedAt DateTime @default(now())
 }
 
 model OrderReceipt {

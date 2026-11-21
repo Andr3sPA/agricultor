@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { Prisma, type OrderDeliveryDetails } from "@/generated/prisma/client";
 import { getCurrentIdentity } from "@/lib/auth/server";
 import { prisma } from "@/lib/db";
-import { isExternalPaymentAvailable, parseWompiPaymentLink } from "./external-payment";
+import { hasPaymentReceipt, isExternalPaymentAvailable, isPaymentReceiptAvailable, parseWompiPaymentLink } from "./external-payment";
 
 type PaymentState = { message: string; ok?: boolean };
 
@@ -18,6 +18,7 @@ export async function saveExternalPayment(delivery: OrderDeliveryDetails, _previ
     select: { id: true, sellerContact: { select: { orderId: true } } },
   });
   if (!order) return { message: "No encontramos ese pedido aceptado en tu cuenta." };
+  if (await hasPaymentReceipt(orderId)) return { message: "El pago ya está confirmado." };
   if (form.get("operation") === "remove") {
     await prisma.orderExternalPayment.deleteMany({ where: { orderId } });
     revalidatePath("/mi-cuenta/pedidos");
@@ -56,4 +57,37 @@ export async function saveExternalPayment(delivery: OrderDeliveryDetails, _previ
   }
   revalidatePath("/mi-cuenta/pedidos");
   return { ok: true, message: "Guardamos las instrucciones de pago." };
+}
+
+export async function confirmExternalPayment(
+  orderId: string,
+  method: string,
+  wompiUrl: string | null,
+  expectedAmountCOP: string,
+): Promise<PaymentState> {
+  const actor = await getCurrentIdentity();
+  if (!actor?.roles.includes("PRODUCER")) return { message: "Necesitas el perfil de vendedor." };
+  if (!await isPaymentReceiptAvailable()) return { message: "Esta opción todavía no está disponible." };
+  const [result] = await prisma.$queryRaw<{ eligible: boolean }[]>`
+    WITH agreed AS (
+      SELECT p."orderId", p."method",
+        (round(o."requestedQuantity" * o."priceCOP") + d."costCOP")::bigint AS amount
+      FROM "OrderExternalPayment" p
+      JOIN "OrderDeliveryDetails" d ON d."orderId" = p."orderId"
+      JOIN "Order" o ON o."id" = p."orderId"
+      WHERE p."orderId" = ${orderId} AND o."producerId" = ${actor.userId} AND o."status" = 'ACCEPTED'
+        AND p."method" = ${method} AND p."wompiUrl" IS NOT DISTINCT FROM ${wompiUrl}::text
+        AND round(o."requestedQuantity" * o."priceCOP") + d."costCOP" = ${expectedAmountCOP}::numeric
+      FOR UPDATE OF d, p
+    ), recorded AS (
+      INSERT INTO "OrderPaymentReceipt" ("orderId", "method", "amountCOP")
+      SELECT "orderId", "method", amount FROM agreed
+      ON CONFLICT ("orderId") DO NOTHING
+    )
+    SELECT EXISTS (SELECT 1 FROM agreed) AS eligible
+  `;
+  revalidatePath("/mi-cuenta/pedidos");
+  return result.eligible
+    ? { ok: true, message: "Registramos tu confirmación del pago." }
+    : { message: "El acuerdo cambió o el pedido no está disponible. Revisa el importe antes de confirmar." };
 }

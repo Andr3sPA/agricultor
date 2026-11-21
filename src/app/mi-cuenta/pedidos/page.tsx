@@ -7,7 +7,8 @@ import { OrderDeliveryConfirmationForm } from "@/features/orders/order-delivery-
 import { isOrderReceiptAvailable } from "@/features/orders/order-receipt";
 import { OrderRatingForm, OrderReceiptForm } from "@/features/orders/order-receipt-forms";
 import { ExternalPaymentForm } from "@/features/orders/external-payment-form";
-import { isExternalPaymentAvailable, paymentLabels } from "@/features/orders/external-payment";
+import { isExternalPaymentAvailable, isPaymentReceiptAvailable, paymentLabels } from "@/features/orders/external-payment";
+import { PaymentReceiptForm } from "@/features/orders/payment-receipt-form";
 import { OrderDeliveryForm } from "@/features/orders/order-delivery-form";
 import { isOrderSellerContactAvailable } from "@/features/orders/order-seller-contact";
 import { OrderSellerContactForm } from "@/features/orders/order-seller-contact-form";
@@ -134,10 +135,10 @@ export default async function OrdersPage({
 
   const acceptedOrderIds = [...buyerOrders, ...producerOrders]
     .filter(({ status }) => status === "ACCEPTED").map(({ id }) => id);
-  const [contactsAvailable, deliveryAvailable, confirmationAvailable, receiptAvailable, paymentAvailable] = acceptedOrderIds.length > 0
-    ? await Promise.all([isOrderSellerContactAvailable(), isOrderDeliveryAvailable(), isDeliveryConfirmationAvailable(), isOrderReceiptAvailable(), isExternalPaymentAvailable()])
-    : [false, false, false, false, false];
-  const [contacts, deliveries, receipts] = await Promise.all([
+  const [contactsAvailable, deliveryAvailable, confirmationAvailable, receiptAvailable, paymentAvailable, paymentReceiptAvailable] = acceptedOrderIds.length > 0
+    ? await Promise.all([isOrderSellerContactAvailable(), isOrderDeliveryAvailable(), isDeliveryConfirmationAvailable(), isOrderReceiptAvailable(), isExternalPaymentAvailable(), isPaymentReceiptAvailable()])
+    : [false, false, false, false, false, false];
+  const [contacts, deliveries, receipts, paymentReceipts] = await Promise.all([
     contactsAvailable ? prisma.orderSellerContact.findMany({
       where: { orderId: { in: acceptedOrderIds } },
       select: { orderId: true, whatsapp: true },
@@ -156,7 +157,11 @@ export default async function OrdersPage({
       where: { orderId: { in: acceptedOrderIds } },
       select: { orderId: true, receivedAt: true, rating: true },
     }) : [],
+    paymentReceiptAvailable ? prisma.orderPaymentReceipt.findMany({
+      where: { orderId: { in: acceptedOrderIds } },
+    }) : [],
   ]);
+  const paymentReceiptByOrder = new Map(paymentReceipts.map((record) => [record.orderId, record]));
   const deliveryByOrder = new Map(deliveries.map((delivery) => [delivery.orderId, delivery]));
   const receiptByOrder = new Map(receipts.map((receipt) => [receipt.orderId, receipt]));
   const contactByOrder = new Map(contacts.map(({ orderId, whatsapp }) => [orderId, whatsapp]));
@@ -189,6 +194,7 @@ export default async function OrdersPage({
     const requestedAt = dateFormatter.format(order.createdAt);
     const whatsapp = contactByOrder.get(order.id);
     const delivery = deliveryByOrder.get(order.id);
+    const paymentReceipt = paymentReceiptByOrder.get(order.id);
     const receipt = receiptByOrder.get(order.id);
     const confirmed = delivery && "confirmed" in delivery && delivery.confirmed === true;
     const payment = delivery && "paymentMethod" in delivery && typeof delivery.paymentMethod === "string"
@@ -198,6 +204,9 @@ export default async function OrdersPage({
       order.requestedQuantity.toString(),
       String(order.priceCOP),
     ).value;
+    const totalWithDelivery = delivery && estimatedTotal !== null
+      ? String(BigInt(estimatedTotal) + BigInt(delivery.costCOP))
+      : null;
     const currentOffer = !producerView && order.status === "ACCEPTED" && "product" in order
       ? order.product
       : null;
@@ -347,8 +356,8 @@ export default async function OrdersPage({
                   <div><dt className="font-medium">Cuándo</dt><dd>{delivery.when}</dd></div>
                   <div><dt className="font-medium">Lugar acordado</dt><dd>{delivery.place}</dd></div>
                   <div><dt className="font-medium">Costo de entrega</dt><dd>{copFormatter.format(delivery.costCOP)} COP</dd></div>
-                  {estimatedTotal !== null && (
-                    <div><dt className="font-medium">Total estimado con entrega</dt><dd>$ {formatAgriculturalValue(String(BigInt(estimatedTotal) + BigInt(delivery.costCOP)))} COP</dd></div>
+                  {totalWithDelivery !== null && (
+                    <div><dt className="font-medium">Total estimado con entrega</dt><dd>$ {formatAgriculturalValue(totalWithDelivery)} COP</dd></div>
                   )}
                 </dl>
               ) : <p className="mt-2 text-sm text-slate-700">Aún no se han registrado los datos de entrega.</p>}
@@ -372,10 +381,16 @@ export default async function OrdersPage({
                 <OrderReceiptForm delivery={delivery} />
               ) : null}
             </section>
-            {producerView && !receipt && <OrderDeliveryForm orderId={order.id} delivery={delivery} />}
+            {producerView && !receipt && !paymentReceipt && <OrderDeliveryForm orderId={order.id} delivery={delivery} />}
           </>
         )}
-        {paymentAvailable && delivery && confirmed && order.status === "ACCEPTED" && (
+        {paymentReceipt ? (
+          <section aria-label="Pago confirmado" className="mt-4 space-y-2 rounded-xl bg-emerald-50 p-4">
+            <TrackingHeading className="font-semibold">Pago confirmado por el vendedor</TrackingHeading>
+            <p>{paymentLabels[paymentReceipt.method as keyof typeof paymentLabels]} · $ {formatAgriculturalValue(String(paymentReceipt.amountCOP))} COP</p>
+            <p className="text-sm text-slate-700">{dateFormatter.format(paymentReceipt.confirmedAt)}</p>
+          </section>
+        ) : paymentAvailable && delivery && confirmed && order.status === "ACCEPTED" && (
           <>
             {payment && whatsapp && (
               <section className="mt-4 space-y-2 rounded-xl bg-slate-50 p-4" aria-label="Forma de pago acordada">
@@ -389,6 +404,12 @@ export default async function OrdersPage({
                   </a>
                 )}
                 <p className="text-sm text-slate-700">El vendedor recibe el pago. Para dudas sobre el cobro o devoluciones, contacta al vendedor por WhatsApp. Agricultor no confirma el abono.</p>
+                {paymentReceiptAvailable && (
+                  <p className="text-sm font-semibold text-slate-700">Pendiente de confirmación del vendedor. Si ya pagaste, consulta al vendedor antes de pagar otra vez.</p>
+                )}
+                {producerView && paymentReceiptAvailable && totalWithDelivery !== null && (
+                  <PaymentReceiptForm orderId={order.id} method={payment.method} wompiUrl={payment.wompiUrl} amountCOP={totalWithDelivery} />
+                )}
               </section>
             )}
             {producerView && (whatsapp || payment ? <ExternalPaymentForm delivery={delivery} payment={payment} /> : (

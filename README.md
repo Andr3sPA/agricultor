@@ -76,6 +76,8 @@ Confirmar la recepción y calificar al vendedor requiere la migración
 Las instrucciones de pago externo requieren la migración
 `20261120050000_order_external_payment`. Si cambia el acuerdo de entrega,
 el vendedor debe volver a configurar el pago después de la nueva confirmación.
+Registrar que el vendedor recibió el pago requiere la migración
+`20261120060000_order_payment_receipt`.
 
 Los productores administran sus productos y pueden publicarlos explícitamente.
 El catálogo público muestra solo productos publicados con cantidad disponible y
