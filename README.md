@@ -26,6 +26,8 @@ La aplicación local se sirve en `http://localhost:3000`.
 - `API_KEY_BREVO` y `BREVO_SENDER_EMAIL`: clave y dirección remitente
   verificada en Brevo. Se usan al solicitar recuperación de contraseña; no se
   requieren para registro, inicio de sesión ni para compilar.
+- El registro no requiere confirmación por correo. Después de registrarte,
+  inicia sesión; si el correo era nuevo, la cuenta ya quedó creada.
 - En Vercel, Better Auth usa los dominios de implementación que entrega el
   sistema (`VERCEL_URL`, `VERCEL_BRANCH_URL` y
   `VERCEL_PROJECT_PRODUCTION_URL`) para limitar los hosts permitidos.
