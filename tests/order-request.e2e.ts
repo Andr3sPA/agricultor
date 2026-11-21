@@ -1273,6 +1273,15 @@ async function main(): Promise<void> {
       await expect(producerPage.getByRole("heading", { name: "Valor estimado de los pedidos aceptados" })).toBeHidden();
       await expect(producerPage.getByRole("button", { name: "Consultar" })).toBeHidden();
       await producerPage.emulateMedia({ media: "screen" });
+      await producerPage.getByRole("link", { name: "Ver lista de empaque por pedido" }).click();
+      const packingList = producerPage.getByRole("region", { name: "Lista de empaque por pedido" });
+      await expect(producerPage.getByLabel("Desde", { exact: true })).toHaveValue("2026-11-19");
+      await expect(packingList.getByText(`Referencia del pedido: ${formulaOrder.id}`, { exact: true })).toBeVisible();
+      await expect(packingList.getByText(`Referencia del pedido: ${followingDay.id}`, { exact: true })).toHaveCount(0);
+      await producerPage.emulateMedia({ media: "print" });
+      await expect(packingList.getByText("2,5 Kilogramo (kg)", { exact: true })).toBeVisible();
+      await producerPage.emulateMedia({ media: "screen" });
+      await producerPage.getByRole("link", { name: "Ver cantidades agrupadas por producto" }).click();
       const kiloGroup = producerPage.getByText("2,625 Kilogramo (kg)", { exact: true }).locator("..");
       await kiloGroup.getByText("Ver pedidos de este total", { exact: true }).click();
       await expect(kiloGroup.getByRole("link", { name: /^Abrir pedido / })).toHaveCount(2);

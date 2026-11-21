@@ -20,6 +20,7 @@ export default async function DispatchPage({
   const params = await searchParams;
   const from = typeof params.desde === "string" ? params.desde : "";
   const through = typeof params.hasta === "string" ? params.hasta : "";
+  const byOrder = params.vista === "pedidos";
   const dates = getDispatchDateFilter(from, through);
   const orders = dates ? await prisma.order.findMany({
     where: {
@@ -42,6 +43,8 @@ export default async function DispatchPage({
     else ordersByGroup.set(key, [{ order, value }]);
   }
   const query = new URLSearchParams({ formato: "consolidado", desde: from, hasta: through });
+  const viewQuery = new URLSearchParams({ desde: from, hasta: through });
+  if (!byOrder) viewQuery.set("vista", "pedidos");
   const today = getColombianAgendaDate(new Date());
   const weekStart = new Date(`${today}T00:00:00Z`);
   weekStart.setUTCDate(weekStart.getUTCDate() - 6);
@@ -58,15 +61,22 @@ export default async function DispatchPage({
       </Link>
       <h1 className="text-3xl font-semibold">Cantidades para despacho</h1>
       <p className="print:hidden">Consulta cuánto reunir de cada producto según los pedidos aceptados. Elige fechas de aceptación en hora de Colombia.</p>
+      <Link
+        className="inline-flex min-h-11 items-center font-semibold text-emerald-900 underline print:hidden"
+        href={`/mi-cuenta/pedidos/despacho?${viewQuery}`}
+      >
+        {byOrder ? "Ver cantidades agrupadas por producto" : "Ver lista de empaque por pedido"}
+      </Link>
       <nav aria-label="Períodos de despacho" className="flex flex-wrap gap-2 print:hidden">
         {datePresets.map((preset) => {
           const active = preset.from === from && preset.through === through;
           const search = new URLSearchParams({ desde: preset.from, hasta: preset.through });
+          if (byOrder) search.set("vista", "pedidos");
           return (
             <Link
               aria-current={active ? "true" : undefined}
               className={`inline-flex min-h-11 items-center rounded-lg border border-emerald-900 px-3 font-semibold ${active ? "bg-emerald-800 text-white" : "text-emerald-950 hover:bg-emerald-50"}`}
-              href={preset.from ? `/mi-cuenta/pedidos/despacho?${search}` : "/mi-cuenta/pedidos/despacho"}
+              href={preset.from || byOrder ? `/mi-cuenta/pedidos/despacho?${search}` : "/mi-cuenta/pedidos/despacho"}
               key={preset.label}
             >
               {preset.label}
@@ -75,6 +85,7 @@ export default async function DispatchPage({
         })}
       </nav>
       <form className="flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-white p-4 print:hidden" key={query.toString()} method="get">
+        {byOrder && <input name="vista" type="hidden" value="pedidos" />}
         <label className="text-sm font-medium">Desde
           <input className="mt-1 block min-h-11 rounded-lg border border-slate-300 px-3" defaultValue={from} name="desde" type="date" />
         </label>
@@ -100,6 +111,25 @@ export default async function DispatchPage({
             <p className="mt-1 text-2xl font-semibold text-emerald-950">$ {formatAgriculturalValue(String(totalValue))} COP</p>
             <p className="mt-1 text-sm text-slate-700">Suma de los importes registrados al solicitar cada pedido, redondeados al peso. Los pagos se coordinan por separado.</p>
           </div>
+          {byOrder ? (
+            <section aria-labelledby="packing-by-order">
+              <h2 className="mb-3 text-xl font-semibold" id="packing-by-order">Lista de empaque por pedido</h2>
+              <ul className="space-y-3">
+                {orders.map((order) => (
+                  <li className="rounded-xl border border-slate-200 bg-white p-4 print:break-inside-avoid print:border-black" key={order.id}>
+                    <h3 className="break-words font-semibold">
+                      <span aria-hidden="true" className="mr-3 hidden size-4 border border-black align-middle print:inline-block" />
+                      {order.productName}
+                    </h3>
+                    <p className="mt-1 text-lg font-semibold">
+                      {formatAgriculturalValue(order.requestedQuantity.toFixed())} {PRODUCT_UNITS.find(({ value }) => value === order.unit)?.label ?? order.unit}
+                    </p>
+                    <p className="break-all text-sm">Referencia del pedido: {order.id}</p>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : (
           <ul aria-label="Cantidades por producto y unidad" className="space-y-3">
             {totals.map(({ productName, unit, quantity, count }) => (
               <li className="rounded-xl border border-slate-200 bg-white p-4 print:break-inside-avoid print:border-black" key={dispatchGroupKey(productName, unit)}>
@@ -133,10 +163,11 @@ export default async function DispatchPage({
               </li>
             ))}
           </ul>
+          )}
           <div className="flex flex-wrap gap-3 print:hidden">
             <PrintDispatchButton />
             <a className="inline-flex min-h-11 items-center font-semibold text-emerald-900 underline" download href={`/mi-cuenta/pedidos/aceptados.csv?${query}`}>
-              Descargar estas cantidades (CSV)
+              {byOrder ? "Descargar totales por producto (CSV)" : "Descargar estas cantidades (CSV)"}
             </a>
           </div>
         </>
