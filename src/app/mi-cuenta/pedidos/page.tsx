@@ -214,9 +214,9 @@ export default async function OrdersPage({
     return (
       <li
         className="scroll-mt-4 rounded-2xl border border-slate-200 p-5"
-        id={producerView ? undefined : `solicitud-${order.id}`}
+        id={producerView ? `recibida-${order.id}` : `solicitud-${order.id}`}
         key={`${producerView ? "producer" : "buyer"}-${order.id}`}
-        tabIndex={producerView ? undefined : -1}
+        tabIndex={-1}
       >
         {!producerView && registeredOrder === order.id && (
           <p className="mb-3 rounded-xl bg-emerald-50 p-3 text-emerald-950" role="status">
@@ -469,6 +469,9 @@ export default async function OrdersPage({
           href="/mi-cuenta"
         >
           Volver a mi cuenta
+        </Link>
+        <Link className="inline-flex min-h-12 items-center font-semibold text-emerald-900 underline underline-offset-4" href="/mi-cuenta/avisos">
+          Avisos de pedidos
         </Link>
         {isBuyer && (
           <Link

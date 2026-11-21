@@ -46,6 +46,11 @@ export default async function AccountPage({
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-3xl px-4 py-8 sm:px-6 sm:py-12">
+      {(isProducer || identity.roles.includes("BUYER")) && (
+        <Link className="mb-3 inline-flex min-h-11 items-center font-semibold text-emerald-900 underline" href="/mi-cuenta/avisos">
+          Avisos de pedidos
+        </Link>
+      )}
       {dashboard && (
         <section
           aria-labelledby="producer-dashboard-title"

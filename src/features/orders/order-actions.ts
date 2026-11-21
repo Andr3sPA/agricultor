@@ -70,6 +70,7 @@ export async function requestOrderAction(
   revalidatePath("/catalogo");
   revalidatePath("/mi-cuenta");
   revalidatePath("/mi-cuenta/pedidos");
+  revalidatePath("/mi-cuenta/avisos");
   const orderId = encodeURIComponent(result.orderId);
   redirect(`/mi-cuenta/pedidos?registrada=${orderId}#solicitud-${orderId}`);
 }
@@ -91,6 +92,7 @@ export async function decideOrderAction(
   }
 
   revalidatePath("/mi-cuenta/pedidos");
+  revalidatePath("/mi-cuenta/avisos");
   revalidatePath("/mi-cuenta");
   revalidatePath("/catalogo");
   return {

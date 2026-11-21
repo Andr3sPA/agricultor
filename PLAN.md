@@ -31,6 +31,8 @@ La aplicación ya tiene cuentas y recuperación por Brevo, catálogo público, i
 
 ## 3. Notificaciones y calificaciones
 
+- «Avisos de pedidos» muestra al vendedor las solicitudes por responder y al comprador las respuestas recientes. Cada aviso abre el pedido correspondiente.
+
 - El distribuidor puede publicar su perfil comercial con descripción, municipio y ofertas disponibles. El contacto de coordinación permanece en el pedido.
 
 **Razón para volver.** El productor se entera a tiempo de una solicitud y quien compra puede evaluar negocios que sí completan entregas.

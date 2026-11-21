@@ -984,6 +984,10 @@ async function main(): Promise<void> {
         .waitFor();
       const pendingProducerRequests = producerPage.getByRole("region", { name: "Por responder" });
       await expect(pendingProducerRequests.getByRole("heading", { name: "Por responder" })).toBeInViewport();
+      await producerPage.getByRole("link", { name: "Avisos de pedidos" }).click();
+      await expect(producerPage.getByRole("heading", { name: "Solicitud por responder" })).toBeVisible();
+      await producerPage.getByRole("link", { name: /Abrir pedido.*Solicitud por responder/ }).click();
+      await expect(producerPage).toHaveURL(/#recibida-/);
       const answeredProducerRequests = producerPage.getByRole("region", { name: "Ya respondidas" });
       const acceptOrder = pendingProducerRequests.getByRole("button", { name: "Aceptar pedido" });
       await expect(pendingProducerRequests.getByText("Coordinar entrega")).toHaveCount(0);
@@ -1044,7 +1048,11 @@ async function main(): Promise<void> {
       });
       assert.ok(summary.includes(`Solicitud: ${colombianTime.format(acceptedOrder.createdAt)} (hora de Colombia)`));
 
-      await page.goto(`${baseURL}/mi-cuenta/pedidos`);
+      await page.goto(`${baseURL}/mi-cuenta/avisos`);
+      await expect(page.getByRole("heading", { name: "Aceptaron tu solicitud" })).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Solicitud por responder" })).toHaveCount(0);
+      await page.getByRole("link", { name: /Abrir pedido.*Aceptaron tu solicitud/ }).click();
+      await expect(page).toHaveURL(`${baseURL}/mi-cuenta/pedidos#solicitud-${acceptedOrder.id}`);
       await page
         .getByText("El productor aceptó esta solicitud.")
         .waitFor();
