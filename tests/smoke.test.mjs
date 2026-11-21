@@ -114,18 +114,24 @@ after(async () => {
   await once(server, "exit");
 });
 
-test("production home page guides buyers and producers to the right starting point", async () => {
+test("production home page offers one shared signup and a single sign-in link", async () => {
   const response = await fetch(url);
   assert.equal(response.status, 200);
   const html = await response.text();
 
   assert.match(html, /<html lang="es"/);
   assert.match(html, /Compra productos del campo o vende tu cosecha/);
-  assert.match(html, /Explorar el catálogo/);
-  assert.match(html, /href="\/catalogo"/);
-  assert.match(html, /Crear cuenta para vender/);
-  assert.match(html, /href="\/crear-cuenta\?intent=producer"/);
-  assert.match(html, /href="\/iniciar-sesion"/);
+  assert.match(html, /href="\/crear-cuenta">Crear cuenta<\/a>/);
+  assert.equal([...html.matchAll(/href="\/crear-cuenta"/g)].length, 1);
+  assert.match(html, /href="\/catalogo">Explorar el catálogo<\/a>/);
+  assert.equal([...html.matchAll(/href="\/iniciar-sesion"/g)].length, 1);
+  assert.match(html, /¿Ya tienes cuenta\?/);
+  assert.match(html, /href="\/iniciar-sesion">Inicia sesión<\/a>/);
+  assert.match(html, /agregar tu perfil para publicar tu cosecha/);
+  assert.doesNotMatch(
+    html,
+    /Crear cuenta para vender|Quiero comprar|Quiero vender|Elige cómo participar|intent=producer/,
+  );
 });
 
 test("production serves the offline worker, policy, and app manifest", async () => {
