@@ -60,6 +60,10 @@ versionadas, que instalan también el registro automático de esta fecha.
 
 ## Catálogo, pedidos e inventario
 
+La opción de compartir WhatsApp en pedidos aceptados requiere aplicar en Neon
+la migración `20261120000000_order_seller_contact`. Hasta entonces, sigue
+disponible el resumen para copiar y coordinar la entrega.
+
 Los productores administran sus productos y pueden publicarlos explícitamente.
 El catálogo público muestra solo productos publicados con cantidad disponible y
 no expone datos personales o de contacto. Categorías, unidades y precio por

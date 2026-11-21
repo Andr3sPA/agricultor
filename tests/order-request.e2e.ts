@@ -1002,6 +1002,13 @@ async function main(): Promise<void> {
       });
       assert.equal(acceptedOrder.status, "ACCEPTED");
       assert.equal(acceptedOrder.history.length, 2);
+      const sellerPhone = answeredProducerRequests.getByLabel("WhatsApp del vendedor");
+      await sellerPhone.fill("123");
+      await answeredProducerRequests.getByRole("button", { name: "Compartir WhatsApp" }).click();
+      await expect(answeredProducerRequests.getByRole("alert")).toHaveText("Escribe un celular colombiano de 10 dígitos.");
+      await sellerPhone.fill("+57 300 000 0000");
+      await answeredProducerRequests.getByRole("button", { name: "Compartir WhatsApp" }).click();
+      await expect(answeredProducerRequests.getByRole("status").filter({ hasText: "Compartimos el WhatsApp" })).toBeVisible();
       await expect(answeredProducerRequests.getByText(acceptedOrder.id, { exact: true })).toBeVisible();
       assert.ok(summary.includes(`Referencia: ${acceptedOrder.id}\n`));
       const acceptance = acceptedOrder.history.find(
@@ -1020,6 +1027,9 @@ async function main(): Promise<void> {
         .getByText("El productor aceptó esta solicitud.")
         .waitFor();
       await page.getByText("Coordinar entrega", { exact: true }).click();
+      const whatsapp = page.getByRole("link", { name: "Hablar con el vendedor por WhatsApp" });
+      await expect(whatsapp).toHaveAttribute("href", /^https:\/\/wa\.me\/573000000000\?text=/);
+      assert.ok((await whatsapp.getAttribute("href"))?.includes(acceptedOrder.id));
       await expect(page.getByText(acceptedOrder.id, { exact: true })).toBeVisible();
       await expect(page.getByRole("textbox", { name: "Resumen del pedido" })).toHaveValue(summary);
       assert.match(summary, /Precio por unidad al solicitar: \$\s*1\.250 COP/);
@@ -1029,6 +1039,10 @@ async function main(): Promise<void> {
       await expect(page.getByRole("status")).toHaveText("Resumen copiado.");
       const copiedSummary = await page.evaluate(() => navigator.clipboard.readText());
       assert.equal(copiedSummary.replaceAll("\r\n", "\n"), summary);
+      await producerPage.getByRole("button", { name: "Retirar número" }).click();
+      await expect(producerPage.getByText("Retiramos el número compartido.")).toBeVisible();
+      await page.reload();
+      await expect(whatsapp).toHaveCount(0);
       await page
         .getByRole("list", { name: "Seguimiento de tu solicitud" })
         .getByText("Respuesta del productor")

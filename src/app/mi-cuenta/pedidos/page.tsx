@@ -2,6 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCatalogPageHref, getPublicProductOrderHref } from "@/features/catalog/public-products";
 import { OrderCoordinationSummary } from "@/features/orders/order-coordination-summary";
+import { isOrderSellerContactAvailable } from "@/features/orders/order-seller-contact";
+import { OrderSellerContactForm } from "@/features/orders/order-seller-contact-form";
 import { OrderDecisionForm } from "@/features/orders/order-decision-form";
 import { PRODUCT_UNITS } from "@/features/products/product-validation";
 import {
@@ -122,6 +124,14 @@ export default async function OrdersPage({
       : Promise.resolve([]),
   ]);
 
+  const acceptedOrderIds = [...buyerOrders, ...producerOrders]
+    .filter(({ status }) => status === "ACCEPTED").map(({ id }) => id);
+  const contactsAvailable = acceptedOrderIds.length > 0 && await isOrderSellerContactAvailable();
+  const contacts = contactsAvailable ? await prisma.orderSellerContact.findMany({
+    where: { orderId: { in: acceptedOrderIds } },
+    select: { orderId: true, whatsapp: true },
+  }) : [];
+  const contactByOrder = new Map(contacts.map(({ orderId, whatsapp }) => [orderId, whatsapp]));
   const pendingProducerOrders = producerOrders.filter(({ status }) => status === "PENDING");
   const answeredProducerOrders = producerOrders.filter(({ status }) => status !== "PENDING");
   const search = producerProduct.toLocaleLowerCase("es-CO");
@@ -149,6 +159,7 @@ export default async function OrdersPage({
     const quantity = `${quantityFormatter.format(order.requestedQuantity.toNumber())} ${unit}`;
     const unitPrice = copFormatter.format(order.priceCOP);
     const requestedAt = dateFormatter.format(order.createdAt);
+    const whatsapp = contactByOrder.get(order.id);
     const estimatedTotal = calculateUnitPriceTotal(
       order.requestedQuantity.toString(),
       String(order.priceCOP),
@@ -291,6 +302,18 @@ export default async function OrdersPage({
               "¿Acordamos si será envío o recogida, cuándo y dónde?",
             ].join("\n")}
           />
+        )}
+        {contactsAvailable && order.status === "ACCEPTED" && (
+          producerView ? <OrderSellerContactForm orderId={order.id} whatsapp={whatsapp} /> : whatsapp && (
+            <a
+              className="mt-4 inline-flex min-h-12 items-center rounded-xl bg-emerald-800 px-4 font-semibold text-white hover:bg-emerald-900"
+              href={`https://wa.me/${whatsapp}?${new URLSearchParams({ text: `Hola, quiero coordinar la entrega de mi pedido de Agricultor. Referencia: ${order.id}` })}`}
+              rel="noreferrer"
+              target="_blank"
+            >
+              Hablar con el vendedor por WhatsApp
+            </a>
+          )
         )}
         {producerView && order.status === "PENDING" && (
           <OrderDecisionForm orderId={order.id} />

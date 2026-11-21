@@ -143,11 +143,18 @@ model Order {
   producer           User        @relation("OrderProducer", fields: [producerId], references: [id], onDelete: Cascade)
   product            Product?    @relation(fields: [productId], references: [id], onDelete: SetNull)
   history            OrderHistory[]
+  sellerContact      OrderSellerContact?
 
   @@index([buyerId, createdAt])
   @@index([producerId, status, createdAt])
   @@index([productId])
   @@unique([buyerId, idempotencyKey])
+}
+
+model OrderSellerContact {
+  orderId  String @id
+  order    Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  whatsapp String @db.VarChar(12)
 }
 
 model OrderHistory {
