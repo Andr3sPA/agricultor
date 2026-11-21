@@ -11,7 +11,7 @@ export function SignOutButton() {
   return (
     <div className="text-right">
       <button
-        className="min-h-12 rounded-xl bg-emerald-100 px-4 py-3 font-semibold text-emerald-950 hover:bg-emerald-200"
+        className="min-h-12 rounded-md px-3 py-3 font-semibold text-[#253528] underline underline-offset-4 hover:bg-[#edddc2]"
         onClick={async () => {
           setMessage("");
           try {
@@ -31,7 +31,7 @@ export function SignOutButton() {
         Cerrar sesión
       </button>
       {message && (
-        <p className="mt-2 text-sm text-rose-100" role="alert">
+        <p className="mt-2 text-sm text-red-800" role="alert">
           {message}
         </p>
       )}

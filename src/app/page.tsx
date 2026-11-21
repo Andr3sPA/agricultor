@@ -1,86 +1,76 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
+import market from "../../public/mercado-potrerillo.webp";
 
 export const metadata: Metadata = {
   title: "Agricultor | Productos del campo",
-  description:
-    "Explora productos del campo y crea una cuenta para comprar o vender.",
+  description: "Compra y vende productos del campo en Colombia.",
 };
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-emerald-50/60">
-      <div className="mx-auto w-full max-w-6xl px-4 pb-12 sm:px-6 sm:pb-16">
-        <header className="flex min-h-20 items-center justify-between gap-4">
+    <main className="min-h-screen bg-[#f8f1e4] text-[#253528]">
+      <div className="mx-auto max-w-7xl px-5 pb-8 sm:px-9">
+        <header className="flex min-h-20 items-center justify-between gap-4 border-b border-[#b7ab96]">
           <Link
             aria-label="Agricultor, inicio"
-            className="text-xl font-bold tracking-tight text-emerald-950 sm:text-2xl"
+            className="font-serif text-3xl font-bold leading-none tracking-tight"
             href="/"
           >
             Agricultor
           </Link>
-        </header>
-
-        <section
-          aria-labelledby="welcome-title"
-          className="overflow-hidden rounded-3xl bg-emerald-900 px-6 py-10 text-white shadow-sm sm:px-10 sm:py-10 lg:px-14"
-        >
-          <div className="max-w-3xl">
-            <p className="text-sm font-bold uppercase tracking-[0.14em] text-emerald-200">
-              Del campo, más cerca
-            </p>
-            <h1
-              className="mt-4 text-3xl font-bold leading-tight tracking-tight sm:text-5xl"
-              id="welcome-title"
-            >
-              Compra productos del campo o vende tu cosecha
-            </h1>
-            <p className="mt-5 max-w-2xl text-lg leading-8 text-emerald-50 sm:text-xl">
-              Explora el catálogo sin registrarte.
-            </p>
-          </div>
-        </section>
-
-        <section
-          aria-labelledby="getting-started-title"
-          className="mt-5 rounded-3xl border border-emerald-950/10 bg-white p-6 shadow-sm sm:p-8"
-        >
-          <div className="max-w-2xl">
-            <h2
-              className="text-2xl font-bold text-emerald-950"
-              id="getting-started-title"
-            >
-              Empieza con una sola cuenta
-            </h2>
-            <p className="mt-2 leading-7 text-slate-700">
-              Compra y vende con la misma cuenta.
-            </p>
-            <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-              <Link
-                className="inline-flex min-h-12 items-center justify-center rounded-xl bg-emerald-800 px-5 py-3 text-center font-bold text-white hover:bg-emerald-900"
-                href="/crear-cuenta"
-              >
-                Crear cuenta
-              </Link>
-              <Link
-                className="inline-flex min-h-12 items-center justify-center rounded-xl bg-emerald-100 px-5 py-3 text-center font-bold text-emerald-950 hover:bg-emerald-200"
-                href="/catalogo"
-              >
-                Explorar el catálogo
-              </Link>
-            </div>
-          </div>
-        </section>
-
-        <p className="mt-8 text-center text-slate-700">
-          ¿Ya tienes cuenta?{" "}
           <Link
-            className="font-semibold text-emerald-950 underline decoration-emerald-700 underline-offset-4"
+            className="inline-flex min-h-12 items-center px-2 font-bold underline decoration-[#91612e] underline-offset-4"
             href="/iniciar-sesion"
           >
             Inicia sesión
           </Link>
-        </p>
+        </header>
+
+        <section aria-labelledby="welcome-title" className="grid items-center gap-8 py-8 sm:py-12 lg:grid-cols-[1fr_1.04fr] lg:gap-14">
+          <div>
+            <h1 id="welcome-title" className="max-w-2xl text-balance font-serif text-[clamp(2.5rem,6vw,5.4rem)] leading-[0.98] font-bold tracking-[-0.04em]">
+              Compra y vende productos del campo
+            </h1>
+            <p className="mt-5 max-w-md text-lg leading-relaxed text-[#414b3e]">
+              Consulta precios y cantidades sin registrarte.
+            </p>
+            <div className="mt-7 flex flex-wrap items-center gap-3">
+              <Link
+                className="inline-flex min-h-12 items-center rounded-md bg-[#314b32] px-5 py-3 font-bold text-[#fff9e9] hover:bg-[#213623]"
+                href="/catalogo"
+              >
+                Explorar el catálogo
+              </Link>
+              <Link
+                className="inline-flex min-h-12 items-center rounded-md bg-[#edc574] px-5 py-3 font-bold text-[#322714] hover:bg-[#e4b65b]"
+                href="/crear-cuenta"
+              >
+                Crear cuenta
+              </Link>
+            </div>
+          </div>
+
+          <figure>
+            <Image
+              alt="Dos vendedoras atienden un puesto de frutas y verduras en la plaza de mercado."
+              className="aspect-[4/3] w-full bg-[#d5baa0] object-cover object-[50%_28%]"
+              preload
+              sizes="(min-width: 1280px) 590px, (min-width: 1024px) 48vw, 100vw"
+              src={market}
+            />
+            <figcaption className="mt-2 flex flex-wrap justify-between gap-x-4 gap-y-1 text-sm text-[#514738]">
+              <span>Mercado El Potrerillo · Pasto, Nariño</span>
+              <span>
+                Foto <a className="underline underline-offset-2" href="https://commons.wikimedia.org/wiki/File:El_Potrerillo,_frutas_y_verduras.jpg">Υ.Γ.</a>
+                {" · "}
+                <a className="underline underline-offset-2" href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>
+                {" · recorte"}
+              </span>
+            </figcaption>
+          </figure>
+        </section>
       </div>
     </main>
   );

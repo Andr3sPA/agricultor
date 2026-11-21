@@ -120,14 +120,14 @@ test("production home page offers one shared signup and a single sign-in link", 
   const html = await response.text();
 
   assert.match(html, /<html lang="es"/);
-  assert.match(html, /Compra productos del campo o vende tu cosecha/);
+  assert.match(html, /Compra y vende productos del campo/);
   assert.match(html, /href="\/crear-cuenta">Crear cuenta<\/a>/);
   assert.equal([...html.matchAll(/href="\/crear-cuenta"/g)].length, 1);
   assert.match(html, /href="\/catalogo">Explorar el catálogo<\/a>/);
   assert.equal([...html.matchAll(/href="\/iniciar-sesion"/g)].length, 1);
-  assert.match(html, /¿Ya tienes cuenta\?/);
+  assert.match(html, /Consulta precios y cantidades sin registrarte/);
   assert.match(html, /href="\/iniciar-sesion">Inicia sesión<\/a>/);
-  assert.match(html, /Compra y vende con la misma cuenta/);
+  assert.match(html, /Mercado El Potrerillo/);
   assert.doesNotMatch(
     html,
     /Crear cuenta para vender|Quiero comprar|Quiero vender|Elige cómo participar|intent=producer/,

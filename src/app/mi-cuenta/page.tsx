@@ -9,10 +9,10 @@ import { prisma } from "@/lib/db";
 import { isSellerProfileAvailable } from "@/features/sellers/seller-profile";
 import Link from "next/link";
 
-const button = "inline-flex min-h-12 items-center justify-center rounded-xl px-4 py-3 text-center font-semibold";
-const primary = `${button} bg-emerald-800 text-white hover:bg-emerald-950`;
-const secondary = `${button} bg-emerald-100 text-emerald-950 hover:bg-emerald-200`;
-const card = "rounded-2xl border border-emerald-200 bg-white p-5 sm:p-6";
+const button = "inline-flex min-h-12 items-center justify-center rounded-md px-4 py-3 text-center font-semibold";
+const primary = `${button} bg-[#314b32] text-[#fff9e9] hover:bg-[#213623]`;
+const secondary = `${button} bg-[#edddc2] text-[#253528] hover:bg-[#e4cfaa]`;
+const card = "border-t border-[#b7ab96] py-5 sm:py-6";
 
 export default async function AccountPage({
   searchParams,
@@ -39,10 +39,10 @@ export default async function AccountPage({
     : [null, 0, false] as const;
 
   return (
-    <main className="min-h-screen bg-emerald-50">
-      <div className="mx-auto w-full max-w-4xl space-y-4 px-4 py-6 sm:px-6 sm:py-10">
-        <header className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-emerald-950 px-5 py-4 text-white sm:px-6">
-          <h1 className="text-3xl font-bold">Mi cuenta</h1>
+    <main className="min-h-screen bg-[#f8f1e4] text-[#253528]">
+      <div className="mx-auto w-full max-w-4xl px-4 py-6 sm:px-6 sm:py-10">
+        <header className="flex flex-wrap items-center justify-between gap-3 pb-4">
+          <h1 className="font-serif text-4xl font-bold">Mi cuenta</h1>
           <SignOutButton />
         </header>
 
@@ -54,19 +54,19 @@ export default async function AccountPage({
         </nav>
 
         <section aria-labelledby="sales-title" className={card}>
-          <h2 id="sales-title" className="text-xl font-bold text-emerald-950">Ventas</h2>
+          <h2 id="sales-title" className="font-serif text-2xl font-bold">Ventas</h2>
           {dashboard ? (
             <>
               <dl className="mt-4 grid grid-cols-3 gap-2">
-                <div className="rounded-xl bg-emerald-50 p-3">
+                <div className="border-l-2 border-[#70815d] pl-3">
                   <dt className="text-sm">Publicados</dt>
                   <dd className="text-xl font-bold">{dashboard.products.published}</dd>
                 </div>
-                <div className="rounded-xl bg-amber-50 p-3">
+                <div className="border-l-2 border-[#91612e] pl-3">
                   <dt className="text-sm">Agotados</dt>
                   <dd className="text-xl font-bold">{dashboard.products.soldOut}</dd>
                 </div>
-                <div className="rounded-xl bg-amber-50 p-3">
+                <div className="border-l-2 border-[#91612e] pl-3">
                   <dt className="text-sm">Por responder</dt>
                   <dd className="text-xl font-bold">{dashboard.orders.PENDING}</dd>
                 </div>
@@ -95,7 +95,7 @@ export default async function AccountPage({
 
         {dashboard && (
           <section aria-labelledby="tools-title" className={card}>
-            <h2 id="tools-title" className="text-xl font-bold text-emerald-950">Herramientas</h2>
+            <h2 id="tools-title" className="font-serif text-2xl font-bold">Herramientas</h2>
             {todayCount > 0 && (
               <p className="mt-2 text-sm text-emerald-950">
                 {todayCount === 1 ? "1 labor para hoy" : `${todayCount} labores para hoy`}
