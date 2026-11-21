@@ -218,8 +218,21 @@ test("producer registration keeps its intent through sign-in and role selection"
   const signinHtml = await signinResponse.text();
   assert.match(signinHtml, /href="\/crear-cuenta\?intent=producer"/);
   assert.match(authForm, /\/mi-cuenta\?intent=producer/);
-  assert.match(authForm, /Inicia sesión y continúa como productor/);
+  assert.match(authForm, /Iniciar sesión y continuar como productor/);
   assert.match(roleForm, /Agregar perfil y continuar/);
+});
+
+test("successful registration replaces the form with clear next steps", () => {
+  assert.match(authForm, /setRegistrationComplete\(true\)/);
+  assert.match(authForm, /if \(isSignUp && registrationComplete\)/);
+  assert.match(authForm, /Registro recibido/);
+  assert.match(authForm, /Si el correo es nuevo, tu cuenta quedó creada; si ya tenías una/);
+  assert.match(authForm, /No enviamos un correo de confirmación porque no hace falta/);
+  assert.match(authForm, /href=\{signInHref\}/);
+  assert.match(authForm, /role="status"/);
+  assert.doesNotMatch(authForm, /Si el correo está disponible/);
+  assert.match(authForm, /if \(redirectTo\) signInQuery\.set\("redirectTo", redirectTo\)/);
+  assert.match(authForm, /if \(producerIntent\) signInQuery\.set\("intent", "producer"\)/);
 });
 
 test("production sign-in page offers clear recovery and return navigation", async () => {

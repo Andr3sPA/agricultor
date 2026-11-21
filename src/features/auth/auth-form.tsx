@@ -18,14 +18,13 @@ export function AuthForm({
 }: AuthFormProps) {
   const router = useRouter();
   const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState<"error" | "success">("error");
   const [pending, setPending] = useState(false);
+  const [registrationComplete, setRegistrationComplete] = useState(false);
   const isSignUp = mode === "sign-up";
 
   async function submit(formData: FormData) {
     setPending(true);
     setMessage("");
-    setMessageType("error");
 
     try {
       const result = isSignUp
@@ -49,12 +48,7 @@ export function AuthForm({
       }
 
       if (isSignUp) {
-        setMessage(
-          producerIntent
-            ? "Si el correo está disponible, tu cuenta quedó lista. Inicia sesión para agregar el perfil de productor."
-            : "Si el correo está disponible, tu cuenta quedó lista. Inicia sesión para continuar.",
-        );
-        setMessageType("success");
+        setRegistrationComplete(true);
         return;
       }
 
@@ -80,9 +74,45 @@ export function AuthForm({
   const authPageHref = authQueryString
     ? `${authPage}?${authQueryString}`
     : authPage;
-  const producerSignInQuery = new URLSearchParams();
-  producerSignInQuery.set("intent", "producer");
-  if (redirectTo) producerSignInQuery.set("redirectTo", redirectTo);
+  const signInQuery = new URLSearchParams();
+  if (redirectTo) signInQuery.set("redirectTo", redirectTo);
+  if (producerIntent) signInQuery.set("intent", "producer");
+  const signInQueryString = signInQuery.toString();
+  const signInHref = signInQueryString
+    ? `/iniciar-sesion?${signInQueryString}`
+    : "/iniciar-sesion";
+
+  if (isSignUp && registrationComplete) {
+    return (
+      <section
+        aria-labelledby="registration-success-title"
+        className="mt-8 space-y-5 rounded-2xl border border-emerald-800/20 bg-emerald-50 p-5"
+        role="status"
+      >
+        <div>
+          <h2
+            className="text-xl font-semibold text-emerald-950"
+            id="registration-success-title"
+          >
+            Registro recibido
+          </h2>
+          <p className="mt-2 leading-7 text-slate-700">
+            {producerIntent
+              ? "Si el correo es nuevo, tu cuenta quedó creada; si ya tenías una, puedes iniciar sesión con ella. No enviamos un correo de confirmación porque no hace falta. Después de iniciar sesión, podrás agregar tu perfil de productor."
+              : "Si el correo es nuevo, tu cuenta quedó creada; si ya tenías una, puedes iniciar sesión con ella. No enviamos un correo de confirmación porque no hace falta. Continúa para iniciar sesión."}
+          </p>
+        </div>
+        <Link
+          className="inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-emerald-800 px-5 py-3 text-center font-semibold text-white hover:bg-emerald-900"
+          href={signInHref}
+        >
+          {producerIntent
+            ? "Iniciar sesión y continuar como productor"
+            : "Ir a iniciar sesión"}
+        </Link>
+      </section>
+    );
+  }
 
   return (
     <form
@@ -143,25 +173,9 @@ export function AuthForm({
         )}
       </div>
       {message && (
-        <p
-          className={
-            messageType === "success"
-              ? "text-sm text-emerald-900"
-              : "text-sm text-red-800"
-          }
-          id="auth-message"
-          role={messageType === "success" ? "status" : "alert"}
-        >
+        <p className="text-sm text-red-800" id="auth-message" role="alert">
           {message}
         </p>
-      )}
-      {isSignUp && producerIntent && messageType === "success" && (
-        <Link
-          className="inline-flex min-h-12 w-full items-center justify-center rounded-xl border border-emerald-900 px-5 py-3 text-center font-semibold text-emerald-950 hover:bg-emerald-50"
-          href={`/iniciar-sesion?${producerSignInQuery.toString()}`}
-        >
-          Inicia sesión y continúa como productor
-        </Link>
       )}
       <button
         className="min-h-12 w-full rounded-xl bg-emerald-800 px-5 py-3 font-semibold text-white hover:bg-emerald-900 disabled:opacity-60"
