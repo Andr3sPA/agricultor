@@ -2,7 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCatalogPageHref, getPublicProductOrderHref } from "@/features/catalog/public-products";
 import { OrderCoordinationSummary } from "@/features/orders/order-coordination-summary";
-import { isOrderDeliveryAvailable } from "@/features/orders/order-delivery";
+import { isDeliveryConfirmationAvailable, isOrderDeliveryAvailable } from "@/features/orders/order-delivery";
+import { OrderDeliveryConfirmationForm } from "@/features/orders/order-delivery-confirmation-form";
 import { OrderDeliveryForm } from "@/features/orders/order-delivery-form";
 import { isOrderSellerContactAvailable } from "@/features/orders/order-seller-contact";
 import { OrderSellerContactForm } from "@/features/orders/order-seller-contact-form";
@@ -15,6 +16,7 @@ import {
 import type { OrderStatus } from "@/generated/prisma/enums";
 import { getCurrentIdentity } from "@/lib/auth/server";
 import { prisma } from "@/lib/db";
+import { Prisma, type OrderDeliveryDetails } from "@/generated/prisma/client";
 
 const statusLabels: Record<OrderStatus, string> = {
   PENDING: "Pendiente",
@@ -128,15 +130,20 @@ export default async function OrdersPage({
 
   const acceptedOrderIds = [...buyerOrders, ...producerOrders]
     .filter(({ status }) => status === "ACCEPTED").map(({ id }) => id);
-  const [contactsAvailable, deliveryAvailable] = acceptedOrderIds.length > 0
-    ? await Promise.all([isOrderSellerContactAvailable(), isOrderDeliveryAvailable()])
-    : [false, false];
+  const [contactsAvailable, deliveryAvailable, confirmationAvailable] = acceptedOrderIds.length > 0
+    ? await Promise.all([isOrderSellerContactAvailable(), isOrderDeliveryAvailable(), isDeliveryConfirmationAvailable()])
+    : [false, false, false];
   const [contacts, deliveries] = await Promise.all([
     contactsAvailable ? prisma.orderSellerContact.findMany({
       where: { orderId: { in: acceptedOrderIds } },
       select: { orderId: true, whatsapp: true },
     }) : [],
-    deliveryAvailable ? prisma.orderDeliveryDetails.findMany({
+    deliveryAvailable && confirmationAvailable ? prisma.$queryRaw<(OrderDeliveryDetails & { confirmed: boolean })[]>`
+      SELECT d.*, c."orderId" IS NOT NULL AS confirmed
+      FROM "OrderDeliveryDetails" d
+      LEFT JOIN "OrderDeliveryConfirmation" c ON c."orderId" = d."orderId"
+      WHERE d."orderId" IN (${Prisma.join(acceptedOrderIds)})
+    ` : deliveryAvailable ? prisma.orderDeliveryDetails.findMany({
       where: { orderId: { in: acceptedOrderIds } },
     }) : [],
   ]);
@@ -329,6 +336,15 @@ export default async function OrdersPage({
                   )}
                 </dl>
               ) : <p className="mt-2 text-sm text-slate-700">Aún no se han registrado los datos de entrega.</p>}
+              {delivery && confirmationAvailable && (
+                "confirmed" in delivery && delivery.confirmed ? (
+                  <p className="mt-3 text-sm font-semibold text-emerald-950">Datos confirmados por el comprador.</p>
+                ) : producerView ? (
+                  <p className="mt-3 text-sm text-slate-700">Pendiente de confirmación del comprador.</p>
+                ) : (
+                  <OrderDeliveryConfirmationForm delivery={delivery} />
+                )
+              )}
             </section>
             {producerView && <OrderDeliveryForm orderId={order.id} delivery={delivery} />}
           </>

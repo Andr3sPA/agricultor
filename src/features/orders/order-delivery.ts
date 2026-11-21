@@ -6,3 +6,10 @@ export async function isOrderDeliveryAvailable() {
   `;
   return schema.available;
 }
+
+export async function isDeliveryConfirmationAvailable() {
+  const [schema] = await prisma.$queryRaw<{ available: boolean }[]>`
+    SELECT to_regclass('"OrderDeliveryConfirmation"') IS NOT NULL AS available
+  `;
+  return schema.available;
+}

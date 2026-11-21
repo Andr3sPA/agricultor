@@ -65,6 +65,9 @@ la migración `20261120000000_order_seller_contact`. Hasta entonces, sigue
 disponible el resumen para copiar y coordinar la entrega.
 Los datos acordados de entrega requieren la migración
 `20261120010000_order_delivery_details`.
+La confirmación del comprador requiere
+`20261120020000_order_delivery_confirmation`. Cualquier cambio en el envío o la
+recogida vuelve a dejar esos datos pendientes de confirmación.
 
 Los productores administran sus productos y pueden publicarlos explícitamente.
 El catálogo público muestra solo productos publicados con cantidad disponible y

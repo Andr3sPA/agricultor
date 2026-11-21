@@ -159,6 +159,13 @@ model OrderDeliveryDetails {
   when    String @db.VarChar(100)
   place   String @db.VarChar(240)
   costCOP Int
+  confirmation OrderDeliveryConfirmation?
+}
+
+model OrderDeliveryConfirmation {
+  orderId     String               @id
+  delivery    OrderDeliveryDetails @relation(fields: [orderId], references: [orderId], onDelete: Cascade)
+  confirmedAt DateTime             @default(now())
 }
 
 model OrderSellerContact {

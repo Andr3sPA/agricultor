@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { getCurrentIdentity } from "@/lib/auth/server";
 import { prisma } from "@/lib/db";
-import { isOrderDeliveryAvailable } from "./order-delivery";
+import { isDeliveryConfirmationAvailable, isOrderDeliveryAvailable } from "./order-delivery";
+import type { OrderDeliveryDetails } from "@/generated/prisma/client";
 
 type DeliveryState = { message: string; ok?: boolean };
 
@@ -35,4 +36,35 @@ export async function saveOrderDelivery(orderId: string, _state: DeliveryState, 
   });
   revalidatePath("/mi-cuenta/pedidos");
   return { ok: true, message: "Guardamos los datos de entrega del pedido." };
+}
+
+export async function confirmOrderDelivery(
+  delivery: OrderDeliveryDetails,
+): Promise<DeliveryState> {
+  const actor = await getCurrentIdentity();
+  if (!actor?.roles.includes("BUYER")) return { message: "Necesitas el perfil de comprador." };
+  if (!await isDeliveryConfirmationAvailable()) return { message: "Esta opción todavía no está disponible." };
+
+  // Lock the exact version shown to the buyer so a concurrent edit either wins
+  // before this confirmation or clears it immediately afterwards.
+  const [result] = await prisma.$queryRaw<{ matched: boolean }[]>`
+    WITH matching AS (
+      SELECT d."orderId"
+      FROM "OrderDeliveryDetails" d JOIN "Order" o ON o."id" = d."orderId"
+      WHERE d."orderId" = ${delivery.orderId} AND o."buyerId" = ${actor.userId}
+        AND o."status" = 'ACCEPTED'
+        AND d."method" = ${delivery.method} AND d."when" = ${delivery.when}
+        AND d."place" = ${delivery.place} AND d."costCOP" = ${delivery.costCOP}
+      FOR UPDATE OF d
+    ), confirmed AS (
+      INSERT INTO "OrderDeliveryConfirmation" ("orderId")
+      SELECT "orderId" FROM matching
+      ON CONFLICT ("orderId") DO NOTHING
+    )
+    SELECT EXISTS (SELECT 1 FROM matching) AS matched
+  `;
+  revalidatePath("/mi-cuenta/pedidos");
+  return result.matched
+    ? { ok: true, message: "Confirmaste los datos de entrega." }
+    : { message: "Los datos ya no coinciden. Revisa la entrega antes de confirmar." };
 }
