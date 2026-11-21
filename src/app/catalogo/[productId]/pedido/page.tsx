@@ -73,7 +73,7 @@ export default async function RequestOrderPage({
     searchedQuantity && product.availableQuantity.gte(searchedQuantity)
       ? searchedQuantity.replace(".", ",")
       : "";
-  const signInHref = `/iniciar-sesion?redirectTo=${encodeURIComponent(
+  const accountQuery = `?redirectTo=${encodeURIComponent(
     getPublicProductOrderHref(product.id, filters),
   )}`;
 
@@ -133,11 +133,17 @@ export default async function RequestOrderPage({
         ) : !identity ? (
           <div className="mt-6 space-y-3">
             <p className="text-slate-700">
-              Necesitas un perfil de comprador para solicitar este producto.
+              Crea una cuenta de comprador para solicitar este producto, ver las respuestas del vendedor y consultar tus pedidos después.
             </p>
             <Link
               className="inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-emerald-800 px-5 py-3 font-semibold text-white hover:bg-emerald-900 sm:w-auto"
-              href={signInHref}
+              href={`/crear-cuenta${accountQuery}`}
+            >
+              Crear cuenta de comprador
+            </Link>
+            <Link
+              className="inline-flex min-h-12 items-center font-semibold text-emerald-900 underline underline-offset-4"
+              href={`/iniciar-sesion${accountQuery}`}
             >
               Inicia sesión
             </Link>

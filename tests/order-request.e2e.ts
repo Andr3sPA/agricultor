@@ -428,6 +428,11 @@ async function main(): Promise<void> {
         name: `Solicitar este producto: ${product.name}`,
       }).click();
       await anonymousPage.waitForURL(orderContextUrl);
+      const createBuyerLink = anonymousPage.getByRole("link", { name: "Crear cuenta de comprador" });
+      await expect(createBuyerLink).toBeVisible();
+      const signupTarget = new URL(await createBuyerLink.getAttribute("href") ?? "", baseURL);
+      assert.equal(signupTarget.pathname, "/crear-cuenta");
+      assert.equal(signupTarget.searchParams.get("redirectTo"), orderContextUrl.slice(baseURL.length));
       await anonymousPage.getByRole("link", { name: "Volver al catálogo" }).click();
       await anonymousPage.waitForURL(catalogUrl);
       const sortedCatalogQuery = new URLSearchParams(catalogQuery);

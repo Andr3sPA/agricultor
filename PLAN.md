@@ -6,6 +6,8 @@ Ayudar a productores a publicar lo que tienen disponible y vender por volumen a 
 
 El primer piloto se propone en una zona y con uno o dos productos que los participantes ya comercialicen. Se usará el acceso comprador existente para probar con distribuidores y comercios. La identidad comercial, sus requisitos y quién puede comprar o vender por volumen se definirán según el piloto.
 
+La cuenta de comprador seguirá disponible y se recomendará para ver respuestas y conservar el historial. La solicitud como invitado es un flujo pendiente y se añadirá como alternativa, con datos mínimos de contacto y entrega.
+
 ## Punto de partida
 
 La aplicación ya tiene cuentas y recuperación por Brevo, catálogo público, inventario, reservas, solicitudes con aceptación o rechazo, seguimiento, favoritos, agenda, conversor y calculadora. Los pedidos guardan el precio y la unidad de la solicitud y el flujo actual pide revisar la oferta si cambia antes de reservar. El historial de este archivo conserva las propuestas anteriores. Las prioridades de esta versión guían el trabajo nuevo.
