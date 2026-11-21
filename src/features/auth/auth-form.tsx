@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { authClient } from "@/lib/auth-client";
+import { LoadingIndicator } from "@/components/loading-indicator";
+import { ResendVerificationForm } from "./resend-verification-form";
 
 type AuthFormProps = {
   mode: "sign-in" | "sign-up";
@@ -20,9 +22,12 @@ export function AuthForm({
   const [message, setMessage] = useState("");
   const [pending, setPending] = useState(false);
   const [registrationComplete, setRegistrationComplete] = useState(false);
+  const [verificationEmail, setVerificationEmail] = useState("");
   const isSignUp = mode === "sign-up";
 
-  async function submit(formData: FormData) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
     setPending(true);
     setMessage("");
 
@@ -32,6 +37,7 @@ export function AuthForm({
             name: String(formData.get("name") ?? ""),
             email: String(formData.get("email") ?? ""),
             password: String(formData.get("password") ?? ""),
+            callbackURL: verificationCallback,
           })
         : await authClient.signIn.email({
             email: String(formData.get("email") ?? ""),
@@ -39,6 +45,11 @@ export function AuthForm({
           });
 
       if (result.error) {
+        if (!isSignUp && result.error.code === "EMAIL_NOT_VERIFIED") {
+          setVerificationEmail(String(formData.get("email") ?? ""));
+          setMessage("Confirma tu correo para iniciar sesión. Puedes pedir otro enlace.");
+          return;
+        }
         setMessage(
           isSignUp
             ? "No pudimos crear la cuenta. Revisa los datos o intenta iniciar sesión."
@@ -48,6 +59,7 @@ export function AuthForm({
       }
 
       if (isSignUp) {
+        setVerificationEmail(String(formData.get("email") ?? ""));
         setRegistrationComplete(true);
         return;
       }
@@ -81,6 +93,8 @@ export function AuthForm({
   const signInHref = signInQueryString
     ? `/iniciar-sesion?${signInQueryString}`
     : "/iniciar-sesion";
+  signInQuery.set("correo", "confirmado");
+  const verificationCallback = `/iniciar-sesion?${signInQuery}`;
 
   if (isSignUp && registrationComplete) {
     return (
@@ -97,11 +111,10 @@ export function AuthForm({
             Registro recibido
           </h2>
           <p className="mt-2 leading-7 text-slate-700">
-            {producerIntent
-              ? "Si el correo es nuevo, tu cuenta quedó creada; si ya tenías una, puedes iniciar sesión con ella. No enviamos un correo de confirmación porque no hace falta. Después de iniciar sesión, podrás agregar tu perfil de productor."
-              : "Si el correo es nuevo, tu cuenta quedó creada; si ya tenías una, puedes iniciar sesión con ella. No enviamos un correo de confirmación porque no hace falta. Continúa para iniciar sesión."}
+            Si tu correo está pendiente de confirmación, revisa tu bandeja de entrada y el correo no deseado. Abre el enlace para confirmar la cuenta e iniciar sesión.
           </p>
         </div>
+        <ResendVerificationForm callbackURL={verificationCallback} initialEmail={verificationEmail} />
         <Link
           className="inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-emerald-800 px-5 py-3 text-center font-semibold text-white hover:bg-emerald-900"
           href={signInHref}
@@ -115,8 +128,9 @@ export function AuthForm({
   }
 
   return (
+    <>
     <form
-      action={submit}
+      method="post" onSubmit={submit}
       className="mt-8 space-y-5"
       aria-describedby={message ? "auth-message" : undefined}
       aria-busy={pending}
@@ -183,7 +197,7 @@ export function AuthForm({
         type="submit"
       >
         {pending
-          ? "Un momento..."
+          ? <LoadingIndicator label={isSignUp ? "Creando cuenta…" : "Iniciando sesión…"} />
           : isSignUp
             ? "Crear cuenta"
             : "Iniciar sesión"}
@@ -208,5 +222,12 @@ export function AuthForm({
         </Link>
       </p>
     </form>
+    {!isSignUp && (
+      <details className="mt-5 rounded-xl border border-slate-200 p-4" open={verificationEmail ? true : undefined}>
+        <summary className="min-h-11 cursor-pointer font-semibold text-emerald-900">¿No te llegó el correo de confirmación?</summary>
+        <ResendVerificationForm callbackURL={verificationCallback} initialEmail={verificationEmail} key={verificationEmail} />
+      </details>
+    )}
+    </>
   );
 }

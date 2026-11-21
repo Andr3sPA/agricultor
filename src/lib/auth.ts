@@ -5,7 +5,7 @@ import { APIError, createAuthMiddleware } from "better-auth/api";
 import { after } from "next/server";
 import { getPrismaClient } from "@/lib/db";
 import { normalizeDisplayName } from "@/lib/auth/validation";
-import { sendPasswordResetEmail } from "@/lib/email/brevo";
+import { sendPasswordResetEmail, sendVerificationEmail } from "@/lib/email/brevo";
 
 function createAuth() {
   const secret = process.env.AUTH_SECRET;
@@ -78,6 +78,7 @@ function createAuth() {
     },
     emailAndPassword: {
       enabled: true,
+      requireEmailVerification: true,
       minPasswordLength: 8,
       maxPasswordLength: 128,
       autoSignIn: false,
@@ -90,6 +91,22 @@ function createAuth() {
       },
       resetPasswordTokenExpiresIn: 60 * 60,
       revokeSessionsOnPasswordReset: true,
+    },
+    emailVerification: {
+      sendOnSignUp: true,
+      sendOnSignIn: false,
+      expiresIn: 60 * 60,
+      sendVerificationEmail: ({ user, url }) => {
+        // Keep the public response the same even if the provider rejects the email.
+        after(async () => {
+          try {
+            await sendVerificationEmail({ email: user.email, name: user.name, url });
+          } catch {
+            console.error("No se pudo entregar un correo de confirmación de Agricultor.");
+          }
+        });
+        return Promise.resolve();
+      },
     },
     session: {
       expiresIn: 60 * 60 * 24 * 7,
@@ -110,6 +127,7 @@ function createAuth() {
           window: 60,
           max: 3,
         },
+        "/send-verification-email": { window: 60, max: 3 },
       },
     },
     hooks: {

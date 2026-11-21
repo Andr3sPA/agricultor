@@ -1,14 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { authClient } from "@/lib/auth-client";
+import { LoadingIndicator } from "@/components/loading-indicator";
 
 export function RequestPasswordResetForm() {
   const [message, setMessage] = useState("");
   const [pending, setPending] = useState(false);
 
-  async function submit(formData: FormData) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
     setPending(true);
     setMessage("");
 
@@ -26,7 +29,7 @@ export function RequestPasswordResetForm() {
       }
 
       setMessage(
-        "Si existe una cuenta con ese correo, recibirás instrucciones para cambiar la contraseña.",
+        "Si existe una cuenta con ese correo, recibirás instrucciones para cambiar la contraseña. Revisa el correo no deseado. Si no llega, verifica tu correo y vuelve a solicitar el enlace.",
       );
     } catch {
       setMessage(
@@ -38,7 +41,7 @@ export function RequestPasswordResetForm() {
   }
 
   return (
-    <form action={submit} aria-busy={pending} className="mt-8 space-y-5">
+    <form method="post" onSubmit={submit} aria-busy={pending} className="mt-8 space-y-5">
       <div>
         <label className="block text-sm font-medium" htmlFor="email">
           Correo electrónico
@@ -63,7 +66,7 @@ export function RequestPasswordResetForm() {
         disabled={pending}
         type="submit"
       >
-        {pending ? "Un momento..." : "Enviar instrucciones"}
+        {pending ? <LoadingIndicator label="Solicitando enlace…" /> : message ? "Solicitar otro enlace" : "Enviar instrucciones"}
       </button>
       <p className="text-center text-sm text-slate-700">
         <Link
@@ -93,7 +96,9 @@ export function ResetPasswordForm({ token }: { token: string }) {
     }
   }, [token]);
 
-  async function submit(formData: FormData) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
     const password = String(formData.get("password") ?? "");
     const confirmation = String(formData.get("confirmation") ?? "");
 
@@ -160,7 +165,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
   }
 
   return (
-    <form action={submit} aria-busy={pending} className="mt-8 space-y-5">
+    <form method="post" onSubmit={submit} aria-busy={pending} className="mt-8 space-y-5">
       <div>
         <label className="block text-sm font-medium" htmlFor="password">
           Nueva contraseña
@@ -240,7 +245,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
           disabled={pending}
           type="submit"
         >
-          {pending ? "Un momento..." : "Guardar contraseña"}
+          {pending ? <LoadingIndicator label="Guardando contraseña…" /> : "Guardar contraseña"}
         </button>
       )}
       {!success && (

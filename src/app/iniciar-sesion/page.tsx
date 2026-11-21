@@ -24,6 +24,17 @@ export default async function SignInPage({
           Agricultor
         </p>
         <h1 className="mt-4 text-3xl font-semibold">Inicia sesión</h1>
+        {params.correo === "confirmado" && (
+          params.error ? (
+            <p className="mt-3 rounded-xl bg-rose-50 p-3 text-rose-950" role="alert">
+              El enlace de confirmación venció o es inválido. Puedes pedir otro abajo.
+            </p>
+          ) : (
+            <p className="mt-3 rounded-xl bg-emerald-50 p-3 text-emerald-950" role="status">
+              Correo confirmado. Ya puedes iniciar sesión.
+            </p>
+          )
+        )}
         <p className="mt-3 leading-7 text-slate-700">
           Ingresa con el correo y la contraseña de tu cuenta.
         </p>

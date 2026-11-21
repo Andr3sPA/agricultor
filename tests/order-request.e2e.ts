@@ -79,6 +79,7 @@ function isCapturedResetEmail(value: unknown): value is CapturedResetEmail {
 
 async function startBrevoStub() {
   const messages: CapturedResetEmail[] = [];
+  const rejected: CapturedResetEmail[] = [];
   const server = createHttpServer((request, response) => {
     if (
       request.method !== "POST" ||
@@ -105,6 +106,13 @@ async function startBrevoStub() {
         return;
       }
 
+      if (payload.textContent.includes("/verify-email?") &&
+          payload.to.some(({ email }) => email.startsWith("order-e2e-buyer-")) &&
+          rejected.length === 0) {
+        rejected.push(payload);
+        response.writeHead(503).end();
+        return;
+      }
       messages.push(payload);
       response
         .writeHead(201, { "content-type": "application/json" })
@@ -122,6 +130,7 @@ async function startBrevoStub() {
   return {
     apiUrl: `http://127.0.0.1:${address.port}/v3/smtp/email`,
     messages,
+    rejected,
     close: () =>
       new Promise<void>((resolve, reject) => {
         server.close((error) => (error ? reject(error) : resolve()));
@@ -129,19 +138,21 @@ async function startBrevoStub() {
   };
 }
 
-async function waitForResetEmail(
+async function waitForAccountEmail(
   messages: CapturedResetEmail[],
   email: string,
+  path: string,
 ): Promise<CapturedResetEmail> {
   const deadline = Date.now() + 10_000;
   while (Date.now() < deadline) {
     const message = messages.find((candidate) =>
-      candidate.to.some((recipient) => recipient.email === email),
+      candidate.to.some((recipient) => recipient.email === email) &&
+      candidate.textContent.includes(path),
     );
     if (message) return message;
     await new Promise((resolve) => setTimeout(resolve, 50));
   }
-  throw new Error("The local Brevo E2E stub did not capture the reset email.");
+  throw new Error("The local Brevo E2E stub did not capture the expected email.");
 }
 
 async function startServer(
@@ -255,6 +266,10 @@ async function main(): Promise<void> {
       true,
       `Producer signup failed: ${await producerSignup.text()}`,
     );
+    const producerVerification = await waitForAccountEmail(brevoStub.messages, producerEmail, "/verify-email?");
+    const producerVerificationUrl = producerVerification.textContent.match(/https?:\/\/\S+/)?.[0];
+    assert.ok(producerVerificationUrl);
+    assert.ok((await producerApi.get(producerVerificationUrl)).ok());
     const producerSignin = await producerApi.post("/api/auth/sign-in/email", {
       data: { email: producerEmail, password: producerPassword },
     });
@@ -323,6 +338,19 @@ async function main(): Promise<void> {
         select: { id: true },
       });
       fixtureUserIds.push(buyer.id);
+      await waitForAccountEmail(brevoStub.rejected, email, "/verify-email?");
+      const unverifiedSignin = await api.post("/api/auth/sign-in/email", { data: { email, password } });
+      assert.equal(unverifiedSignin.status(), 403);
+      const resend = await api.post("/api/auth/send-verification-email", {
+        data: { email, callbackURL: "/iniciar-sesion?correo=confirmado" },
+      });
+      assert.ok(resend.ok());
+      const buyerVerification = await waitForAccountEmail(brevoStub.messages, email, "/verify-email?");
+      const buyerVerificationUrl = buyerVerification.textContent.match(/https?:\/\/\S+/)?.[0];
+      assert.ok(buyerVerificationUrl);
+      const verified = await api.get(buyerVerificationUrl);
+      assert.ok(verified.ok());
+      assert.match(await verified.text(), /Correo confirmado/);
 
       const resetRequest = await api.post(
         "/api/auth/request-password-reset",
@@ -338,7 +366,7 @@ async function main(): Promise<void> {
         true,
         `Password reset request failed: ${await resetRequest.text()}`,
       );
-      const resetEmail = await waitForResetEmail(brevoStub.messages, email);
+      const resetEmail = await waitForAccountEmail(brevoStub.messages, email, "/reset-password/");
       const resetUrl = resetEmail.textContent.match(/https?:\/\/\S+/)?.[0];
       assert.ok(resetUrl, "The local reset email did not contain a link.");
 
@@ -450,11 +478,10 @@ async function main(): Promise<void> {
       await expect(resetFilters).toHaveCount(0);
       for (const path of ["/mi-cuenta", "/mi-cuenta/pedidos"]) {
         await anonymousPage.goto(`${baseURL}${path}`);
-        assert.equal(
-          new URL(anonymousPage.url()).pathname,
-          "/iniciar-sesion",
+        await expect(
+          anonymousPage,
           `${path} should require a session.`,
-        );
+        ).toHaveURL(`${baseURL}/iniciar-sesion`);
       }
       await anonymousContext.close();
       const producerContext = await browser.newContext({
@@ -747,7 +774,20 @@ async function main(): Promise<void> {
       await signInLink.click();
       await page.getByLabel("Correo electrónico").fill(email);
       await page.getByLabel("Contraseña").fill(newPassword);
-      await page.getByRole("button", { name: "Iniciar sesión" }).click();
+      let releaseSignin!: () => void;
+      const signinGate = new Promise<void>((resolve) => { releaseSignin = resolve; });
+      await page.route("**/api/auth/sign-in/email", async (route) => {
+        await signinGate;
+        await route.continue();
+      }, { times: 1 });
+      try {
+        await page.getByRole("button", { name: "Iniciar sesión" }).click();
+        const loading = page.getByRole("status").filter({ hasText: "Iniciando sesión…" });
+        await expect(loading).toBeVisible();
+        await expect(page.getByRole("button").filter({ has: loading })).toBeDisabled();
+      } finally {
+        releaseSignin();
+      }
       await page.waitForURL(orderContextUrl);
       await page.getByRole("heading", { name: product.name }).waitFor();
       await page.getByText("Solicitud de compra", { exact: true }).waitFor();
@@ -809,11 +849,10 @@ async function main(): Promise<void> {
         .getByRole("link", { name: "Explorar el catálogo" })
         .waitFor();
       await page.goto(`${baseURL}/mi-cuenta/productos`);
-      assert.equal(
-        new URL(page.url()).pathname,
-        "/mi-cuenta",
+      await expect(
+        page,
         "A buyer should not access producer product management.",
-      );
+      ).toHaveURL(`${baseURL}/mi-cuenta`);
       await page.goto(`${baseURL}/catalogo/${product.id}/pedido`);
       await page.getByRole("heading", { name: product.name }).waitFor();
 

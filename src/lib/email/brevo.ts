@@ -59,9 +59,10 @@ function getBrevoApiUrl(): string {
   }
 }
 
-export async function sendPasswordResetEmail(
+async function sendAccountEmail(
   { email, name, url }: PasswordResetEmail,
-  dependencies: BrevoEmailDependencies = {},
+  dependencies: BrevoEmailDependencies,
+  purpose: "reset" | "verify",
 ): Promise<void> {
   const apiKey = dependencies.apiKey ?? process.env.API_KEY_BREVO;
   const senderEmail = dependencies.senderEmail ?? process.env.BREVO_SENDER_EMAIL;
@@ -77,6 +78,13 @@ export async function sendPasswordResetEmail(
 
   const safeName = escapeHtml(name);
   const safeUrl = escapeHtml(url);
+  const verify = purpose === "verify";
+  const subject = verify ? "Confirma tu correo en Agricultor" : "Recupera tu contraseña de Agricultor";
+  const intro = verify
+    ? "Confirma tu correo para iniciar sesión en Agricultor. Usa este enlace dentro de una hora:"
+    : "Recibimos una solicitud para cambiar la contraseña de tu cuenta de Agricultor. Usa este enlace dentro de una hora:";
+  const action = verify ? "Confirmar correo" : "Cambiar contraseña";
+  const closing = verify ? "Si no creaste esta cuenta, puedes ignorar este mensaje." : "Si no solicitaste este cambio, puedes ignorar este mensaje.";
   const response = await (dependencies.fetcher ?? fetch)(
     getBrevoApiUrl(),
     {
@@ -90,14 +98,22 @@ export async function sendPasswordResetEmail(
       body: JSON.stringify({
         sender: { email: senderEmail, name: "Agricultor" },
         to: [{ email }],
-        subject: "Recupera tu contraseña de Agricultor",
-        htmlContent: `<p>Hola ${safeName},</p><p>Recibimos una solicitud para cambiar la contraseña de tu cuenta de Agricultor. Usa este enlace dentro de una hora:</p><p><a href="${safeUrl}">Cambiar contraseña</a></p><p>Si no solicitaste este cambio, puedes ignorar este mensaje.</p>`,
-        textContent: `Hola ${name},\n\nRecibimos una solicitud para cambiar la contraseña de tu cuenta de Agricultor. Usa este enlace dentro de una hora:\n${url}\n\nSi no solicitaste este cambio, puedes ignorar este mensaje.`,
+        subject,
+        htmlContent: `<p>Hola ${safeName},</p><p>${intro}</p><p><a href="${safeUrl}">${action}</a></p><p>${closing}</p>`,
+        textContent: `Hola ${name},\n\n${intro}\n${url}\n\n${closing}`,
       }),
     },
   );
 
   if (!response.ok) {
-    throw new Error(`Brevo rechazó el correo de recuperación (HTTP ${response.status}).`);
+    throw new Error(`Brevo rechazó el correo de ${verify ? "confirmación" : "recuperación"} (HTTP ${response.status}).`);
   }
+}
+
+export function sendPasswordResetEmail(email: PasswordResetEmail, dependencies: BrevoEmailDependencies = {}) {
+  return sendAccountEmail(email, dependencies, "reset");
+}
+
+export function sendVerificationEmail(email: PasswordResetEmail, dependencies: BrevoEmailDependencies = {}) {
+  return sendAccountEmail(email, dependencies, "verify");
 }

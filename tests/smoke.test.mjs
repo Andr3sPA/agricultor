@@ -226,8 +226,9 @@ test("successful registration replaces the form with clear next steps", () => {
   assert.match(authForm, /setRegistrationComplete\(true\)/);
   assert.match(authForm, /if \(isSignUp && registrationComplete\)/);
   assert.match(authForm, /Registro recibido/);
-  assert.match(authForm, /Si el correo es nuevo, tu cuenta quedó creada; si ya tenías una/);
-  assert.match(authForm, /No enviamos un correo de confirmación porque no hace falta/);
+  assert.match(authForm, /Si tu correo está pendiente de confirmación/);
+  assert.match(authForm, /ResendVerificationForm/);
+  assert.match(authForm, /Creando cuenta…/);
   assert.match(authForm, /href=\{signInHref\}/);
   assert.match(authForm, /role="status"/);
   assert.doesNotMatch(authForm, /Si el correo está disponible/);

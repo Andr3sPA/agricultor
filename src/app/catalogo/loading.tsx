@@ -13,7 +13,7 @@ export default function CatalogLoading() {
       >
         {[0, 1, 2].map((item) => (
           <div
-            className="h-48 rounded-2xl border border-slate-200 bg-white"
+            className="h-48 rounded-2xl border border-emerald-950/5 bg-emerald-100/60 motion-safe:animate-pulse"
             key={item}
           />
         ))}
