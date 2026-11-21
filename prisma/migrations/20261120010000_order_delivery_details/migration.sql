@@ -1,0 +1,7 @@
+CREATE TABLE "OrderDeliveryDetails" (
+    "orderId" TEXT NOT NULL PRIMARY KEY REFERENCES "Order"("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    "method" VARCHAR(8) NOT NULL CHECK ("method" IN ('PICKUP', 'SHIPPING')),
+    "when" VARCHAR(100) NOT NULL,
+    "place" VARCHAR(240) NOT NULL,
+    "costCOP" INTEGER NOT NULL CHECK ("costCOP" >= 0)
+);

@@ -144,11 +144,21 @@ model Order {
   product            Product?    @relation(fields: [productId], references: [id], onDelete: SetNull)
   history            OrderHistory[]
   sellerContact      OrderSellerContact?
+  deliveryDetails    OrderDeliveryDetails?
 
   @@index([buyerId, createdAt])
   @@index([producerId, status, createdAt])
   @@index([productId])
   @@unique([buyerId, idempotencyKey])
+}
+
+model OrderDeliveryDetails {
+  orderId String @id
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  method  String @db.VarChar(8)
+  when    String @db.VarChar(100)
+  place   String @db.VarChar(240)
+  costCOP Int
 }
 
 model OrderSellerContact {

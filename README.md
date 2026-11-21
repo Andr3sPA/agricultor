@@ -63,6 +63,8 @@ versionadas, que instalan también el registro automático de esta fecha.
 La opción de compartir WhatsApp en pedidos aceptados requiere aplicar en Neon
 la migración `20261120000000_order_seller_contact`. Hasta entonces, sigue
 disponible el resumen para copiar y coordinar la entrega.
+Los datos acordados de entrega requieren la migración
+`20261120010000_order_delivery_details`.
 
 Los productores administran sus productos y pueden publicarlos explícitamente.
 El catálogo público muestra solo productos publicados con cantidad disponible y

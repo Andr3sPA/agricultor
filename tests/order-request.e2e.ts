@@ -1002,6 +1002,13 @@ async function main(): Promise<void> {
       });
       assert.equal(acceptedOrder.status, "ACCEPTED");
       assert.equal(acceptedOrder.history.length, 2);
+      await answeredProducerRequests.getByText("Registrar datos de entrega", { exact: true }).click();
+      await answeredProducerRequests.getByLabel("Forma de entrega").selectOption("SHIPPING");
+      await answeredProducerRequests.getByLabel("Cuándo").fill("Viernes, de 8 a 10 a. m.");
+      await answeredProducerRequests.getByLabel("Lugar acordado").fill("Bodega local de prueba");
+      await answeredProducerRequests.getByLabel("Costo de entrega en pesos").fill("750");
+      await answeredProducerRequests.getByRole("button", { name: "Guardar datos de entrega" }).click();
+      await expect(answeredProducerRequests.getByText("Guardamos los datos de entrega del pedido.")).toBeVisible();
       const sellerPhone = answeredProducerRequests.getByLabel("WhatsApp del vendedor");
       await sellerPhone.fill("123");
       await answeredProducerRequests.getByRole("button", { name: "Compartir WhatsApp" }).click();
@@ -1027,6 +1034,10 @@ async function main(): Promise<void> {
         .getByText("El productor aceptó esta solicitud.")
         .waitFor();
       await page.getByText("Coordinar entrega", { exact: true }).click();
+      const delivery = page.getByRole("region", { name: "Datos de entrega" });
+      await expect(delivery.getByText("Bodega local de prueba")).toBeVisible();
+      await expect(delivery).toContainText(/Total estimado con entrega\s*\$\s*3\.250 COP/);
+      await expect(page.getByText("Actualizar datos de entrega", { exact: true })).toHaveCount(0);
       const whatsapp = page.getByRole("link", { name: "Hablar con el vendedor por WhatsApp" });
       await expect(whatsapp).toHaveAttribute("href", /^https:\/\/wa\.me\/573000000000\?text=/);
       assert.ok((await whatsapp.getAttribute("href"))?.includes(acceptedOrder.id));

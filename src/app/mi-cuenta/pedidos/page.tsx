@@ -2,6 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCatalogPageHref, getPublicProductOrderHref } from "@/features/catalog/public-products";
 import { OrderCoordinationSummary } from "@/features/orders/order-coordination-summary";
+import { isOrderDeliveryAvailable } from "@/features/orders/order-delivery";
+import { OrderDeliveryForm } from "@/features/orders/order-delivery-form";
 import { isOrderSellerContactAvailable } from "@/features/orders/order-seller-contact";
 import { OrderSellerContactForm } from "@/features/orders/order-seller-contact-form";
 import { OrderDecisionForm } from "@/features/orders/order-decision-form";
@@ -126,11 +128,19 @@ export default async function OrdersPage({
 
   const acceptedOrderIds = [...buyerOrders, ...producerOrders]
     .filter(({ status }) => status === "ACCEPTED").map(({ id }) => id);
-  const contactsAvailable = acceptedOrderIds.length > 0 && await isOrderSellerContactAvailable();
-  const contacts = contactsAvailable ? await prisma.orderSellerContact.findMany({
-    where: { orderId: { in: acceptedOrderIds } },
-    select: { orderId: true, whatsapp: true },
-  }) : [];
+  const [contactsAvailable, deliveryAvailable] = acceptedOrderIds.length > 0
+    ? await Promise.all([isOrderSellerContactAvailable(), isOrderDeliveryAvailable()])
+    : [false, false];
+  const [contacts, deliveries] = await Promise.all([
+    contactsAvailable ? prisma.orderSellerContact.findMany({
+      where: { orderId: { in: acceptedOrderIds } },
+      select: { orderId: true, whatsapp: true },
+    }) : [],
+    deliveryAvailable ? prisma.orderDeliveryDetails.findMany({
+      where: { orderId: { in: acceptedOrderIds } },
+    }) : [],
+  ]);
+  const deliveryByOrder = new Map(deliveries.map((delivery) => [delivery.orderId, delivery]));
   const contactByOrder = new Map(contacts.map(({ orderId, whatsapp }) => [orderId, whatsapp]));
   const pendingProducerOrders = producerOrders.filter(({ status }) => status === "PENDING");
   const answeredProducerOrders = producerOrders.filter(({ status }) => status !== "PENDING");
@@ -160,6 +170,7 @@ export default async function OrdersPage({
     const unitPrice = copFormatter.format(order.priceCOP);
     const requestedAt = dateFormatter.format(order.createdAt);
     const whatsapp = contactByOrder.get(order.id);
+    const delivery = deliveryByOrder.get(order.id);
     const estimatedTotal = calculateUnitPriceTotal(
       order.requestedQuantity.toString(),
       String(order.priceCOP),
@@ -302,6 +313,25 @@ export default async function OrdersPage({
               "¿Acordamos si será envío o recogida, cuándo y dónde?",
             ].join("\n")}
           />
+        )}
+        {deliveryAvailable && order.status === "ACCEPTED" && (
+          <>
+            <section className="mt-4 rounded-xl bg-slate-50 p-4" aria-label="Datos de entrega">
+              <TrackingHeading className="font-semibold">Datos de entrega</TrackingHeading>
+              {delivery ? (
+                <dl className="mt-2 space-y-2 break-words text-sm text-slate-700">
+                  <div><dt className="font-medium">Forma de entrega</dt><dd>{delivery.method === "PICKUP" ? "Recogida" : "Envío"}</dd></div>
+                  <div><dt className="font-medium">Cuándo</dt><dd>{delivery.when}</dd></div>
+                  <div><dt className="font-medium">Lugar acordado</dt><dd>{delivery.place}</dd></div>
+                  <div><dt className="font-medium">Costo de entrega</dt><dd>{copFormatter.format(delivery.costCOP)} COP</dd></div>
+                  {estimatedTotal !== null && (
+                    <div><dt className="font-medium">Total estimado con entrega</dt><dd>$ {formatAgriculturalValue(String(BigInt(estimatedTotal) + BigInt(delivery.costCOP)))} COP</dd></div>
+                  )}
+                </dl>
+              ) : <p className="mt-2 text-sm text-slate-700">Aún no se han registrado los datos de entrega.</p>}
+            </section>
+            {producerView && <OrderDeliveryForm orderId={order.id} delivery={delivery} />}
+          </>
         )}
         {contactsAvailable && order.status === "ACCEPTED" && (
           producerView ? <OrderSellerContactForm orderId={order.id} whatsapp={whatsapp} /> : whatsapp && (
