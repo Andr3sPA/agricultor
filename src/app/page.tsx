@@ -4,7 +4,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Agricultor | Productos del campo",
   description:
-    "Explora productos del campo o crea una cuenta para ofrecer tu cosecha.",
+    "Explora productos del campo y crea una cuenta para comprar o vender.",
 };
 
 export default function Home() {
@@ -18,12 +18,6 @@ export default function Home() {
             href="/"
           >
             Agricultor
-          </Link>
-          <Link
-            className="inline-flex min-h-11 items-center justify-center rounded-xl px-4 py-2 font-semibold text-emerald-950 underline decoration-emerald-700 underline-offset-4 hover:bg-white"
-            href="/iniciar-sesion"
-          >
-            Ya tengo cuenta
           </Link>
         </header>
 
@@ -42,95 +36,43 @@ export default function Home() {
               Compra productos del campo o vende tu cosecha
             </h1>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-emerald-50 sm:text-xl">
-              Agricultor conecta a quienes producen con quienes buscan
-              alimentos frescos. Elige por dónde quieres empezar.
+              Explora el catálogo sin registrarte. Con una sola cuenta puedes
+              comprar y, si produces, agregar tu perfil de productor más
+              adelante.
             </p>
           </div>
         </section>
 
         <section
-          aria-label="Elige cómo participar"
-          className="mt-5 grid gap-5 md:grid-cols-2 md:gap-6"
+          aria-labelledby="getting-started-title"
+          className="mt-5 rounded-3xl border border-emerald-950/10 bg-white p-6 shadow-sm sm:p-8"
         >
-          <article className="flex flex-col rounded-3xl border border-emerald-950/10 bg-white p-6 shadow-sm sm:p-6">
-            <div
-              aria-hidden="true"
-              className="flex size-14 items-center justify-center rounded-2xl bg-amber-100 text-amber-950"
+          <div className="max-w-2xl">
+            <h2
+              className="text-2xl font-bold text-emerald-950"
+              id="getting-started-title"
             >
-              <svg
-                fill="none"
-                height="30"
-                viewBox="0 0 24 24"
-                width="30"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M3 4h2l2.2 10.1a2 2 0 0 0 2 1.6h7.6a2 2 0 0 0 1.9-1.4L20 8H6"
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="1.8"
-                />
-                <circle cx="10" cy="20" r="1.3" fill="currentColor" />
-                <circle cx="17" cy="20" r="1.3" fill="currentColor" />
-              </svg>
-            </div>
-            <h2 className="mt-4 text-2xl font-bold text-emerald-950">
-              Quiero comprar
+              Empieza con una sola cuenta
             </h2>
-            <p className="mt-2 flex-1 leading-7 text-slate-700">
-              Explora el catálogo y consulta los productos publicados por
-              productores.
+            <p className="mt-2 leading-7 text-slate-700">
+              Crea tu cuenta para comprar. Si produces, después puedes agregar
+              tu perfil para publicar tu cosecha.
             </p>
-            <Link
-              className="mt-5 inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-emerald-800 px-5 py-3 text-center font-bold text-white hover:bg-emerald-900 sm:w-auto"
-              href="/catalogo"
-            >
-              Explorar el catálogo
-            </Link>
-          </article>
-
-          <article className="flex flex-col rounded-3xl border border-emerald-950/10 bg-white p-6 shadow-sm sm:p-6">
-            <div
-              aria-hidden="true"
-              className="flex size-14 items-center justify-center rounded-2xl bg-lime-100 text-emerald-950"
-            >
-              <svg
-                fill="none"
-                height="30"
-                viewBox="0 0 24 24"
-                width="30"
-                xmlns="http://www.w3.org/2000/svg"
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+              <Link
+                className="inline-flex min-h-12 items-center justify-center rounded-xl bg-emerald-800 px-5 py-3 text-center font-bold text-white hover:bg-emerald-900"
+                href="/crear-cuenta"
               >
-                <path
-                  d="M20 4c-8.3 0-13 3.8-13 9a5 5 0 0 0 5 5c5.2 0 8-5.7 8-14Z"
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="1.8"
-                />
-                <path
-                  d="M4 21c2-5 5-8 10-11"
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeWidth="1.8"
-                />
-              </svg>
+                Crear cuenta
+              </Link>
+              <Link
+                className="inline-flex min-h-12 items-center justify-center rounded-xl border border-emerald-800 px-5 py-3 text-center font-bold text-emerald-950 hover:bg-emerald-50"
+                href="/catalogo"
+              >
+                Explorar el catálogo
+              </Link>
             </div>
-            <h2 className="mt-4 text-2xl font-bold text-emerald-950">
-              Quiero vender
-            </h2>
-            <p className="mt-2 flex-1 leading-7 text-slate-700">
-              Crea tu cuenta y agrega el perfil de productor para publicar lo
-              que cosechas.
-            </p>
-            <Link
-              className="mt-5 inline-flex min-h-12 w-full items-center justify-center rounded-xl border-2 border-emerald-800 px-5 py-3 text-center font-bold text-emerald-950 hover:bg-emerald-50 sm:w-auto"
-              href="/crear-cuenta?intent=producer"
-            >
-              Crear cuenta para vender
-            </Link>
-          </article>
+          </div>
         </section>
 
         <p className="mt-8 text-center text-slate-700">
@@ -139,7 +81,7 @@ export default function Home() {
             className="font-semibold text-emerald-950 underline decoration-emerald-700 underline-offset-4"
             href="/iniciar-sesion"
           >
-            Inicia sesión aquí
+            Inicia sesión
           </Link>
         </p>
       </div>
