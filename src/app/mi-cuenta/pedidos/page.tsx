@@ -4,6 +4,8 @@ import { getCatalogPageHref, getPublicProductOrderHref } from "@/features/catalo
 import { OrderCoordinationSummary } from "@/features/orders/order-coordination-summary";
 import { isDeliveryConfirmationAvailable, isOrderDeliveryAvailable } from "@/features/orders/order-delivery";
 import { OrderDeliveryConfirmationForm } from "@/features/orders/order-delivery-confirmation-form";
+import { isOrderReceiptAvailable } from "@/features/orders/order-receipt";
+import { OrderRatingForm, OrderReceiptForm } from "@/features/orders/order-receipt-forms";
 import { OrderDeliveryForm } from "@/features/orders/order-delivery-form";
 import { isOrderSellerContactAvailable } from "@/features/orders/order-seller-contact";
 import { OrderSellerContactForm } from "@/features/orders/order-seller-contact-form";
@@ -130,10 +132,10 @@ export default async function OrdersPage({
 
   const acceptedOrderIds = [...buyerOrders, ...producerOrders]
     .filter(({ status }) => status === "ACCEPTED").map(({ id }) => id);
-  const [contactsAvailable, deliveryAvailable, confirmationAvailable] = acceptedOrderIds.length > 0
-    ? await Promise.all([isOrderSellerContactAvailable(), isOrderDeliveryAvailable(), isDeliveryConfirmationAvailable()])
-    : [false, false, false];
-  const [contacts, deliveries] = await Promise.all([
+  const [contactsAvailable, deliveryAvailable, confirmationAvailable, receiptAvailable] = acceptedOrderIds.length > 0
+    ? await Promise.all([isOrderSellerContactAvailable(), isOrderDeliveryAvailable(), isDeliveryConfirmationAvailable(), isOrderReceiptAvailable()])
+    : [false, false, false, false];
+  const [contacts, deliveries, receipts] = await Promise.all([
     contactsAvailable ? prisma.orderSellerContact.findMany({
       where: { orderId: { in: acceptedOrderIds } },
       select: { orderId: true, whatsapp: true },
@@ -146,8 +148,13 @@ export default async function OrdersPage({
     ` : deliveryAvailable ? prisma.orderDeliveryDetails.findMany({
       where: { orderId: { in: acceptedOrderIds } },
     }) : [],
+    receiptAvailable ? prisma.orderReceipt.findMany({
+      where: { orderId: { in: acceptedOrderIds } },
+      select: { orderId: true, receivedAt: true, rating: true },
+    }) : [],
   ]);
   const deliveryByOrder = new Map(deliveries.map((delivery) => [delivery.orderId, delivery]));
+  const receiptByOrder = new Map(receipts.map((receipt) => [receipt.orderId, receipt]));
   const contactByOrder = new Map(contacts.map(({ orderId, whatsapp }) => [orderId, whatsapp]));
   const pendingProducerOrders = producerOrders.filter(({ status }) => status === "PENDING");
   const answeredProducerOrders = producerOrders.filter(({ status }) => status !== "PENDING");
@@ -178,6 +185,8 @@ export default async function OrdersPage({
     const requestedAt = dateFormatter.format(order.createdAt);
     const whatsapp = contactByOrder.get(order.id);
     const delivery = deliveryByOrder.get(order.id);
+    const receipt = receiptByOrder.get(order.id);
+    const confirmed = delivery && "confirmed" in delivery && delivery.confirmed === true;
     const estimatedTotal = calculateUnitPriceTotal(
       order.requestedQuantity.toString(),
       String(order.priceCOP),
@@ -336,8 +345,8 @@ export default async function OrdersPage({
                   )}
                 </dl>
               ) : <p className="mt-2 text-sm text-slate-700">Aún no se han registrado los datos de entrega.</p>}
-              {delivery && confirmationAvailable && (
-                "confirmed" in delivery && delivery.confirmed ? (
+              {delivery && confirmationAvailable && !receipt && (
+                confirmed ? (
                   <p className="mt-3 text-sm font-semibold text-emerald-950">Datos confirmados por el comprador.</p>
                 ) : producerView ? (
                   <p className="mt-3 text-sm text-slate-700">Pendiente de confirmación del comprador.</p>
@@ -345,8 +354,18 @@ export default async function OrdersPage({
                   <OrderDeliveryConfirmationForm delivery={delivery} />
                 )
               )}
+              {receipt ? (
+                <>
+                  <p className="mt-3 text-sm font-semibold text-emerald-950">Pedido recibido el {dateFormatter.format(receipt.receivedAt)}.</p>
+                  {!producerView && (receipt.rating === null
+                    ? <OrderRatingForm orderId={order.id} />
+                    : <p className="mt-2 text-sm">Tu calificación: {receipt.rating} de 5.</p>)}
+                </>
+              ) : !producerView && delivery && confirmed && receiptAvailable ? (
+                <OrderReceiptForm delivery={delivery} />
+              ) : null}
             </section>
-            {producerView && <OrderDeliveryForm orderId={order.id} delivery={delivery} />}
+            {producerView && !receipt && <OrderDeliveryForm orderId={order.id} delivery={delivery} />}
           </>
         )}
         {contactsAvailable && order.status === "ACCEPTED" && (

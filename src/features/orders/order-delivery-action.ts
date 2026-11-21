@@ -5,6 +5,7 @@ import { getCurrentIdentity } from "@/lib/auth/server";
 import { prisma } from "@/lib/db";
 import { isDeliveryConfirmationAvailable, isOrderDeliveryAvailable } from "./order-delivery";
 import type { OrderDeliveryDetails } from "@/generated/prisma/client";
+import { isOrderReceiptAvailable } from "./order-receipt";
 
 type DeliveryState = { message: string; ok?: boolean };
 
@@ -17,6 +18,10 @@ export async function saveOrderDelivery(orderId: string, _state: DeliveryState, 
   });
   if (!order) return { message: "No encontramos ese pedido aceptado en tu cuenta." };
   if (!await isOrderDeliveryAvailable()) return { message: "Esta opción todavía no está disponible." };
+  if (await isOrderReceiptAvailable() && await prisma.orderReceipt.findUnique({
+    where: { orderId: order.id },
+    select: { orderId: true },
+  })) return { message: "El comprador ya confirmó la recepción de este pedido." };
 
   const method = form.get("method");
   const when = String(form.get("when") ?? "").trim();

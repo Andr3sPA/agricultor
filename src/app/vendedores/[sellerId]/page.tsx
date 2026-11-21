@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPublicProductHref } from "@/features/catalog/public-products";
 import { isSellerProfileAvailable } from "@/features/sellers/seller-profile";
+import { isOrderReceiptAvailable } from "@/features/orders/order-receipt";
 import { prisma } from "@/lib/db";
 
 export default async function PublicSellerProfile({ params }: { params: Promise<{ sellerId: string }> }) {
@@ -12,6 +13,11 @@ export default async function PublicSellerProfile({ params }: { params: Promise<
     select: { name: true, description: true, municipality: true, ownerId: true },
   });
   if (!profile) notFound();
+  const ratings = await isOrderReceiptAvailable() ? await prisma.orderReceipt.aggregate({
+    where: { rating: { not: null }, order: { producerId: profile.ownerId, status: "ACCEPTED" } },
+    _avg: { rating: true },
+    _count: { rating: true },
+  }) : null;
   const offers = await prisma.product.findMany({
     where: { ownerId: profile.ownerId, isPublished: true, availableQuantity: { gt: 0 } },
     orderBy: [{ name: "asc" }, { id: "asc" }],
@@ -25,6 +31,13 @@ export default async function PublicSellerProfile({ params }: { params: Promise<
         <h1 className="text-3xl font-semibold wrap-anywhere">{profile.name}</h1>
         <p className="font-medium wrap-anywhere">{profile.municipality}</p>
         <p className="whitespace-pre-wrap wrap-anywhere">{profile.description}</p>
+        {ratings && (
+          <p className="rounded-xl bg-emerald-50 p-3 text-sm text-emerald-950">
+            {ratings._avg.rating === null ? "Todavía no hay calificaciones de pedidos recibidos." : (
+              <><strong>{new Intl.NumberFormat("es-CO", { maximumFractionDigits: 1 }).format(ratings._avg.rating)} de 5</strong> · {ratings._count.rating} {ratings._count.rating === 1 ? "calificación" : "calificaciones"} de pedidos recibidos</>
+            )}
+          </p>
+        )}
       </section>
       <section aria-labelledby="seller-offers">
         <h2 className="text-xl font-semibold" id="seller-offers">Ofertas disponibles</h2>

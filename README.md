@@ -71,6 +71,8 @@ Los datos acordados de entrega requieren la migración
 La confirmación del comprador requiere
 `20261120020000_order_delivery_confirmation`. Cualquier cambio en el envío o la
 recogida vuelve a dejar esos datos pendientes de confirmación.
+Confirmar la recepción y calificar al vendedor requiere la migración
+`20261120040000_order_receipt_rating`.
 
 Los productores administran sus productos y pueden publicarlos explícitamente.
 El catálogo público muestra solo productos publicados con cantidad disponible y

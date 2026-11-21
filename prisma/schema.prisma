@@ -156,11 +156,19 @@ model Order {
   history            OrderHistory[]
   sellerContact      OrderSellerContact?
   deliveryDetails    OrderDeliveryDetails?
+  receipt            OrderReceipt?
 
   @@index([buyerId, createdAt])
   @@index([producerId, status, createdAt])
   @@index([productId])
   @@unique([buyerId, idempotencyKey])
+}
+
+model OrderReceipt {
+  orderId    String   @id
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  receivedAt DateTime @default(now())
+  rating     Int?
 }
 
 model OrderDeliveryDetails {

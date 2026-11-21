@@ -37,7 +37,7 @@ La aplicación ya tiene cuentas y recuperación por Brevo, catálogo público, i
 
 - Empezar con correo para el productor cuando recibe una solicitud y para el comprador cuando hay una respuesta. Considerar despacho o cambios de entrega solo si los participantes los necesitan. El correo debe llevar al pedido y omitir dirección, datos bancarios y detalles sensibles.
 - Reutilizar Brevo cuando se autoricen el remitente y el entorno de prueba. Diseñar envíos fuera de la transacción del pedido, con reintentos y deduplicación por evento y destinatario. Probar con un sustituto local antes de cualquier piloto con destinatarios reales.
-- Pilotear calificación del comprador al vendedor después de una recepción confirmada, con una reseña por pedido y valoración de aspectos que el piloto pueda comprobar, como cantidad, calidad acordada y cumplimiento. Definir reporte, moderación, privacidad y correcciones antes de mostrar reseñas públicamente. Validar si también hace falta calificar compradores.
+- El comprador puede confirmar la recepción completa y dejar una calificación de 1 a 5 por pedido. El perfil público muestra el promedio y el número de calificaciones. Para añadir reseñas escritas, definir reporte, moderación y correcciones. Validar si también hace falta calificar compradores.
 
 ## 4. Formas de pago
 
