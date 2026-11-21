@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { dispatchGroupKey, getDispatchDateFilter, groupDispatchOrders } from "@/features/orders/dispatch-report";
+import { PrintDispatchButton } from "@/features/orders/print-dispatch-button";
 import { PRODUCT_UNITS } from "@/features/products/product-validation";
 import { calculateUnitPriceTotal, formatAgriculturalValue } from "@/features/unit-converter/agricultural-units";
 import { getCurrentIdentity } from "@/lib/auth/server";
@@ -42,13 +43,13 @@ export default async function DispatchPage({
   const query = new URLSearchParams({ formato: "consolidado", desde: from, hasta: through });
 
   return (
-    <main className="mx-auto min-h-screen max-w-3xl space-y-5 px-4 py-8 sm:px-6">
-      <Link className="inline-flex min-h-11 items-center font-semibold text-emerald-900 underline" href="/mi-cuenta/pedidos#pedidos-respondidos">
+    <main className="mx-auto min-h-screen max-w-3xl space-y-5 px-4 py-8 sm:px-6 print:min-h-0 print:max-w-none print:p-0 print:text-black">
+      <Link className="inline-flex min-h-11 items-center font-semibold text-emerald-900 underline print:hidden" href="/mi-cuenta/pedidos#pedidos-respondidos">
         Volver a pedidos
       </Link>
       <h1 className="text-3xl font-semibold">Cantidades para despacho</h1>
-      <p>Consulta cuánto reunir de cada producto según los pedidos aceptados. Elige fechas de aceptación en hora de Colombia.</p>
-      <form className="flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-white p-4" method="get">
+      <p className="print:hidden">Consulta cuánto reunir de cada producto según los pedidos aceptados. Elige fechas de aceptación en hora de Colombia.</p>
+      <form className="flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-white p-4 print:hidden" method="get">
         <label className="text-sm font-medium">Desde
           <input className="mt-1 block min-h-11 rounded-lg border border-slate-300 px-3" defaultValue={from} name="desde" type="date" />
         </label>
@@ -63,21 +64,29 @@ export default async function DispatchPage({
         <p>No hay pedidos aceptados para estas fechas.</p>
       ) : (
         <>
+          <p className="hidden print:block">
+            Fechas de aceptación (hora de Colombia) · {from && through
+              ? from === through ? from : `Del ${from} al ${through}`
+              : from ? `Desde ${from}` : through ? `Hasta ${through}` : "Todas las fechas"}
+          </p>
           <p role="status">{orders.length} {orders.length === 1 ? "pedido aceptado" : "pedidos aceptados"}</p>
-          <div className="rounded-xl bg-emerald-50 p-4">
+          <div className="rounded-xl bg-emerald-50 p-4 print:hidden">
             <h2 className="font-semibold">Valor estimado de los pedidos aceptados</h2>
             <p className="mt-1 text-2xl font-semibold text-emerald-950">$ {formatAgriculturalValue(String(totalValue))} COP</p>
             <p className="mt-1 text-sm text-slate-700">Suma de los importes registrados al solicitar cada pedido, redondeados al peso. Los pagos se coordinan por separado.</p>
           </div>
           <ul aria-label="Cantidades por producto y unidad" className="space-y-3">
             {totals.map(({ productName, unit, quantity, count }) => (
-              <li className="rounded-xl border border-slate-200 bg-white p-4" key={dispatchGroupKey(productName, unit)}>
-                <h2 className="break-words font-semibold">{productName}</h2>
+              <li className="rounded-xl border border-slate-200 bg-white p-4 print:break-inside-avoid print:border-black" key={dispatchGroupKey(productName, unit)}>
+                <h2 className="break-words font-semibold">
+                  <span aria-hidden="true" className="mr-3 hidden size-4 border border-black align-middle print:inline-block" />
+                  {productName}
+                </h2>
                 <p className="mt-1 text-lg font-semibold text-emerald-950">
                   {formatAgriculturalValue(quantity.toFixed())} {PRODUCT_UNITS.find(({ value }) => value === unit)?.label ?? unit}
                 </p>
                 <p className="text-sm">{count} {count === 1 ? "pedido" : "pedidos"}</p>
-                <details className="mt-2 border-t border-slate-200">
+                <details className="mt-2 border-t border-slate-200 print:hidden">
                   <summary className="min-h-11 cursor-pointer pt-3 font-semibold text-emerald-900">
                     Ver pedidos de este total
                   </summary>
@@ -99,9 +108,12 @@ export default async function DispatchPage({
               </li>
             ))}
           </ul>
-          <a className="inline-flex min-h-11 items-center font-semibold text-emerald-900 underline" download href={`/mi-cuenta/pedidos/aceptados.csv?${query}`}>
-            Descargar estas cantidades (CSV)
-          </a>
+          <div className="flex flex-wrap gap-3 print:hidden">
+            <PrintDispatchButton />
+            <a className="inline-flex min-h-11 items-center font-semibold text-emerald-900 underline" download href={`/mi-cuenta/pedidos/aceptados.csv?${query}`}>
+              Descargar estas cantidades (CSV)
+            </a>
+          </div>
         </>
       )}
     </main>

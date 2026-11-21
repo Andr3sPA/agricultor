@@ -1251,6 +1251,18 @@ async function main(): Promise<void> {
       await expect(producerPage.getByText("2,5 Bulto", { exact: true })).toBeVisible();
       await expect(producerPage.getByRole("link", { name: "Descargar estas cantidades (CSV)" }))
         .toHaveAttribute("href", `${exportPath}?formato=consolidado&desde=2026-11-19&hasta=2026-11-19`);
+      await producerPage.evaluate(() => {
+        window.print = () => { document.body.dataset.printRequested = "true"; };
+      });
+      await producerPage.getByRole("button", { name: "Imprimir lista de empaque" }).click();
+      await expect(producerPage.locator("body")).toHaveAttribute("data-print-requested", "true");
+      await producerPage.emulateMedia({ media: "print" });
+      await expect(producerPage.getByText(/Fechas de aceptación.*2026-11-19/)).toBeVisible();
+      await expect(producerPage.getByText("2,625 Kilogramo (kg)", { exact: true })).toBeVisible();
+      await expect(producerPage.getByText("2,5 Bulto", { exact: true })).toBeVisible();
+      await expect(producerPage.getByRole("heading", { name: "Valor estimado de los pedidos aceptados" })).toBeHidden();
+      await expect(producerPage.getByRole("button", { name: "Consultar" })).toBeHidden();
+      await producerPage.emulateMedia({ media: "screen" });
       const kiloGroup = producerPage.getByText("2,625 Kilogramo (kg)", { exact: true }).locator("..");
       await kiloGroup.getByText("Ver pedidos de este total", { exact: true }).click();
       await expect(kiloGroup.getByRole("link", { name: /^Abrir pedido / })).toHaveCount(2);
