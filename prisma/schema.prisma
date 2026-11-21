@@ -185,6 +185,14 @@ model OrderDeliveryConfirmation {
   orderId     String               @id
   delivery    OrderDeliveryDetails @relation(fields: [orderId], references: [orderId], onDelete: Cascade)
   confirmedAt DateTime             @default(now())
+  payment     OrderExternalPayment?
+}
+
+model OrderExternalPayment {
+  orderId      String                    @id
+  confirmation OrderDeliveryConfirmation @relation(fields: [orderId], references: [orderId], onDelete: Cascade)
+  method       String                    @db.VarChar(16)
+  wompiUrl     String?                   @db.VarChar(250) @unique
 }
 
 model OrderSellerContact {

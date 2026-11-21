@@ -73,6 +73,9 @@ La confirmación del comprador requiere
 recogida vuelve a dejar esos datos pendientes de confirmación.
 Confirmar la recepción y calificar al vendedor requiere la migración
 `20261120040000_order_receipt_rating`.
+Las instrucciones de pago externo requieren la migración
+`20261120050000_order_external_payment`. Si cambia el acuerdo de entrega,
+el vendedor debe volver a configurar el pago después de la nueva confirmación.
 
 Los productores administran sus productos y pueden publicarlos explícitamente.
 El catálogo público muestra solo productos publicados con cantidad disponible y

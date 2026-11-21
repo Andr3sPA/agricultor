@@ -6,6 +6,8 @@ import { isDeliveryConfirmationAvailable, isOrderDeliveryAvailable } from "@/fea
 import { OrderDeliveryConfirmationForm } from "@/features/orders/order-delivery-confirmation-form";
 import { isOrderReceiptAvailable } from "@/features/orders/order-receipt";
 import { OrderRatingForm, OrderReceiptForm } from "@/features/orders/order-receipt-forms";
+import { ExternalPaymentForm } from "@/features/orders/external-payment-form";
+import { isExternalPaymentAvailable, paymentLabels } from "@/features/orders/external-payment";
 import { OrderDeliveryForm } from "@/features/orders/order-delivery-form";
 import { isOrderSellerContactAvailable } from "@/features/orders/order-seller-contact";
 import { OrderSellerContactForm } from "@/features/orders/order-seller-contact-form";
@@ -132,18 +134,20 @@ export default async function OrdersPage({
 
   const acceptedOrderIds = [...buyerOrders, ...producerOrders]
     .filter(({ status }) => status === "ACCEPTED").map(({ id }) => id);
-  const [contactsAvailable, deliveryAvailable, confirmationAvailable, receiptAvailable] = acceptedOrderIds.length > 0
-    ? await Promise.all([isOrderSellerContactAvailable(), isOrderDeliveryAvailable(), isDeliveryConfirmationAvailable(), isOrderReceiptAvailable()])
-    : [false, false, false, false];
+  const [contactsAvailable, deliveryAvailable, confirmationAvailable, receiptAvailable, paymentAvailable] = acceptedOrderIds.length > 0
+    ? await Promise.all([isOrderSellerContactAvailable(), isOrderDeliveryAvailable(), isDeliveryConfirmationAvailable(), isOrderReceiptAvailable(), isExternalPaymentAvailable()])
+    : [false, false, false, false, false];
   const [contacts, deliveries, receipts] = await Promise.all([
     contactsAvailable ? prisma.orderSellerContact.findMany({
       where: { orderId: { in: acceptedOrderIds } },
       select: { orderId: true, whatsapp: true },
     }) : [],
-    deliveryAvailable && confirmationAvailable ? prisma.$queryRaw<(OrderDeliveryDetails & { confirmed: boolean })[]>`
-      SELECT d.*, c."orderId" IS NOT NULL AS confirmed
+    deliveryAvailable && confirmationAvailable ? prisma.$queryRaw<(OrderDeliveryDetails & { confirmed: boolean; paymentMethod: string | null; wompiUrl: string | null })[]>`
+      SELECT d.*, c."orderId" IS NOT NULL AS confirmed,
+        ${paymentAvailable ? Prisma.sql`p."method" AS "paymentMethod", p."wompiUrl"` : Prisma.sql`NULL AS "paymentMethod", NULL AS "wompiUrl"`}
       FROM "OrderDeliveryDetails" d
       LEFT JOIN "OrderDeliveryConfirmation" c ON c."orderId" = d."orderId"
+      ${paymentAvailable ? Prisma.sql`LEFT JOIN "OrderExternalPayment" p ON p."orderId" = c."orderId"` : Prisma.empty}
       WHERE d."orderId" IN (${Prisma.join(acceptedOrderIds)})
     ` : deliveryAvailable ? prisma.orderDeliveryDetails.findMany({
       where: { orderId: { in: acceptedOrderIds } },
@@ -187,6 +191,9 @@ export default async function OrdersPage({
     const delivery = deliveryByOrder.get(order.id);
     const receipt = receiptByOrder.get(order.id);
     const confirmed = delivery && "confirmed" in delivery && delivery.confirmed === true;
+    const payment = delivery && "paymentMethod" in delivery && typeof delivery.paymentMethod === "string"
+      ? { orderId: order.id, method: delivery.paymentMethod, wompiUrl: "wompiUrl" in delivery && typeof delivery.wompiUrl === "string" ? delivery.wompiUrl : null }
+      : undefined;
     const estimatedTotal = calculateUnitPriceTotal(
       order.requestedQuantity.toString(),
       String(order.priceCOP),
@@ -366,6 +373,27 @@ export default async function OrdersPage({
               ) : null}
             </section>
             {producerView && !receipt && <OrderDeliveryForm orderId={order.id} delivery={delivery} />}
+          </>
+        )}
+        {paymentAvailable && delivery && confirmed && order.status === "ACCEPTED" && (
+          <>
+            {payment && whatsapp && (
+              <section className="mt-4 space-y-2 rounded-xl bg-slate-50 p-4" aria-label="Forma de pago acordada">
+                <TrackingHeading className="font-semibold">Forma de pago acordada</TrackingHeading>
+                <p>{paymentLabels[payment.method as keyof typeof paymentLabels]}</p>
+                {payment.method === "TRANSFER" && <p>Acuerda los datos de la transferencia con el vendedor por WhatsApp.</p>}
+                {payment.method === "ON_DELIVERY" && <p>Paga al vendedor al recibir o recoger el pedido.</p>}
+                {!producerView && payment.wompiUrl && (
+                  <a className="inline-flex min-h-11 items-center rounded-lg bg-emerald-800 px-3 font-semibold text-white" href={payment.wompiUrl} rel="noreferrer" target="_blank">
+                    Pagar en Wompi
+                  </a>
+                )}
+                <p className="text-sm text-slate-700">El vendedor recibe el pago. Para dudas sobre el cobro o devoluciones, contacta al vendedor por WhatsApp. Agricultor no confirma el abono.</p>
+              </section>
+            )}
+            {producerView && (whatsapp || payment ? <ExternalPaymentForm delivery={delivery} payment={payment} /> : (
+              <p className="mt-3 text-sm text-slate-700">Comparte tu WhatsApp para indicar la forma de pago.</p>
+            ))}
           </>
         )}
         {contactsAvailable && order.status === "ACCEPTED" && (
