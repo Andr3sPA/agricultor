@@ -28,8 +28,8 @@ export default async function SignUpPage({
         </h1>
         <p className="mt-3 leading-7 text-slate-700">
           {producerIntent
-            ? "Después de crear tu cuenta e iniciar sesión, agrega el perfil de productor para registrar y publicar tu cosecha."
-            : "Tu cuenta empieza como comprador. Luego puedes agregar otros perfiles."}
+            ? "Inicia sesión y selecciona Vender productos."
+            : "Compra, vende y consulta tus pedidos."}
         </p>
         <AuthForm
           mode="sign-up"

@@ -1,44 +1,25 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { getCurrentIdentity } from "@/lib/auth/server";
 import { prisma } from "@/lib/db";
-import { isSelfAssignableRole } from "@/lib/auth/roles";
 
-export type RoleActionState = {
-  ok?: boolean;
-  message?: string;
-};
-
-export async function adoptRole(
-  _previousState: RoleActionState,
-  formData: FormData,
-): Promise<RoleActionState> {
+export async function enableSelling() {
   const identity = await getCurrentIdentity();
+  if (!identity) redirect("/iniciar-sesion?intent=producer");
 
-  if (!identity) {
-    return { message: "Inicia sesión para agregar un perfil." };
+  const sellerRole = { userId: identity.userId, role: "PRODUCER" } as const;
+  try {
+    await prisma.userRole.upsert({
+      where: { userId_role: sellerRole },
+      create: sellerRole,
+      update: {},
+    });
+  } catch {
+    return { message: "No pudimos abrir tus ventas. Intenta de nuevo." };
   }
-
-  const role = formData.get("role");
-  if (!isSelfAssignableRole(role)) {
-    return { message: "Ese perfil no se puede agregar desde este formulario." };
-  }
-
-  await prisma.userRole.upsert({
-    where: {
-      userId_role: {
-        userId: identity.userId,
-        role,
-      },
-    },
-    create: {
-      userId: identity.userId,
-      role,
-    },
-    update: {},
-  });
 
   revalidatePath("/mi-cuenta");
-  return { ok: true, message: "Listo, agregamos ese perfil a tu cuenta." };
+  redirect("/mi-cuenta/productos");
 }

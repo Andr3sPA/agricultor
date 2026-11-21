@@ -32,12 +32,10 @@ La aplicación local se sirve en `http://localhost:3000`.
   sistema (`VERCEL_URL`, `VERCEL_BRANCH_URL` y
   `VERCEL_PROJECT_PRODUCTION_URL`) para limitar los hosts permitidos.
 
-La creación de cuenta usa correo y contraseña. Después de crearla, la persona
-inicia sesión explícitamente. Una cuenta nueva comienza como comprador; cada
-persona puede agregar los perfiles de productor o comerciante. Asociación y
-administrador no se pueden autoasignar. Hay que confirmar el correo para
-iniciar sesión. Las cuentas existentes que aún
-no lo hayan confirmado pueden solicitar el enlace desde el inicio de sesión.
+La creación de cuenta usa correo y contraseña. Después de confirmar el correo,
+la persona puede iniciar sesión, comprar y consultar sus pedidos. La opción
+**Vender productos** abre el inventario de esa misma cuenta. Quienes tengan el
+correo pendiente pueden solicitar el enlace desde el inicio de sesión.
 La recuperación de contraseña
 envía un enlace de un solo uso, válido por una hora, mediante Brevo; la pantalla
 de solicitud no revela si el correo tiene una cuenta.

@@ -120,7 +120,7 @@ export function AuthForm({
           href={signInHref}
         >
           {producerIntent
-            ? "Iniciar sesión y continuar como productor"
+            ? "Iniciar sesión para vender"
             : "Ir a iniciar sesión"}
         </Link>
       </section>

@@ -9,9 +9,9 @@ export function SignOutButton() {
   const [message, setMessage] = useState("");
 
   return (
-    <div className="mt-8">
+    <div className="text-right">
       <button
-        className="rounded-xl px-5 py-3 font-semibold text-emerald-950 underline"
+        className="min-h-12 rounded-xl bg-emerald-100 px-4 py-3 font-semibold text-emerald-950 hover:bg-emerald-200"
         onClick={async () => {
           setMessage("");
           try {
@@ -31,7 +31,7 @@ export function SignOutButton() {
         Cerrar sesión
       </button>
       {message && (
-        <p className="mt-2 text-sm text-red-800" role="alert">
+        <p className="mt-2 text-sm text-rose-100" role="alert">
           {message}
         </p>
       )}

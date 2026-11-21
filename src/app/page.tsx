@@ -36,9 +36,7 @@ export default function Home() {
               Compra productos del campo o vende tu cosecha
             </h1>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-emerald-50 sm:text-xl">
-              Explora el catálogo sin registrarte. Con una sola cuenta puedes
-              comprar y, si produces, agregar tu perfil de productor más
-              adelante.
+              Explora el catálogo sin registrarte.
             </p>
           </div>
         </section>
@@ -55,8 +53,7 @@ export default function Home() {
               Empieza con una sola cuenta
             </h2>
             <p className="mt-2 leading-7 text-slate-700">
-              Crea tu cuenta para comprar. Si produces, después puedes agregar
-              tu perfil para publicar tu cosecha.
+              Compra y vende con la misma cuenta.
             </p>
             <div className="mt-5 flex flex-col gap-3 sm:flex-row">
               <Link
@@ -66,7 +63,7 @@ export default function Home() {
                 Crear cuenta
               </Link>
               <Link
-                className="inline-flex min-h-12 items-center justify-center rounded-xl border border-emerald-800 px-5 py-3 text-center font-bold text-emerald-950 hover:bg-emerald-50"
+                className="inline-flex min-h-12 items-center justify-center rounded-xl bg-emerald-100 px-5 py-3 text-center font-bold text-emerald-950 hover:bg-emerald-200"
                 href="/catalogo"
               >
                 Explorar el catálogo

@@ -127,7 +127,7 @@ test("production home page offers one shared signup and a single sign-in link", 
   assert.equal([...html.matchAll(/href="\/iniciar-sesion"/g)].length, 1);
   assert.match(html, /¿Ya tienes cuenta\?/);
   assert.match(html, /href="\/iniciar-sesion">Inicia sesión<\/a>/);
-  assert.match(html, /agregar tu perfil para publicar tu cosecha/);
+  assert.match(html, /Compra y vende con la misma cuenta/);
   assert.doesNotMatch(
     html,
     /Crear cuenta para vender|Quiero comprar|Quiero vender|Elige cómo participar|intent=producer/,
@@ -172,9 +172,8 @@ test("order quantity validation is linked to its invalid field", () => {
 test("action feedback distinguishes success statuses from errors", () => {
   assert.match(ordersPage, /role="status"/);
   assert.match(orderRequestForm, /role="alert"/);
-  for (const source of [orderDecisionForm, roleForm]) {
-    assert.match(source, /role=\{state\.ok \? "status" : "alert"\}/);
-  }
+  assert.match(orderDecisionForm, /role=\{state\.ok \? "status" : "alert"\}/);
+  assert.match(roleForm, /role="alert"/);
 });
 
 test("catalog helps people recover from loading, filter, and connection problems", () => {
@@ -205,12 +204,12 @@ test("production registration page keeps labels associated with their fields", a
   assert.match(html, /min-h-12/);
 });
 
-test("producer registration keeps its intent through sign-in and role selection", async () => {
+test("producer registration keeps its intent through sign-in and selling", async () => {
   const signupResponse = await fetch(`${url}/crear-cuenta?intent=producer`);
   assert.equal(signupResponse.status, 200);
   const signupHtml = await signupResponse.text();
   assert.match(signupHtml, /Crea tu cuenta para vender/);
-  assert.match(signupHtml, /agrega el perfil de productor/);
+  assert.match(signupHtml, /selecciona Vender productos/);
   assert.match(signupHtml, /href="\/iniciar-sesion\?intent=producer"/);
 
   const signinResponse = await fetch(`${url}/iniciar-sesion?intent=producer`);
@@ -218,8 +217,8 @@ test("producer registration keeps its intent through sign-in and role selection"
   const signinHtml = await signinResponse.text();
   assert.match(signinHtml, /href="\/crear-cuenta\?intent=producer"/);
   assert.match(authForm, /\/mi-cuenta\?intent=producer/);
-  assert.match(authForm, /Iniciar sesión y continuar como productor/);
-  assert.match(roleForm, /Agregar perfil y continuar/);
+  assert.match(authForm, /Iniciar sesión para vender/);
+  assert.match(roleForm, /Vender productos/);
 });
 
 test("successful registration replaces the form with clear next steps", () => {

@@ -338,6 +338,7 @@ async function main(): Promise<void> {
         select: { id: true },
       });
       fixtureUserIds.push(buyer.id);
+      await database.userRole.deleteMany({ where: { userId: buyer.id, role: "BUYER" } });
       await waitForAccountEmail(brevoStub.rejected, email, "/verify-email?");
       const unverifiedSignin = await api.post("/api/auth/sign-in/email", { data: { email, password } });
       assert.equal(unverifiedSignin.status(), 403);
@@ -677,8 +678,8 @@ async function main(): Promise<void> {
       await agendaForm.getByRole("button", { name: "Agregar a mi agenda" }).click();
       await expect(comingTasks.getByText("Papa para regar hoy", { exact: true })).toBeVisible();
       await producerPage.goto(`${baseURL}/mi-cuenta`);
-      await expect(producerPage.getByRole("region", { name: "Agenda de labores" }))
-        .toContainText("Tienes 1 labor para hoy.");
+      await expect(producerPage.getByRole("region", { name: "Herramientas" }))
+        .toContainText("1 labor para hoy");
       await producerPage.getByRole("link", { name: "Abrir mi agenda" }).click();
       await expect(comingTasks.getByText("Papa para regar hoy", { exact: true })).toBeVisible();
       await agendaForm.getByLabel("Actividad", { exact: true }).selectOption("SOWING");
@@ -833,10 +834,10 @@ async function main(): Promise<void> {
       );
       await page.goto(`${baseURL}/mi-cuenta`);
       await page
-        .getByRole("heading", { name: "Encuentra productos locales" })
+        .getByRole("heading", { name: "Mi cuenta" })
         .waitFor();
       await page
-        .getByRole("link", { name: "Consultar mis pedidos" })
+        .getByRole("link", { name: "Mis pedidos" })
         .waitFor();
       await page.goto(`${baseURL}/mi-cuenta/pedidos`);
       const buyerOrdersSection = page.getByRole("region", {
@@ -1463,6 +1464,14 @@ async function main(): Promise<void> {
       await expect(producerPage.getByText("Guardamos tu perfil como privado.")).toBeVisible();
       const hiddenProfile = await producerPage.request.get(publicProfileUrl);
       assert.equal(hiddenProfile.status(), 404);
+      await page.goto(`${baseURL}/mi-cuenta`);
+      await expect(page.getByRole("link", { name: "Comprar", exact: true })).toBeVisible();
+      await expect(page.getByText("Puedes participar como")).toHaveCount(0);
+      await page.getByRole("button", { name: "Vender productos" }).click();
+      await expect(page).toHaveURL(`${baseURL}/mi-cuenta/productos`);
+      await page.goto(`${baseURL}/mi-cuenta`);
+      await expect(page.getByRole("link", { name: "Gestionar mis productos" })).toBeVisible();
+      await expect(page.getByRole("link", { name: "Comprar", exact: true })).toBeVisible();
       await producerContext.close();
       await context.close();
     } finally {

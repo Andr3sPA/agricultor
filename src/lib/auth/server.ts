@@ -26,9 +26,12 @@ export async function getCurrentIdentity(): Promise<{
     select: { role: true },
   });
 
+  const roles = new Set<UserRole>(userRoles.map(({ role }: { role: RoleName }) => role));
+  roles.add("BUYER");
+
   return {
     userId: session.user.id,
-    roles: userRoles.map(({ role }: { role: RoleName }) => role),
+    roles: [...roles],
   };
 }
 
